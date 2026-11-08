@@ -1,0 +1,23 @@
+// The control of the test of the rules of code, rules_test.go at the root of engine: a module
+// that breaks every rule, each line marked with the rules it breaks. Nothing builds it, and it is
+// kept as go.mod.control, since a module zip would leave out a nested module: the test reads it
+// under that name. learner-model is the one module go.mod may require, alone, in a block or
+// quoted, and nothing may be replaced.
+module example.com/coderules
+
+go 1.27.3
+
+require example.com/dependency v1.0.0 // want require
+
+require github.com/altnovatrail/learner-model v0.1.0
+
+require (
+	"github.com/altnovatrail/learner-model" v0.1.0
+	example.com/other v1.0.0 // want require
+)
+
+replace github.com/altnovatrail/learner-model => ../learner-model // want replace
+
+replace (
+	example.com/dependency v1.0.0 => example.com/fork v1.0.0 // want replace
+)

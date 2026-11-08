@@ -50,10 +50,80 @@ ci-lint:
 # a package that no test runs is in it too, its statements at zero. Every test counts for every
 # package of the module, -coverpkg=./...: a test of golden vectors runs the code of other packages,
 # and its lines count where they are.
-# Run the tests, with the race detector, and write their coverage.
-ci-test:
+# Then come the checks of the same choice on every build (R10): the tests on the builds where the
+# bits are most at risk, and the comparison of the assembler with and without fusion.
+# Run the tests, with the race detector, and write their coverage; then the same-bits checks.
+ci-test: && test-targets fma-diff
     mkdir -p coverage
     go test -race -count=1 -covermode=atomic -coverpkg=./... -coverprofile=coverage/go.out ./...
+
+# The same tests, without the race detector and coverage, which Go does not have on 386 and wasm
+# (docs/architecture.md, section 3.7): on amd64 with GOAMD64 v3, where the compiler fuses an
+# addition; with v1 and GODEBUG=cpu.all=off, with no processor extension for the runtime and the
+# standard library to pick their path by; on 386; and in js/wasm, in the container's Node. A host
+# other than amd64 — the arm64 job of ci.yml — runs no amd64 build and none for 386, and runs its
+# own build with cpu.all=off. wasip1 is built and vetted alone: there is no WASI runtime in the
+# container.
+# Run the tests on the builds the same bits are held on.
+test-targets:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    run() { echo "== $*" >&2; env "$@"; }
+    if [ "$(go env GOHOSTARCH)" = amd64 ]; then
+        run GOAMD64=v3 go test -count=1 ./...
+        run GOAMD64=v1 GODEBUG=cpu.all=off go test -count=1 ./...
+        run GOARCH=386 go test -count=1 ./...
+    else
+        run GODEBUG=cpu.all=off go test -count=1 ./...
+    fi
+    run GOOS=js GOARCH=wasm go test -count=1 -exec="$(go env GOROOT)/lib/wasm/go_js_wasm_exec" ./...
+    run GOOS=wasip1 GOARCH=wasm go build ./...
+    run GOOS=wasip1 GOARCH=wasm go vet ./...
+
+# Each package of the module is compiled for every target whose compiler fuses a multiplication
+# with an addition or a subtraction, twice: as it is, and with -d=fmahash=n, which turns every rule
+# of fusion off. The assembler must be the same, and the second build must report no place where a
+# rule would have fired, "fmahash triggered". The control, testdata/fma, must differ on every target,
+# or the check has stopped seeing fusion (docs/architecture.md, section 3.7). The packages are built
+# one at a time, so that their output comes in one order. The output does not depend on the host,
+# so the arm64 job repeats it, as the same ci-test.
+# Compare the assembler with fusion and without it, on every target that fuses.
+fma-diff:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # A build that fails says why, rather than stopping the script with nothing printed.
+    asm() {
+        local out
+        if ! out="$(go build -gcflags="-S $1" "$2" 2>&1)"; then
+            echo "fma-diff: $GOARCH: $2 does not build:" >&2
+            echo "$out" >&2
+            return 1
+        fi
+        echo "$out"
+    }
+    # The packages with code: one of tests alone has nothing to build.
+    pkgs="$(go list -f '{{{{if .GoFiles}}{{{{.ImportPath}}{{{{end}}' ./...)"
+    status=0
+    for target in arm64 ppc64le s390x riscv64 loong64 amd64/v3; do
+        export GOOS=linux GOARCH="${target%%/*}" GOAMD64=v1
+        if [ "$target" = amd64/v3 ]; then GOAMD64=v3; fi
+        ok=1
+        for pkg in $pkgs; do
+            fused="$(asm "" "$pkg")"
+            plain="$(asm -d=fmahash=n "$pkg")"
+            if [ "$fused" != "$plain" ] || grep -q 'fmahash triggered' <<<"$plain"; then
+                echo "fma-diff: $target: the compiler fuses in $pkg; put float64() round the * or / (R10):" >&2
+                diff <(echo "$fused") <(echo "$plain") | head -n 40 >&2 || true
+                ok=0
+            fi
+        done
+        if [ "$(asm "" ./testdata/fma)" = "$(asm -d=fmahash=n ./testdata/fma)" ]; then
+            echo "fma-diff: $target: the control in testdata/fma was not caught: the check sees no fusion" >&2
+            ok=0
+        fi
+        if [ "$ok" = 1 ]; then echo "fma-diff: $target: ok" >&2; else status=1; fi
+    done
+    exit "$status"
 
 # Fail on a known vulnerability in code this module reaches.
 ci-vuln:
