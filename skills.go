@@ -49,6 +49,10 @@ type skillView struct {
 	// Not handed out, and taught by a lesson of the author's order not passed: it comes by that
 	// lesson, and branches 6–9 do not take it (the amendment of 2026-11-08 to R05).
 	awaitsLesson bool
+	// Due for review: open, mastered for the queue, with candidates in the pass, and the time of the
+	// choice not before its review date, or the date marked already (docs/architecture.md, section
+	// 3.4; R06). A skill that awaits its lesson is not.
+	due bool
 }
 
 // paused is a skill open, with evidence, and out of reach.
@@ -95,6 +99,7 @@ func (pr prepared) skills(i int, second bool) []skillView {
 		v.reachable = v.open && len(v.candidates) > 0 && (withinReach || backFromPause(issue))
 		v.masteredForQueue = v.read.Mastered && (!v.hasRecommended || v.recommended.band <= v.read.MasteryBand.Place)
 		v.awaitsLesson = !v.issued && pr.awaitsLesson(i, s.ID)
+		v.due = v.open && v.masteredForQueue && len(v.candidates) > 0 && !v.awaitsLesson && (v.read.Review.Already || in.Time >= v.read.Review.At)
 		out = append(out, v)
 	}
 	return out

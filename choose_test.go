@@ -457,3 +457,41 @@ func TestChooseSecondPass(t *testing.T) {
 		t.Errorf("Choose = %+v, %v; want nothing to give", got, err)
 	}
 }
+
+// A skill the learner model reads as mastered, practised five days ago with a stability of a day,
+// is due for review: on n = 13, the module's turn of the repetition, Choose gives a task on it with
+// the code REASON_CODE_REPETITION, though b, after it, is in the queue; on n = 14 b comes.
+func TestChooseRepetition(t *testing.T) {
+	olympiad := fixtureModules[0]
+	m := fixtureModule(t, olympiad)
+	m.Lessons = nil
+	const at = int64(10_000_000)
+	a, b := skillID(olympiad, "a"), skillID(olympiad, "b")
+	state := learnermodel.State{Kind: learnermodel.StateKind, Modules: []learnermodel.ModuleState{{
+		Module: olympiad, Level: 2, AnswerWeight: 20, StartBand: learnermodel.BandRef{Place: 1, ID: "grade-3"},
+		Skills: []learnermodel.SkillState{
+			{Skill: a, AnswerWeight: 10, EvidenceCount: 10, LastPractice: at - 5*86_400, Stability: 1, MasteryBand: 1, Mastered: true},
+			{Skill: b, AnswerWeight: 2, EvidenceCount: 2, LastPractice: at - 86_400, Stability: 1},
+		},
+	}}}
+	r, err := learnermodel.Read(state, learnermodel.Graphs{olympiad: {Graph: m.Graph, Current: true}}, at, learnermodel.Grade{Value: 3, Known: true}, []string{olympiad})
+	if err != nil {
+		t.Fatal(err)
+	}
+	in := engine.Input{
+		Time: at, Readout: r, Modules: []engine.Module{m},
+		Summary: engine.Summary{
+			Skills:  []engine.SkillIssue{{Skill: a, Issued: true, LastIssued: at - 5*86_400}, {Skill: b, Issued: true, LastIssued: at - 86_400}},
+			Modules: []engine.ModuleChoices{{Module: olympiad, Choices: 13}},
+		},
+	}
+	want := engine.Choice{Kind: engine.ChoiceTask, ID: olympiad + "/task/a-1", Reason: engine.ReasonRepetition}
+	if got, err := engine.Choose(in); err != nil || got != want {
+		t.Errorf("Choose = %+v, %v; want %+v (the reading of a: %+v)", got, err, want, r.Modules[0].Skills[0])
+	}
+	in.Summary.Modules[0].Choices = 14 // off the turn, the queue comes first
+	want = engine.Choice{Kind: engine.ChoiceTask, ID: olympiad + "/task/b-1", Reason: engine.ReasonQueue}
+	if got, err := engine.Choose(in); err != nil || got != want {
+		t.Errorf("n = 14: Choose = %+v, %v; want %+v", got, err, want)
+	}
+}

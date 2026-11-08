@@ -179,7 +179,7 @@ func TestOlympiadProbe(t *testing.T) {
 // recommended task moves above grades-3-4, the mastered skill comes back in rotation.
 func TestOlympiadMasteredSkills(t *testing.T) {
 	w := olympiadWorld(t)
-	w.skill(learnermodel.SkillReadout{Skill: enumSkill, EvidenceCount: 12, Mastered: true, MasteryBand: learnermodel.BandRef{Place: 2}})
+	w.skill(learnermodel.SkillReadout{Skill: enumSkill, EvidenceCount: 12, Mastered: true, Review: notDue, MasteryBand: learnermodel.BandRef{Place: 2}})
 	w.issue(enumSkill, exampleTime-100)
 	w.issue(gapsSkill, exampleTime-50)
 	w.want("pigeon-12-d1-1", ReasonNewSkill)
@@ -215,7 +215,7 @@ func TestGrade3AllMastered(t *testing.T) {
 	w := grade3World(t)
 	w.probabilities([]px{{"*", 0.78}})
 	for k, s := range []string{"comparing-fractions", "division-with-remainder", "fractions-of-a-whole", "times-tables"} {
-		w.skill(learnermodel.SkillReadout{Skill: sid(grade3Math, s), EvidenceCount: 10, Mastered: true, MasteryBand: learnermodel.BandRef{Place: 1}})
+		w.skill(learnermodel.SkillReadout{Skill: sid(grade3Math, s), EvidenceCount: 10, Mastered: true, Review: notDue, MasteryBand: learnermodel.BandRef{Place: 1}})
 		w.issue(sid(grade3Math, s), exampleTime-int64(100*(k+1)))
 	}
 	w.want("times-tables-d1", ReasonRotation)
@@ -247,7 +247,7 @@ func TestBottomOfTheLadder(t *testing.T) {
 	// ago, whatever its band.
 	w.probabilities([]px{{"a-high", 0.8}, {"b-high", 0.8}})
 	for _, s := range []string{a, b} {
-		w.skill(learnermodel.SkillReadout{Skill: s, EvidenceCount: 5, Mastered: true, MasteryBand: high})
+		w.skill(learnermodel.SkillReadout{Skill: s, EvidenceCount: 5, Mastered: true, Review: notDue, MasteryBand: high})
 	}
 	w.issue(a, exampleTime-100)
 	w.want("a-high", ReasonRotation)

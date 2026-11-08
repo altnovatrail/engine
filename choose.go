@@ -24,9 +24,9 @@ import (
 //
 // Choose runs the rule: the lesson of an open run; then on the skill chosen on the map, or in "My
 // subjects" — consolidation in the module of the last closed attempt, then the modules in turn,
-// with the lessons on the new and the author's order —; then a second pass with the tasks on
-// pause, and gives a lesson or a task with the code of its branch, or nothing to give. The
-// repetition is still to come (RUN.md, T20).
+// with the repetition, the lessons on the new and the author's order —; then a second pass with
+// the tasks on pause, and gives a lesson or a task with the code of its branch, or nothing to
+// give.
 func Choose(in Input) (Choice, error) {
 	pr, err := prepare(in)
 	if err != nil {

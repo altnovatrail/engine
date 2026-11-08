@@ -23,6 +23,10 @@ const (
 
 func sid(module, name string) string { return module + "/skill/" + name }
 
+// notDue is a review date that never comes, for a mastered skill whose repetition is not what a
+// test is about: the reading gives every mastered skill a date.
+var notDue = learnermodel.ReviewDate{At: math.MaxInt64}
+
 // exampleTask is a task of one item with an answer to choose, on the task's primary skills.
 func exampleTask(module, name string, band learnermodel.BandRef, difficulty int32, primary ...string) learnermodel.Task {
 	return learnermodel.Task{
@@ -288,7 +292,7 @@ func TestOlympiadMastered(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			w := newWorld(t, olympiad(t))
 			w.skill(learnermodel.SkillReadout{
-				Skill: enum, EvidenceCount: 12, Mastered: true, MasteryBand: learnermodel.BandRef{Place: 2, ID: "grades-3-4"},
+				Skill: enum, EvidenceCount: 12, Mastered: true, Review: notDue, MasteryBand: learnermodel.BandRef{Place: 2, ID: "grades-3-4"},
 			})
 			w.probabilities(tc.ps)
 			if v := w.view(enum, false); v.masteredForQueue != tc.forQueue {
@@ -360,7 +364,7 @@ func TestGrade3Solution(t *testing.T) {
 // comparing-fractions waits for fractions-of-a-whole.
 func TestGrade3Mastered(t *testing.T) {
 	w := newWorld(t, grade3(t))
-	w.skill(learnermodel.SkillReadout{Skill: sid(grade3Math, "times-tables"), EvidenceCount: 10, Mastered: true, MasteryBand: learnermodel.BandRef{Place: 1, ID: "grade-3"}})
+	w.skill(learnermodel.SkillReadout{Skill: sid(grade3Math, "times-tables"), EvidenceCount: 10, Mastered: true, Review: notDue, MasteryBand: learnermodel.BandRef{Place: 1, ID: "grade-3"}})
 	var open []string
 	for _, v := range w.views(false) {
 		if v.open {
@@ -396,7 +400,7 @@ func TestOpen(t *testing.T) {
 		t.Errorf("b with evidence of its own is closed, want it open")
 	}
 	// Mastered by the model: a rubric skill never is, but a reading that says so counts nothing.
-	w.skill(learnermodel.SkillReadout{Skill: essay, Mastered: true})
+	w.skill(learnermodel.SkillReadout{Skill: essay, Mastered: true, Review: notDue})
 	for _, id := range []string{sid(module, "c"), sid(module, "d")} {
 		if v := w.view(id, false); v.open {
 			t.Errorf("%s is open, want it held", id)
@@ -453,7 +457,7 @@ func TestCandidates(t *testing.T) {
 	if got := w.view(c, false).candidates[0].p; got != 0.1 {
 		t.Errorf("own on c: P %v, want 0.1", got)
 	}
-	w.skill(learnermodel.SkillReadout{Skill: a, Mastered: true})
+	w.skill(learnermodel.SkillReadout{Skill: a, Mastered: true, Review: notDue})
 	if got := candidateIDs(w.view(a, false).candidates); !slices.Equal(got, []string{"own", "both"}) {
 		t.Errorf("candidates of a with b open %v, want [own both]", got)
 	}
@@ -522,7 +526,7 @@ func TestSkillsOrder(t *testing.T) {
 	w.p[j] = learnermodel.TaskReadout{Items: []learnermodel.ItemProbability{
 		{Place: 1, Probability: 0.1, HasVerdict: true}, {Place: 2, Probability: 0.2, HasVerdict: true}, {Place: 3, Probability: 0.3, HasVerdict: true},
 	}}
-	w.skill(learnermodel.SkillReadout{Skill: enum, EvidenceCount: 3, Mastered: true, MasteryBand: learnermodel.BandRef{Place: 2}})
+	w.skill(learnermodel.SkillReadout{Skill: enum, EvidenceCount: 3, Mastered: true, Review: notDue, MasteryBand: learnermodel.BandRef{Place: 2}})
 	w.skill(learnermodel.SkillReadout{Skill: gaps, EvidenceCount: 3, Traps: []learnermodel.TrapCount{
 		{ID: "t/1", Count: 2, Last: 5}, {ID: "t/2", Count: 3, Last: 1}, {ID: "t/3", Count: 2, Last: 5}, {ID: "t/4", Count: 1},
 	}})
