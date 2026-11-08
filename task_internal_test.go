@@ -89,3 +89,12 @@ func TestFrequentTraps(t *testing.T) {
 		t.Errorf("frequentTraps = %v, want %v", got, want)
 	}
 }
+
+// The aim of the corridor is 0.775 exactly: of 0.772 and 0.781, the first is nearer it, though an
+// aim of 0.78 would take the second. Found by a negative probe of T21: no vector told them apart.
+func TestCorridorAim(t *testing.T) {
+	a, b := candidate{id: "a", p: 0.772}, candidate{id: "b", p: 0.781}
+	if byCorridor(a, b) >= 0 || byCorridor(b, a) <= 0 {
+		t.Errorf("0.781 comes before 0.772 for the aim %v", corridorAim)
+	}
+}

@@ -1,7 +1,7 @@
 package coderules
 
 import (
-	"encoding/json" // want import
+	"encoding/xml" // want import
 	"math"
 	"testing"
 )
@@ -13,7 +13,7 @@ func TestControl(t *testing.T) {
 		_ = k
 	}
 	go func() {}()
-	_, _ = json.Marshal(m)
+	_, _ = xml.Marshal(m)
 	if math.Exp(a)+math.Log(b) < a*b+c { // want fused math
 		t.Log(math.Pow(a, b)) // want math
 	}

@@ -1,0 +1,2 @@
+testdata/modules/*.tar.gz binary
+testdata/choose/*.txt text eol=lf

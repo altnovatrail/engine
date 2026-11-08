@@ -53,10 +53,13 @@ var codeImports = []string{
 }
 
 // What tests may import beside them: learner-model's list for tests, where os and path/filepath
-// also read cause.proto in the spec submodule.
+// also read cause.proto in the spec submodule; and compress/gzip and encoding/json, which read the
+// packages of the release of modules for the golden vectors (the third amendment of 2026-11-08 to
+// R10). Code imports neither.
 var testImports = []string{
-	"bytes", "crypto/sha256", "fmt", "go/ast", "go/importer", "go/parser", "go/token", "go/types",
-	"math/rand/v2", "os", "path/filepath", "runtime", "testing",
+	"bytes", "compress/gzip", "crypto/sha256", "encoding/json", "fmt", "go/ast",
+	"go/importer", "go/parser", "go/token", "go/types", "math/rand/v2", "os", "path/filepath",
+	"runtime", "testing",
 }
 
 // The functions of math whose result is defined exactly, the only ones code and tests may call
