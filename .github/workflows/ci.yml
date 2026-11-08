@@ -40,3 +40,26 @@ jobs:
       contents: read
       id-token: write
     uses: altnovatrail/.github/.github/workflows/go.yml@89d3ceee0b9977b3334488a4133d084d76474e0d # v0.1.15
+
+  # The same ci-test on arm64 hardware, where the compiler fuses a multiplication with an addition
+  # or a subtraction (R10; docs/architecture.md, section 3.7): the same toolchain stage, run as
+  # go.yml runs it. The shared go.yml runs on ubuntu-24.04 alone; once its option for these runs
+  # comes, it takes this job's place (Д114 in table 4 of spec's RUN.md). The coverage this run
+  # writes is not sent.
+  go-arm64:
+    name: Go arm64
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Toolchain image
+        run: docker build --target toolchain --tag toolchain - < .devcontainer/Dockerfile
+
+      - name: ci-test
+        run: |
+          docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp \
+              --volume "$PWD:/work" --workdir /work \
+              toolchain just ci-test
