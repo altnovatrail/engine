@@ -8,11 +8,12 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The rule (docs/architecture.md, sections 3.1 and 3.2; R03, R04): "My subjects" — consolidation
-// in the module of the last closed attempt, then the modules in turn, each running branches 4–9 —
-// or the skill chosen on the map, branch 2. The first branch that fits makes the choice, and its
-// code is the choice's (R07). The open run, the repetition, the author's order and the lessons
-// come with T19 and T20 (RUN.md).
+// The rule (docs/architecture.md, sections 3.1–3.3; R03, R04, R05): branch 1, the lesson of an
+// open run; then "My subjects" — consolidation in the module of the last closed attempt, then the
+// modules in turn, each running branches 4–9 with 6a, the author's order — or the skill chosen on
+// the map, branch 2. Branches 6–9 give the lesson on the skill when there is one. The first branch
+// that fits makes the choice, and its code is the choice's (R07). The repetition comes with T20
+// (RUN.md).
 
 // The turn of the probe: the module's n-th choice, counted before this one, with n > 5 and
 // n mod 6 = 5, as in standalone. Only a run of sim changes them.
@@ -21,20 +22,22 @@ const (
 	probeAfter int64 = 5
 )
 
-// choose runs the rule: a first pass, a second pass with the tasks on pause, then nothing to
-// give. An open run takes branch 1, which is still to come: until then it gives nothing to give.
+// choose runs the rule: branch 1, which the pause does not touch; then a first pass, a second pass
+// with the tasks on pause, then nothing to give.
 func (pr prepared) choose() Choice {
-	if !slices.ContainsFunc(pr.in.Runs, func(r Run) bool { return r.End == RunOpen }) {
-		for _, second := range []bool{false, true} {
-			if c, ok := pr.pass(second); ok {
-				return c
-			}
+	if c, ok := pr.openRun(); ok {
+		return c
+	}
+	for _, second := range []bool{false, true} {
+		if c, ok := pr.pass(second); ok {
+			return c
 		}
 	}
 	return Choice{Kind: ChoiceNothing}
 }
 
-// pass runs one pass of the rule: on the skill chosen on the map, or in "My subjects".
+// pass runs one pass of the rule after branch 1: on the skill chosen on the map, or in "My
+// subjects".
 func (pr prepared) pass(second bool) (Choice, bool) {
 	if pr.in.MapSkill != "" {
 		return pr.onMap(second)
@@ -52,7 +55,7 @@ func (pr prepared) pass(second bool) (Choice, bool) {
 		}
 	}
 	for _, i := range pr.turns() {
-		if c, ok := pr.turn(i, skillsOf(i)); ok {
+		if c, ok := pr.turn(i, skillsOf(i), second); ok {
 			return c, true
 		}
 	}
@@ -63,6 +66,16 @@ func (pr prepared) pass(second bool) (Choice, bool) {
 func given(s skillView, easiest bool, code ReasonCode) (Choice, bool) {
 	c, _ := s.task(easiest)
 	return Choice{Kind: ChoiceTask, ID: c.id, Reason: code}, true
+}
+
+// give is the choice of branches 6–9 on a skill of the module at place i: the lesson on the skill
+// when there is one, else the task on it, with the branch's code (docs/architecture.md, section
+// 3.3). Consolidation and the probe give only tasks.
+func (pr prepared) give(i int, s skillView, code ReasonCode) (Choice, bool) {
+	if id, ok := pr.lessonOnSkill(i, s.id, s.recommended, s.hasRecommended, false); ok {
+		return Choice{Kind: ChoiceLesson, ID: id, Reason: code}, true
+	}
+	return given(s, false, code)
 }
 
 // lastModule gives the place of the module of the engine whose task the last closed attempt was.
@@ -130,7 +143,7 @@ func (pr prepared) turns() []int {
 }
 
 // turn runs branches 4–9 in the module at place i, on its turn.
-func (pr prepared) turn(i int, skills []skillView) (Choice, bool) {
+func (pr prepared) turn(i int, skills []skillView, second bool) (Choice, bool) {
 	in := pr.in
 	module := in.Modules[i].Graph.Module
 	mr := moduleReadout(in, module)
@@ -148,25 +161,32 @@ func (pr prepared) turn(i int, skills []skillView) (Choice, bool) {
 	}
 
 	// Branch 6: a skill within reach not handed out before, the first in the order of the graph.
+	// One a lesson of the author's order not passed teaches comes by that lesson, and branches 6–9
+	// do not take it.
 	for _, s := range skills {
-		if s.reachable && !s.issued {
-			return given(s, false, ReasonNewSkill)
+		if s.reachable && !s.issued && !s.awaitsLesson {
+			return pr.give(i, s, ReasonNewSkill)
 		}
+	}
+
+	// Branch 6a: the author's order.
+	if c, ok := pr.authorOrder(i, second); ok {
+		return c, true
 	}
 
 	// Branch 7: a skill within reach, handed out before and not mastered for the queue, the one
 	// not handed out for longest. A skill the model has mastered is back in rotation.
 	if s, ok := longestAgo(skills, func(s skillView) bool { return s.reachable && s.issued && !s.masteredForQueue }); ok {
 		if s.read.Mastered {
-			return given(s, false, ReasonRotation)
+			return pr.give(i, s, ReasonRotation)
 		}
-		return given(s, false, ReasonQueue)
+		return pr.give(i, s, ReasonQueue)
 	}
 
 	// Branch 8: every skill within reach is mastered for the queue — the choice of branch 7 among
 	// them all.
-	if s, ok := longestAgo(skills, func(s skillView) bool { return s.reachable }); ok {
-		return given(s, false, ReasonRotation)
+	if s, ok := longestAgo(skills, func(s skillView) bool { return s.reachable && !s.awaitsLesson }); ok {
+		return pr.give(i, s, ReasonRotation)
 	}
 
 	// Branch 9: no skill within reach — branches 6 and 7 among the open skills with candidates at
@@ -175,7 +195,7 @@ func (pr prepared) turn(i int, skills []skillView) (Choice, bool) {
 	// branch 8 does, so that an open skill with candidates is never left with nothing to give.
 	var ladder []skillView
 	for _, s := range skills {
-		if s.open && len(s.candidates) > 0 && s.hasLowestBand {
+		if s.open && len(s.candidates) > 0 && s.hasLowestBand && !s.awaitsLesson {
 			ladder = append(ladder, s)
 		}
 	}
@@ -186,14 +206,14 @@ func (pr prepared) turn(i int, skills []skillView) (Choice, bool) {
 	ladder = slices.DeleteFunc(ladder, func(s skillView) bool { return s.lowestBand != bottom })
 	for _, s := range ladder {
 		if !s.issued {
-			return given(s, false, ReasonNewSkill)
+			return pr.give(i, s, ReasonNewSkill)
 		}
 	}
 	if s, ok := longestAgo(ladder, func(s skillView) bool { return !s.masteredForQueue }); ok {
-		return given(s, false, ReasonRotation)
+		return pr.give(i, s, ReasonRotation)
 	}
 	s, _ := longestAgo(ladder, func(skillView) bool { return true })
-	return given(s, false, ReasonRotation)
+	return pr.give(i, s, ReasonRotation)
 }
 
 // longestAgo gives, of the skills that fit, the one not handed out for longest — one never
@@ -224,10 +244,11 @@ func byIssue(a, b skillView) int {
 	return cmp.Compare(a.lastIssued, b.lastIssued)
 }
 
-// onMap is branch 2, the skill chosen on the map (R04): a task on it, whatever its state — closed,
-// on pause, in the trial series —, among all its tasks, with the code REASON_CODE_SKILL_CHOSEN. A
-// skill outside the modules of the engine gives nothing; so does one with a rubric or none, and a
-// lesson on the skill, until T19 comes.
+// onMap is branch 2, the skill chosen on the map (R04), with the code REASON_CODE_SKILL_CHOSEN,
+// whatever its state — closed, on pause, in the trial series. A skill with a verdict gets the
+// lesson on it when there is one, else a task on it among all its tasks; one with a rubric or none
+// goes by mapAuthor (docs/architecture.md, section 3.3). A skill outside the modules of the engine
+// gives nothing.
 func (pr prepared) onMap(second bool) (Choice, bool) {
 	skill := pr.in.MapSkill
 	for i, m := range pr.in.Modules {
@@ -236,11 +257,18 @@ func (pr prepared) onMap(second bool) (Choice, bool) {
 			continue
 		}
 		if m.Graph.Skills[j].Assessability != learnermodel.AssessabilityVerdict {
-			return Choice{}, false
+			return pr.mapAuthor(i, skill, second)
 		}
 		read, _ := lookup(sortedBy(moduleReadout(pr.in, m.Graph.Module).Skills, func(r learnermodel.SkillReadout) string { return r.Skill }),
 			func(r learnermodel.SkillReadout) string { return r.Skill }, skill)
-		cands, _ := pr.candidates(pr.poolOf(i), skill, frequentTraps(read.Traps), second, true)
+		cands, all := pr.candidates(pr.poolOf(i), skill, frequentTraps(read.Traps), second, true)
+		var rec candidate
+		if len(all) > 0 {
+			rec = slices.MinFunc(all, byCorridor)
+		}
+		if id, ok := pr.lessonOnSkill(i, skill, rec, len(all) > 0, true); ok {
+			return Choice{Kind: ChoiceLesson, ID: id, Reason: ReasonSkillChosen}, true
+		}
 		if len(cands) == 0 {
 			return Choice{}, false
 		}

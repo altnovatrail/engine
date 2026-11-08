@@ -340,7 +340,7 @@ func TestMapSkill(t *testing.T) {
 
 // The skill chosen on the map takes its tasks whose other primary skill is closed, and in the
 // second pass even the task of the last closed attempt, after all the others; one with a rubric
-// gives nothing until T19.
+// gets its task.
 func TestMapSkillTasks(t *testing.T) {
 	module := "example/map"
 	band := learnermodel.BandRef{Place: 1, ID: "b"}
@@ -366,7 +366,7 @@ func TestMapSkillTasks(t *testing.T) {
 	w.want(tid(module, "a-1"), ReasonSkillChosen)
 
 	w.in.MapSkill = essay
-	w.want("", ReasonUnspecified)
+	w.want(tid(module, "essay-1"), ReasonSkillChosen)
 }
 
 func TestComponents(t *testing.T) {

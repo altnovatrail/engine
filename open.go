@@ -29,7 +29,14 @@ type node struct {
 // anchor with nothing to teach it: no skill with a verdict that teaches it has a task of the pool,
 // on pause or not, whose every other primary skill is open, nor a lesson. That last "open" is the
 // one without this case, so that the count is one step and ends (the amendment of 2026-11-08 to
-// R04). A prerequisite with a rubric or none holds the skill until T19 comes.
+// R04).
+//
+// A prerequisite of the module is counted when the model has mastered it, and one with a rubric or
+// none when a lesson that teaches it is passed or a task where it is primary was closed by "Done"
+// (docs/architecture.md, section 3.3). One with nothing to teach it holds nothing either, by the
+// same one step: one with a verdict has no lesson and no task as the teacher of an anchor has none,
+// and one with a rubric or none has no lesson and no task of the pool where it is primary (the
+// amendment of 2026-11-08 to R05).
 func (pr prepared) openSkills() []string {
 	in := pr.in
 	var nodes []node
@@ -85,11 +92,21 @@ func (pr prepared) openSkills() []string {
 	component := components(edges)
 
 	// counted tells whether a prerequisite of the skill at place k is counted; nothingToTeach, when
-	// given, tells whether an anchor skill the learner has not has nothing to teach it.
+	// given, tells whether a prerequisite not counted otherwise has nothing to teach it.
 	counted := func(k int, p string, nothingToTeach func(string) bool) bool {
 		if !strings.HasPrefix(p, anchorPrefix) {
 			j, ok := place(p)
-			return ok && nodes[j].skill.Assessability == learnermodel.AssessabilityVerdict && nodes[j].read.Mastered
+			if !ok {
+				return false
+			}
+			if nodes[j].skill.Assessability == learnermodel.AssessabilityVerdict {
+				if nodes[j].read.Mastered {
+					return true
+				}
+			} else if pr.passedOrDone(p) {
+				return true
+			}
+			return nothingToTeach != nil && nothingToTeach(p)
 		}
 		a, ok := lookup(anchors, func(a learnermodel.AnchorReadout) string { return a.Anchor }, p)
 		switch {
@@ -115,44 +132,62 @@ func (pr prepared) openSkills() []string {
 		return open
 	}
 
-	// Whether each anchor skill has something to teach it, once: a teacher that may be mastered —
-	// with a verdict and a band it is taught at, as learner-model reads a teacher — with a lesson,
-	// or with a task the rule could give it, an item with a verdict where it is primary, whose every
-	// other primary skill is open without this case.
+	// Whether each skill has something to teach it, once, by the "open" without the cases of
+	// nothing to teach. A skill with a verdict has, when the model may master it — with a band it is
+	// taught at, as learner-model reads a teacher — and a lesson not passed names it, or a task the
+	// rule could give it, an item with a verdict where it is primary, has every other primary skill
+	// open; a skill with a rubric or none, when a lesson not passed names it or a task with a rubric
+	// of the pool has it primary. A lesson passed teaches nothing more: no branch gives it again.
 	first := openWith(nil)
 	isOpen := func(id string) bool {
 		_, found := slices.BinarySearch(first, id)
 		return found
 	}
-	teachable := make([]bool, len(named))
+	known, can := make([]bool, len(nodes)), make([]bool, len(nodes))
 	pools := make([][]poolTask, len(in.Modules))
-	for a := range named {
-		for _, k := range teaching[a] {
-			n := nodes[k]
-			if n.skill.Assessability != learnermodel.AssessabilityVerdict || len(n.skill.BandsTaught) == 0 {
-				continue
-			}
-			m := in.Modules[n.module]
-			if slices.ContainsFunc(m.Lessons, func(l Lesson) bool { return slices.Contains(l.Skills, n.skill.ID) }) {
-				teachable[a] = true
-				break
-			}
-			if pools[n.module] == nil {
-				pools[n.module] = pr.poolOf(n.module)
-			}
-			if slices.ContainsFunc(pools[n.module], func(t poolTask) bool {
-				_, ok := candidateOf(t, n.skill.ID, nil)
-				return ok && othersOpen(t.primaries, n.skill.ID, isOpen)
-			}) {
-				teachable[a] = true
-				break
-			}
+	canTeach := func(k int) bool {
+		if known[k] {
+			return can[k]
 		}
+		known[k] = true
+		n := nodes[k]
+		verdict := n.skill.Assessability == learnermodel.AssessabilityVerdict
+		if verdict && len(n.skill.BandsTaught) == 0 {
+			return false
+		}
+		if slices.ContainsFunc(in.Modules[n.module].Lessons, func(l Lesson) bool { return slices.Contains(l.Skills, n.skill.ID) && !pr.isPassed(l.ID) }) {
+			can[k] = true
+			return true
+		}
+		if pools[n.module] == nil {
+			pools[n.module] = pr.poolOf(n.module)
+		}
+		can[k] = slices.ContainsFunc(pools[n.module], func(t poolTask) bool {
+			if !verdict {
+				return slices.Contains(pr.mods[n.module].rubricOf(t.c.Task), n.skill.ID)
+			}
+			_, ok := candidateOf(t, n.skill.ID, nil)
+			return ok && othersOpen(t.primaries, n.skill.ID, isOpen)
+		})
+		return can[k]
 	}
-	return openWith(func(anchor string) bool {
-		a, _ := slices.BinarySearch(named, anchor)
-		return !teachable[a]
+	return openWith(func(p string) bool {
+		if strings.HasPrefix(p, anchorPrefix) {
+			return !slices.ContainsFunc(teachers(p), func(j int) bool {
+				return nodes[j].skill.Assessability == learnermodel.AssessabilityVerdict && canTeach(j)
+			})
+		}
+		j, _ := place(p)
+		return !canTeach(j)
 	})
+}
+
+// passedOrDone tells whether a prerequisite with a rubric or none is counted: a run that ended
+// "passed" names it, or it is primary in a task of an attempt closed by "Done".
+func (pr prepared) passedOrDone(skill string) bool {
+	_, passed := slices.BinarySearch(pr.passedSkills, skill)
+	_, done := slices.BinarySearch(pr.doneSkills, skill)
+	return passed || done
 }
 
 // components gives each vertex of a directed graph its strongly connected component, by Tarjan's
