@@ -38,6 +38,14 @@ type skillView struct {
 	hasRecommended bool
 	// Mastered by the model while the recommended task is not above the band it is mastered at.
 	masteredForQueue bool
+	// Whether the skill was handed out, by a task on it or a lesson that teaches it, and when last
+	// (the summary).
+	issued     bool
+	lastIssued int64
+	// The lowest band the skill is taught at, by place, when the graph has one: the bottom of the
+	// ladder of branch 9.
+	lowestBand    int32
+	hasLowestBand bool
 }
 
 // paused is a skill open, with evidence, and out of reach.
@@ -53,10 +61,7 @@ func (s skillView) notYet() bool { return s.open && !s.evidence && !s.reachable 
 func (pr prepared) skills(i int, second bool) []skillView {
 	in := pr.in
 	m := in.Modules[i]
-	var mr learnermodel.ModuleReadout
-	if j := slices.IndexFunc(in.Readout.Modules, func(r learnermodel.ModuleReadout) bool { return r.Module == m.Graph.Module }); j >= 0 {
-		mr = in.Readout.Modules[j]
-	}
+	mr := moduleReadout(in, m.Graph.Module)
 	reads := sortedBy(mr.Skills, func(r learnermodel.SkillReadout) string { return r.Skill })
 	graph := sortedBy(m.Graph.Skills, func(s learnermodel.Skill) string { return s.ID })
 	readOf := func(id string) learnermodel.SkillReadout {
@@ -114,6 +119,10 @@ func (pr prepared) skills(i int, second bool) []skillView {
 		}
 		withinReach := slices.ContainsFunc(v.candidates, func(c candidate) bool { return c.p >= corridorLow })
 		issue, _ := lookup(issues, func(s SkillIssue) string { return s.Skill }, s.ID)
+		v.issued, v.lastIssued = issue.Issued, issue.LastIssued
+		if len(s.BandsTaught) > 0 {
+			v.lowestBand, v.hasLowestBand = slices.Min(s.BandsTaught), true
+		}
 		v.reachable = v.open && len(v.candidates) > 0 && (withinReach || backFromPause(issue))
 		v.masteredForQueue = v.read.Mastered && (!v.hasRecommended || v.recommended.band <= v.read.MasteryBand.Place)
 		out = append(out, v)
@@ -223,4 +232,13 @@ func lookup[T any](s []T, id func(T) string, key string) (T, bool) {
 		return zero, false
 	}
 	return s[i], true
+}
+
+// moduleReadout gives the learner model's reading of a module, which checkReadout has made sure
+// of for a module of the engine.
+func moduleReadout(in Input, module string) learnermodel.ModuleReadout {
+	if j := slices.IndexFunc(in.Readout.Modules, func(r learnermodel.ModuleReadout) bool { return r.Module == module }); j >= 0 {
+		return in.Readout.Modules[j]
+	}
+	return learnermodel.ModuleReadout{}
 }
