@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/altnovatrail/engine/actions/workflows/ci.yml/badge.svg)](https://github.com/altnovatrail/engine/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/altnovatrail/engine/actions/workflows/codeql.yml/badge.svg)](https://github.com/altnovatrail/engine/actions/workflows/codeql.yml)
+[![Go version](https://img.shields.io/github/go-mod/go-version/altnovatrail/engine)](go.mod)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/altnovatrail/engine/badge)](https://scorecard.dev/viewer/?uri=github.com/altnovatrail/engine)
 [![License](https://img.shields.io/github/license/altnovatrail/engine)](LICENSE)
 
@@ -17,7 +18,7 @@ A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.9.8), a 
 
 ## Status
 
-Detailing is done: the first epic, archived in [docs/plan/E1.md](docs/plan/E1.md), decided everything the component's card left open, and spec has recorded it. There is no code here yet: the current epic of [RUN.md](RUN.md), E2, builds the first version of the rule. The rule starts from the one by which MathTrail's standalone chose the next task.
+Detailing is done: the first epic, archived in [docs/plan/E1.md](docs/plan/E1.md), decided everything the component's card left open, and spec has recorded it. The current epic of [RUN.md](RUN.md), E2, builds the first version of the rule: so far there is the Go module, with no rule in it yet, and the CI its code will pass. The rule starts from the one by which MathTrail's standalone chose the next task.
 
 ## Documents
 

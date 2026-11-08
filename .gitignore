@@ -1,0 +1,2 @@
+# What ci-test writes, for .github's shared go.yml to send to Codecov.
+/coverage/
