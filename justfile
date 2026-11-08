@@ -14,8 +14,8 @@ default:
     @just --list
 
 # Fails on code gofmt would rewrite, on what go vet reports, and on a gopls lock file that names
-# another version than GOPLS_VERSION in the Dockerfile.
-# Check formatting, go vet and the version of gopls.
+# another version than GOPLS_VERSION in the Dockerfile; then ci-release.
+# Check formatting, go vet, the version of gopls and the release's file.
 ci-lint:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -44,6 +44,8 @@ ci-lint:
             ".devcontainer/Dockerfile has GOPLS_VERSION ${arg:-unset}; raise them together (R13)" >&2
         exit 1
     fi
+    # The release's file is the code, the same bytes on every build (R15).
+    {{ just_executable() }} ci-release
 
 # The coverage goes into coverage/go.out, one Go profile, which the job coverage of .github's shared
 # go.yml sends to Codecov (R48 spec; R12). Go counts statements and leaves the tests themselves out;
@@ -137,6 +139,85 @@ rules:
 # What a task's report names as checked on every target.
 # Run test-targets, fma-diff and rules.
 same-bits: test-targets fma-diff rules
+
+# The release's one file (R15): engine-<version>.tar.gz, a folder of that name with LICENSE,
+# go.mod, go.sum and the Go code of the module but its tests and testdata/ — what a consumer builds,
+# the paths that give a release. The tar is written the same by every build: names in order, no
+# times or owners, mode 0644, and gzip with no name or time. .github's shared release runs it in a
+# tree git archive made, with no git to ask, so the files come from the tree. Go code takes the
+# module by the tag; this file binds the tag to the signed release (R77 spec).
+# Build the release's file into dist/.
+release-files version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    version={{ quote(version) }}
+    if ! [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+        echo "release-files: the version is v<major>.<minor>.<patch>, as v0.1.0, not ${version}" >&2
+        exit 1
+    fi
+    name="engine-${version}"
+    rm -rf dist
+    mkdir dist
+    (printf '%s\n' LICENSE go.mod go.sum
+        find . -name testdata -prune -o -path './.*' -prune -o -path ./spec -prune -o \
+            -type f -name '*.go' ! -name '*_test.go' -print | sed 's|^\./||') |
+        LC_ALL=C sort |
+        tar --create --verbatim-files-from --files-from=- --format=posix \
+            --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime \
+            --transform="s,^,${name}/," --mtime=@0 --owner=0 --group=0 --numeric-owner --mode=0644 |
+        gzip -9n > "dist/${name}.tar.gz"
+
+# Builds the release's file twice, a second apart, and fails unless the two are the same bytes;
+# unless the archive holds LICENSE, go.mod, go.sum and every Go file but tests and testdata/ git
+# tracks or would, as they are in the tree, and nothing else; and unless the unpacked archive builds.
+# So the file a release signs is the code of its commit, and anyone can build it again and
+# compare. It refuses to run beside a dist/ of one's own, which release-files would replace.
+# ci-lint runs it, so "Go / lint" holds it (R15).
+# Check that the release's file is the code, and the same bytes on every build.
+ci-release:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -e dist ]; then
+        echo "ci-release: dist/ is there already, and release-files would replace it: move it away first" >&2
+        exit 1
+    fi
+    version=v0.0.0-ci
+    name="engine-${version}"
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp" dist' EXIT
+    {{ just_executable() }} release-files "$version"
+    mv dist "$tmp/first"
+    sleep 1
+    {{ just_executable() }} release-files "$version"
+    if [ "$(ls dist)" != "${name}.tar.gz" ] || ! cmp -s "$tmp/first/${name}.tar.gz" "dist/${name}.tar.gz"; then
+        echo "ci-release: two builds of the release's files differ, or dist/ holds another file:" >&2
+        ls -l "$tmp/first" dist >&2
+        exit 1
+    fi
+    mkdir "$tmp/unpacked"
+    tar -xzf "dist/${name}.tar.gz" -C "$tmp/unpacked"
+    got="$(cd "$tmp/unpacked/$name" && find . -type f | sed 's|^\./||' | LC_ALL=C sort)"
+    # The files git tracks or would, as the gofmt step of ci-lint takes them, but those deleted from
+    # the tree: a new file before git add, or one removed before git rm, is the tree's as the release
+    # sees it.
+    want="$(git ls-files --cached --others --exclude-standard -- LICENSE go.mod go.sum '*.go' \
+        ':(exclude)*_test.go' ':(exclude,glob)**/testdata/**' |
+        while IFS= read -r file; do if [ -e "$file" ]; then printf '%s\n' "$file"; fi; done | LC_ALL=C sort -u)"
+    if [ "$got" != "$want" ]; then
+        echo "ci-release: the archive holds" >&2
+        echo "$got" >&2
+        echo "and git tracks" >&2
+        echo "$want" >&2
+        exit 1
+    fi
+    while IFS= read -r file; do
+        if ! cmp -s "$file" "$tmp/unpacked/$name/$file"; then
+            echo "ci-release: ${file} in the archive is not the tree's" >&2
+            exit 1
+        fi
+    done <<< "$want"
+    go -C "$tmp/unpacked/$name" build ./...
+    echo "ci-release: ${name}.tar.gz is the code, the same bytes on two builds" >&2
 
 # Fail on a known vulnerability in code this module reaches.
 ci-vuln:
