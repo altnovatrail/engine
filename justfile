@@ -140,3 +140,10 @@ ci-licenses:
         exit 1
     fi
     go run {{ GO_LICENSES }} check ./... --allowed_licenses="$ALLOWED_LICENSES"
+
+# The test that holds ReasonCode, ChoiceKind and RunEnd to cause.proto in the spec submodule
+# (docs/architecture.md, section 3.6): the job Contracts of ci.yml runs it with the submodule
+# checked out, where a missing file fails rather than skips, as it does in the other runs.
+# Check the engine's codes against the contracts of spec, in its submodule.
+ci-contracts:
+    ENGINE_CONTRACTS=1 go test -count=1 -run '^TestContracts$' ./...
