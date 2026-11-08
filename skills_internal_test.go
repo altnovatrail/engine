@@ -152,7 +152,7 @@ func (w *world) skill(r learnermodel.SkillReadout) {
 }
 
 func (w *world) views(second bool) []skillView {
-	return prepared{in: w.in, p: [][]learnermodel.TaskReadout{w.p}}.skills(0, second)
+	return ready(w.in, [][]learnermodel.TaskReadout{w.p}).skills(0, second)
 }
 
 func (w *world) view(id string, second bool) skillView {
@@ -373,7 +373,8 @@ func TestGrade3Mastered(t *testing.T) {
 }
 
 // A skill with evidence of its own is open whatever came of its prerequisites; a prerequisite
-// with a rubric or an anchor skill holds it until T18 and T19 come.
+// with a rubric holds it until T19 comes, and so does an anchor skill with no reading, which
+// Choose refuses.
 func TestOpen(t *testing.T) {
 	module := "example/open"
 	band := learnermodel.BandRef{Place: 1, ID: "b"}

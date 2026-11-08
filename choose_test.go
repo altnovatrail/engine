@@ -134,6 +134,9 @@ func TestChooseInvalid(t *testing.T) {
 		{"lesson twice", func(t *testing.T, in *engine.Input) {
 			in.Modules[0].Lessons = append(in.Modules[0].Lessons, in.Modules[0].Lessons[1])
 		}, `lesson "example/olympiad/lesson/a" comes twice`},
+		{"skill of a graph of another module", func(t *testing.T, in *engine.Input) {
+			in.Modules[0].Graph.Skills = append(slices.Clone(in.Modules[0].Graph.Skills), learnermodel.Skill{ID: skillID(workbook, "z")})
+		}, `skill "example/workbook/skill/z" of the graph of module "example/olympiad" is not that module's`},
 		{"task of the pool of another module", func(t *testing.T, in *engine.Input) {
 			// The task is the workbook's, and the learner model would read it by the workbook's graph.
 			in.Modules[0].Pool = append(in.Modules[0].Pool, engine.Candidate{Task: fixtureTask(workbook, "x", skillID(workbook, "a"))})
@@ -191,6 +194,15 @@ func TestChooseInvalid(t *testing.T) {
 		{"module of the engine with no reading", func(t *testing.T, in *engine.Input) {
 			in.Readout = readout(t, in.Modules, []string{olympiad})
 		}, `module "example/workbook" of the engine has no reading of the learner model`},
+		{"anchor skill with no reading", func(t *testing.T, in *engine.Input) {
+			b := &in.Modules[0].Graph.Skills[1]
+			b.Prerequisites = append(slices.Clone(b.Prerequisites), "core.counting")
+		}, `anchor skill "core.counting" has no reading of the learner model`},
+		{"anchor skill with a status off the list", func(t *testing.T, in *engine.Input) {
+			b := &in.Modules[0].Graph.Skills[1]
+			b.Teaches = []string{"core.counting"}
+			in.Readout.Anchors = append(in.Readout.Anchors, learnermodel.AnchorReadout{Anchor: "core.counting", Status: learnermodel.AnchorUnknown + 1})
+		}, `anchor skill "core.counting" has the status 4, which the learner model does not name`},
 		{"candidate the reading refuses", func(t *testing.T, in *engine.Input) {
 			bad := fixtureTask(workbook, "a-2", skillID(workbook, "a"))
 			bad.Difficulty = 9
@@ -383,23 +395,35 @@ func TestChooseOneModule(t *testing.T) {
 		}
 	}
 
-	// A skill chosen on the map and an open run take the branches that come first, and several
-	// modules take turns: until they come (RUN.md, T18 and T19), Choose gives nothing to give.
+	// The skill chosen on the map is given closed, with its own code; several modules take turns,
+	// the one never handed out first, by ID; an open run takes branch 1, which is still to come
+	// (RUN.md, T19): until then Choose gives nothing to give.
+	workbook := fixtureModules[1]
 	for _, tc := range []struct {
 		name   string
 		change func(*engine.Input)
+		want   engine.Choice
 	}{
-		{"skill on the map", func(in *engine.Input) { in.MapSkill = skillID(olympiad, "b") }},
-		{"open run", func(in *engine.Input) { in.Runs = append(in.Runs, engine.Run{Lesson: olympiad + "/lesson/a"}) }},
+		{"skill on the map", func(in *engine.Input) { in.MapSkill = skillID(olympiad, "b") },
+			engine.Choice{Kind: engine.ChoiceTask, ID: olympiad + "/task/b-1", Reason: engine.ReasonSkillChosen}},
+		{"skill on the map of no module of the engine", func(in *engine.Input) { in.MapSkill = skillID(workbook, "b") },
+			engine.Choice{Kind: engine.ChoiceNothing}},
 		{"several modules", func(in *engine.Input) {
 			full := fixture(t)
 			in.Modules, in.Readout = full.Modules, full.Readout
-		}},
+		}, engine.Choice{Kind: engine.ChoiceTask, ID: olympiad + "/task/a-1", Reason: engine.ReasonNewSkill}},
+		{"several modules, the olympiad handed out", func(in *engine.Input) {
+			full := fixture(t)
+			in.Modules, in.Readout = full.Modules, full.Readout
+			in.Summary.Skills = []engine.SkillIssue{{Skill: skillID(olympiad, "a"), Issued: true, LastIssued: 900_000}}
+		}, engine.Choice{Kind: engine.ChoiceTask, ID: workbook + "/task/a-1", Reason: engine.ReasonNewSkill}},
+		{"open run", func(in *engine.Input) { in.Runs = append(in.Runs, engine.Run{Lesson: olympiad + "/lesson/a"}) },
+			engine.Choice{Kind: engine.ChoiceNothing}},
 	} {
 		in := input()
 		tc.change(&in)
-		if got, err := engine.Choose(in); err != nil || got != (engine.Choice{Kind: engine.ChoiceNothing}) {
-			t.Errorf("%s: Choose = %+v, %v; want nothing to give", tc.name, got, err)
+		if got, err := engine.Choose(in); err != nil || got != tc.want {
+			t.Errorf("%s: Choose = %+v, %v; want %+v", tc.name, got, err, tc.want)
 		}
 	}
 }

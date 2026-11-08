@@ -22,6 +22,7 @@ type candidate struct {
 	traps  []int
 	seen   bool  // the solution went to the device: never for a template
 	seenAt int64 // when it last did
+	last   bool  // the task of the last closed attempt, back on the map in the second pass
 }
 
 // poolTask is a task of the pool with what the rule reads of it whatever the skill: its items and
@@ -99,8 +100,15 @@ func frequentTraps(traps []learnermodel.TrapCount) []string {
 }
 
 // bySolution puts the candidates whose solution never went to the device first, and of the rest
-// the one whose solution went longest ago (R82 of spec).
+// the one whose solution went longest ago (R82 of spec); the task of the last closed attempt, back
+// on the map, comes after them all.
 func bySolution(a, b candidate) int {
+	if a.last != b.last {
+		if b.last {
+			return -1
+		}
+		return 1
+	}
 	if a.seen != b.seen {
 		if b.seen {
 			return -1
