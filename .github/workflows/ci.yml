@@ -63,3 +63,26 @@ jobs:
           docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp \
               --volume "$PWD:/work" --workdir /work \
               toolchain just ci-test
+
+  # ReasonCode, ChoiceKind and RunEnd against cause.proto in the spec submodule, at the tag this
+  # repository pins (docs/architecture.md, section 3.6; R09): the shared go.yml checks out no
+  # submodule, and its test job skips this test, so this job checks it out and fails when the
+  # file is missing. The rest of the tests run in the Go job.
+  contracts:
+    name: Contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: true
+
+      - name: Toolchain image
+        run: docker build --target toolchain --tag toolchain - < .devcontainer/Dockerfile
+
+      - name: ci-contracts
+        run: |
+          docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp \
+              --volume "$PWD:/work" --workdir /work \
+              toolchain just ci-contracts
