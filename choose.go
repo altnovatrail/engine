@@ -10,49 +10,58 @@ import (
 
 // Choose picks what the learner is given next, and the reason code of the choice
 // (docs/architecture.md, section 3). It refuses, with ErrInvalid, an input whose rules it relies
-// on are broken: a module, a task of the pool or a lesson twice by ID; a task of the pool or a
-// lesson that is not its module's by ID; a skill of a lesson that is not in the graph of its
-// module; the traps of an item twice, or at a place where its task has no item; a run's end
-// outside its list, an open run with a time of its end, and two open runs of one lesson; a skill,
-// a module or a task twice in the summary, and a reason code of the summary outside its list; a
-// skill twice in the results of the last attempt, and a result with first right verdicts fewer
-// than none or more than its first verdicts; a module of the engine with no reading of the
-// learner model; and a candidate task the reading refuses, or one with the P of an item outside
-// [0, 1], NaN and the infinities included. The checks run in one order and each names the least
-// ID that breaks it, so that the order of the input's lists does not change the error either.
+// on are broken: a module, a task of the pool or a lesson twice by ID; a skill of a graph, a task
+// of the pool or a lesson that is not its module's by ID; a skill of a lesson that is not in the
+// graph of its module; the traps of an item twice, or at a place where its task has no item; a
+// run's end outside its list, an open run with a time of its end, and two open runs of one lesson;
+// a skill, a module or a task twice in the summary, and a reason code of the summary outside its
+// list; a skill twice in the results of the last attempt, and a result with first right verdicts
+// fewer than none or more than its first verdicts; a module of the engine with no reading of the
+// learner model, and an anchor skill a graph names with none or with a status off its list; and a
+// candidate task the reading refuses, or one with the P of an item outside [0, 1], NaN and the
+// infinities included. The checks run in one order and each names the least ID that breaks it, so
+// that the order of the input's lists does not change the error either.
 //
-// With one module of the engine, Choose runs the branches of the rule in it, for the skills with
-// a verdict, and a second pass with the tasks on pause, and gives a task with the code of its
-// branch or nothing to give. The turn of the modules, the open run, the skill chosen on the map,
-// the anchor skills, the repetition, the author's order and the lessons are still to come
-// (RUN.md, T18–T20): an input with several modules, a skill chosen on the map or an open run gives
-// nothing to give, since the branches that come first for them are not there yet.
+// Choose runs the rule for the skills with a verdict: on the skill chosen on the map, or in "My
+// subjects" — consolidation in the module of the last closed attempt, then the modules in turn —,
+// then a second pass with the tasks on pause, and gives a task with the code of its branch or
+// nothing to give. The open run, the repetition, the author's order and the lessons are still to
+// come (RUN.md, T19 and T20): an input with an open run gives nothing to give, since branch 1,
+// which comes first for it, is not there yet.
 func Choose(in Input) (Choice, error) {
 	pr, err := prepare(in)
 	if err != nil {
 		return Choice{}, err
 	}
-	open := slices.ContainsFunc(in.Runs, func(r Run) bool { return r.End == RunOpen })
-	if len(in.Modules) == 1 && in.MapSkill == "" && !open {
-		for _, second := range []bool{false, true} {
-			if c, ok := pr.chooseIn(0, second); ok {
-				return c, nil
-			}
-		}
-	}
-	return Choice{Kind: ChoiceNothing}, nil
+	return pr.choose(), nil
 }
 
 // prepared is the input once its checks have passed, with what the rule reads beside it: the P
 // of each candidate, by the module's place in Input.Modules and the candidate's in its pool.
 type prepared struct {
-	in Input
-	p  [][]learnermodel.TaskReadout
+	in   Input
+	p    [][]learnermodel.TaskReadout
+	open []string // the open skills of the modules of the engine, by full ID, sorted
+	// The tasks whose solution went to the device, by ID, sorted.
+	solutions []TaskSolution
+}
+
+// ready puts what the rule reads beside the input: the P of the candidates, and the open skills.
+func ready(in Input, p [][]learnermodel.TaskReadout) prepared {
+	pr := prepared{in: in, p: p, solutions: sortedBy(in.Summary.Tasks, func(t TaskSolution) string { return t.Task })}
+	pr.open = pr.openSkills()
+	return pr
+}
+
+// isOpen tells whether a skill of the modules of the engine is open.
+func (pr prepared) isOpen(id string) bool {
+	_, found := slices.BinarySearch(pr.open, id)
+	return found
 }
 
 func prepare(in Input) (prepared, error) {
 	for _, check := range []func(Input) error{
-		checkIDs, checkOwnModule, checkLessonSkills, checkTraps, checkRuns, checkSummary, checkResults, checkReadout,
+		checkIDs, checkOwnModule, checkLessonSkills, checkTraps, checkRuns, checkSummary, checkResults, checkReadout, checkAnchors,
 	} {
 		if err := check(in); err != nil {
 			return prepared{}, err
@@ -62,7 +71,7 @@ func prepare(in Input) (prepared, error) {
 	if err != nil {
 		return prepared{}, err
 	}
-	return prepared{in: in, p: p}, nil
+	return ready(in, p), nil
 }
 
 // checkIDs refuses a module, a task of the pool or a lesson twice by its full ID, across the
@@ -89,10 +98,19 @@ func checkIDs(in Input) error {
 	return nil
 }
 
-// checkOwnModule refuses a task of the pool or a lesson whose full ID does not begin with its
-// module's: the learner model reads a candidate by the module its ID names, and the candidate
-// would get the P of another module's graph.
+// checkOwnModule refuses a skill of a graph, a task of the pool or a lesson whose full ID does not
+// begin with its module's: the learner model reads a candidate by the module its ID names, and the
+// candidate would get the P of another module's graph; and the rule reads the skills of all the
+// modules together — the skill chosen on the map, the anchor skills —, where a skill of two
+// modules would be read by the order of the modules.
 func checkOwnModule(in Input) error {
+	graphs := acrossModules(in, func(m Module) int { return len(m.Graph.Skills) }, func(m Module, j int) string { return m.Graph.Skills[j].ID })
+	for _, at := range graphs {
+		m := in.Modules[at.module]
+		if id := m.Graph.Skills[at.item].ID; !strings.HasPrefix(id, m.Graph.Module+"/") {
+			return invalid("skill " + shown(id) + " of the graph of module " + shown(m.Graph.Module) + " is not that module's")
+		}
+	}
 	for _, at := range tasksByID(in) {
 		m := in.Modules[at.module]
 		if id := m.Pool[at.item].Task.ID; !strings.HasPrefix(id, m.Graph.Module+"/") {
@@ -261,6 +279,34 @@ func checkReadout(in Input) error {
 		id := in.Modules[i].Graph.Module
 		if _, found := slices.BinarySearch(read, id); !found {
 			return invalid("module " + shown(id) + " of the engine has no reading of the learner model")
+		}
+	}
+	return nil
+}
+
+// checkAnchors refuses an anchor skill that a graph of a module of the engine names, as a
+// prerequisite or as a skill it teaches, with no reading of the learner model, or with a status
+// outside its list: the rule would have to guess whether the anchor holds a skill (the amendment
+// of 2026-11-08 to R04).
+func checkAnchors(in Input) error {
+	var named []string
+	for _, m := range in.Modules {
+		for _, s := range m.Graph.Skills {
+			for _, id := range slices.Concat(s.Prerequisites, s.Teaches) {
+				if strings.HasPrefix(id, anchorPrefix) {
+					named = append(named, id)
+				}
+			}
+		}
+	}
+	anchors := sortedBy(in.Readout.Anchors, func(a learnermodel.AnchorReadout) string { return a.Anchor })
+	for _, id := range slices.Compact(sortedCopy(named)) {
+		a, ok := lookup(anchors, func(a learnermodel.AnchorReadout) string { return a.Anchor }, id)
+		if !ok {
+			return invalid("anchor skill " + shown(id) + " has no reading of the learner model")
+		}
+		if a.Status < learnermodel.AnchorHas || a.Status > learnermodel.AnchorUnknown {
+			return invalid("anchor skill " + shown(id) + " has the status " + itoa(int64(a.Status)) + ", which the learner model does not name")
 		}
 	}
 	return nil

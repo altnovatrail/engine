@@ -63,57 +63,23 @@ func (pr prepared) skills(i int, second bool) []skillView {
 	m := in.Modules[i]
 	mr := moduleReadout(in, m.Graph.Module)
 	reads := sortedBy(mr.Skills, func(r learnermodel.SkillReadout) string { return r.Skill })
-	graph := sortedBy(m.Graph.Skills, func(s learnermodel.Skill) string { return s.ID })
 	readOf := func(id string) learnermodel.SkillReadout {
 		r, _ := lookup(reads, func(r learnermodel.SkillReadout) string { return r.Skill }, id)
 		return r
 	}
 
-	// A skill is open with evidence of its own, whatever came of its prerequisites (the first
-	// amendment of 2026-11-07 to R03), or when each of its prerequisites is counted.
-	var open []string
-	for _, s := range graph {
-		if readOf(s.ID).EvidenceCount > 0 || allCounted(s.Prerequisites, graph, readOf) {
-			open = append(open, s.ID)
-		}
-	}
-	isOpen := func(id string) bool {
-		_, found := slices.BinarySearch(open, id)
-		return found
-	}
-
-	pool := make([]poolTask, len(m.Pool))
-	for j, c := range m.Pool {
-		pool[j] = newPoolTask(c, pr.p[i][j])
-	}
-	solutions := sortedBy(in.Summary.Tasks, func(t TaskSolution) string { return t.Task })
+	pool := pr.poolOf(i)
 	issues := sortedBy(in.Summary.Skills, func(s SkillIssue) string { return s.Skill })
 	var out []skillView
 	for _, s := range graphOrder(m.Graph.Skills) {
 		if s.Assessability != learnermodel.AssessabilityVerdict {
 			continue
 		}
-		v := skillView{id: s.ID, read: readOf(s.ID), open: isOpen(s.ID)}
+		v := skillView{id: s.ID, read: readOf(s.ID), open: pr.isOpen(s.ID)}
 		v.evidence = v.read.EvidenceCount > 0
 		frequent := frequentTraps(v.read.Traps)
-		var all []candidate
-		for _, t := range pool {
-			cd, ok := candidateOf(t, s.ID, frequent)
-			if !ok || !othersOpen(t.primaries, s.ID, isOpen) {
-				continue
-			}
-			all = append(all, cd)
-			if !t.c.Task.Template {
-				if sent, ok := lookup(solutions, func(t TaskSolution) string { return t.Task }, cd.id); ok {
-					cd.seen, cd.seenAt = true, sent.SolutionSentAt
-				}
-			}
-			if cd.seen && pausedSince(in.Time, cd.seenAt) && (!second || in.HasLast && in.Last.Task == cd.id) {
-				continue
-			}
-			v.candidates = append(v.candidates, cd)
-		}
-		slices.SortFunc(v.candidates, byCorridor)
+		cands, all := pr.candidates(pool, s.ID, frequent, second, false)
+		v.candidates = cands
 		if len(all) > 0 {
 			v.recommended, v.hasRecommended = slices.MinFunc(all, byCorridor), true
 		}
@@ -130,17 +96,46 @@ func (pr prepared) skills(i int, second bool) []skillView {
 	return out
 }
 
-// allCounted tells whether each prerequisite is counted: a skill of the module with a verdict,
-// mastered by the model at any band (R03). A prerequisite with a rubric or none and an anchor
-// skill hold the skill until the rules for them come (RUN.md, T18 and T19).
-func allCounted(prerequisites []string, graph []learnermodel.Skill, readOf func(string) learnermodel.SkillReadout) bool {
-	for _, p := range prerequisites {
-		s, ok := lookup(graph, func(s learnermodel.Skill) string { return s.ID }, p)
-		if !ok || s.Assessability != learnermodel.AssessabilityVerdict || !readOf(p).Mastered {
-			return false
+// candidates gives the candidates of a skill of the module at place i in the pass, in the order
+// of the task on the skill, and all of its tasks without the pause before a seen solution, for the
+// recommended task. A task with another primary skill closed is no candidate, but on the map: the
+// skill chosen there takes all its tasks (R04). In the second pass a task on pause is a candidate
+// again, after the others, but the task of the last closed attempt is not (the amendment of
+// 2026-11-07 to R03) — on the map it is, after all the others (the amendment of 2026-11-07 to
+// R04).
+func (pr prepared) candidates(pool []poolTask, skill string, frequent []string, second, onMap bool) (cands, all []candidate) {
+	in := pr.in
+	for _, t := range pool {
+		cd, ok := candidateOf(t, skill, frequent)
+		if !ok || !onMap && !othersOpen(t.primaries, skill, pr.isOpen) {
+			continue
 		}
+		all = append(all, cd)
+		if !t.c.Task.Template {
+			if sent, ok := lookup(pr.solutions, func(t TaskSolution) string { return t.Task }, cd.id); ok {
+				cd.seen, cd.seenAt = true, sent.SolutionSentAt
+			}
+		}
+		if cd.seen && pausedSince(in.Time, cd.seenAt) {
+			last := in.HasLast && in.Last.Task == cd.id
+			if !second || last && !onMap {
+				continue
+			}
+			cd.last = last
+		}
+		cands = append(cands, cd)
 	}
-	return true
+	slices.SortFunc(cands, byCorridor)
+	return cands, all
+}
+
+// poolOf reads the tasks of the pool of the module at place i.
+func (pr prepared) poolOf(i int) []poolTask {
+	pool := make([]poolTask, len(pr.in.Modules[i].Pool))
+	for j, c := range pr.in.Modules[i].Pool {
+		pool[j] = newPoolTask(c, pr.p[i][j])
+	}
+	return pool
 }
 
 // graphOrder orders the skills of a graph by tier, then by ID byte by byte: the order of the

@@ -4,13 +4,15 @@ import (
 	"cmp"
 	"slices"
 	"strings"
+
+	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The branches of the rule in one module, for the skills with a verdict (docs/architecture.md,
-// section 3.1; R03): consolidation, the probe, a new skill, the queue, all mastered and no skill
-// within reach. The first branch that fits makes the choice, and its code is the choice's (R07).
-// The open run, the skill chosen on the map, the repetition, the author's order and the lessons
-// come with T18–T20 (RUN.md).
+// The rule (docs/architecture.md, sections 3.1 and 3.2; R03, R04): "My subjects" — consolidation
+// in the module of the last closed attempt, then the modules in turn, each running branches 4–9 —
+// or the skill chosen on the map, branch 2. The first branch that fits makes the choice, and its
+// code is the choice's (R07). The open run, the repetition, the author's order and the lessons
+// come with T19 and T20 (RUN.md).
 
 // The turn of the probe: the module's n-th choice, counted before this one, with n > 5 and
 // n mod 6 = 5, as in standalone. Only a run of sim changes them.
@@ -19,33 +21,122 @@ const (
 	probeAfter int64 = 5
 )
 
-// chooseIn runs the branches of the rule in the module at place i of the input, in one pass, and
-// tells whether one of them gave a task.
-func (pr prepared) chooseIn(i int, second bool) (Choice, bool) {
+// choose runs the rule: a first pass, a second pass with the tasks on pause, then nothing to
+// give. An open run takes branch 1, which is still to come: until then it gives nothing to give.
+func (pr prepared) choose() Choice {
+	if !slices.ContainsFunc(pr.in.Runs, func(r Run) bool { return r.End == RunOpen }) {
+		for _, second := range []bool{false, true} {
+			if c, ok := pr.pass(second); ok {
+				return c
+			}
+		}
+	}
+	return Choice{Kind: ChoiceNothing}
+}
+
+// pass runs one pass of the rule: on the skill chosen on the map, or in "My subjects".
+func (pr prepared) pass(second bool) (Choice, bool) {
+	if pr.in.MapSkill != "" {
+		return pr.onMap(second)
+	}
+	views := make([][]skillView, len(pr.in.Modules))
+	skillsOf := func(i int) []skillView {
+		if views[i] == nil {
+			views[i] = pr.skills(i, second)
+		}
+		return views[i]
+	}
+	if i, ok := pr.lastModule(); ok {
+		if c, ok := pr.consolidation(i, skillsOf(i)); ok {
+			return c, true
+		}
+	}
+	for _, i := range pr.turns() {
+		if c, ok := pr.turn(i, skillsOf(i)); ok {
+			return c, true
+		}
+	}
+	return Choice{}, false
+}
+
+// given is the task on a skill a branch chose: every branch chooses a skill with candidates.
+func given(s skillView, easiest bool, code ReasonCode) (Choice, bool) {
+	c, _ := s.task(easiest)
+	return Choice{Kind: ChoiceTask, ID: c.id, Reason: code}, true
+}
+
+// lastModule gives the place of the module of the engine whose task the last closed attempt was.
+func (pr prepared) lastModule() (int, bool) {
+	if !pr.in.HasLast {
+		return 0, false
+	}
+	i := slices.IndexFunc(pr.in.Modules, func(m Module) bool { return strings.HasPrefix(pr.in.Last.Task, m.Graph.Module+"/") })
+	return i, i >= 0
+}
+
+// consolidation is branch 3 in the module of the last closed attempt: a failure on a primary
+// skill, past the trial series, and not left; of its skills within reach, the first in the order
+// of the graph. In the trial series, and on its last answer, a mistake is not worked on. It runs
+// once, before the turn of the modules, and not again on a module's turn.
+func (pr prepared) consolidation(i int, skills []skillView) (Choice, bool) {
+	in := pr.in
+	mr := moduleReadout(in, in.Modules[i].Graph.Module)
+	if in.Last.Left || !mr.TrialOver || mr.LastInTrial {
+		return Choice{}, false
+	}
+	for _, s := range skills {
+		if s.reachable && slices.ContainsFunc(in.Last.Results, func(r SkillResult) bool { return r.Skill == s.id && failed(r) }) {
+			return given(s, false, ReasonConsolidation)
+		}
+	}
+	return Choice{}, false
+}
+
+// turns orders the modules of the engine for their turns: the one whose last handing out was
+// longest ago first, a module never handed out before them all; of as long ago, by full ID byte by
+// byte. A module was last handed out when the latest of its skills was, by the summary (R04): the
+// rows whose full ID begins with the module's, so that a skill a newer version of the module
+// dropped still counts.
+func (pr prepared) turns() []int {
+	type turn struct {
+		place  int
+		issued bool
+		at     int64
+	}
+	var out []turn
+	for i, m := range pr.in.Modules {
+		t := turn{place: i}
+		for _, is := range pr.in.Summary.Skills {
+			if is.Issued && strings.HasPrefix(is.Skill, m.Graph.Module+"/") && (!t.issued || is.LastIssued > t.at) {
+				t.issued, t.at = true, is.LastIssued
+			}
+		}
+		out = append(out, t)
+	}
+	slices.SortFunc(out, func(a, b turn) int {
+		if a.issued != b.issued {
+			if !a.issued {
+				return -1
+			}
+			return 1
+		}
+		return cmp.Or(cmp.Compare(a.at, b.at), strings.Compare(pr.in.Modules[a.place].Graph.Module, pr.in.Modules[b.place].Graph.Module))
+	})
+	places := make([]int, len(out))
+	for k, t := range out {
+		places[k] = t.place
+	}
+	return places
+}
+
+// turn runs branches 4–9 in the module at place i, on its turn.
+func (pr prepared) turn(i int, skills []skillView) (Choice, bool) {
 	in := pr.in
 	module := in.Modules[i].Graph.Module
 	mr := moduleReadout(in, module)
 	var n int64
 	if j := slices.IndexFunc(in.Summary.Modules, func(m ModuleChoices) bool { return m.Module == module }); j >= 0 {
 		n = in.Summary.Modules[j].Choices
-	}
-	skills := pr.skills(i, second)
-
-	// given is the task on a skill a branch chose: every branch chooses a skill with candidates.
-	given := func(s skillView, easiest bool, code ReasonCode) (Choice, bool) {
-		c, _ := s.task(easiest)
-		return Choice{Kind: ChoiceTask, ID: c.id, Reason: code}, true
-	}
-
-	// Branch 3: the last closed attempt is the module's, a failure on a primary skill, past the
-	// trial series, and not left; of its skills within reach, the first in the order of the graph.
-	// In the trial series, and on its last answer, a mistake is not worked on.
-	if in.HasLast && !in.Last.Left && strings.HasPrefix(in.Last.Task, module+"/") && mr.TrialOver && !mr.LastInTrial {
-		for _, s := range skills {
-			if s.reachable && slices.ContainsFunc(in.Last.Results, func(r SkillResult) bool { return r.Skill == s.id && failed(r) }) {
-				return given(s, false, ReasonConsolidation)
-			}
-		}
 	}
 
 	// Branch 4: past the trial series, on the turn of the probe, a skill on pause with candidates,
@@ -131,4 +222,29 @@ func byIssue(a, b skillView) int {
 		return 1
 	}
 	return cmp.Compare(a.lastIssued, b.lastIssued)
+}
+
+// onMap is branch 2, the skill chosen on the map (R04): a task on it, whatever its state — closed,
+// on pause, in the trial series —, among all its tasks, with the code REASON_CODE_SKILL_CHOSEN. A
+// skill outside the modules of the engine gives nothing; so does one with a rubric or none, and a
+// lesson on the skill, until T19 comes.
+func (pr prepared) onMap(second bool) (Choice, bool) {
+	skill := pr.in.MapSkill
+	for i, m := range pr.in.Modules {
+		j := slices.IndexFunc(m.Graph.Skills, func(s learnermodel.Skill) bool { return s.ID == skill })
+		if j < 0 {
+			continue
+		}
+		if m.Graph.Skills[j].Assessability != learnermodel.AssessabilityVerdict {
+			return Choice{}, false
+		}
+		read, _ := lookup(sortedBy(moduleReadout(pr.in, m.Graph.Module).Skills, func(r learnermodel.SkillReadout) string { return r.Skill }),
+			func(r learnermodel.SkillReadout) string { return r.Skill }, skill)
+		cands, _ := pr.candidates(pr.poolOf(i), skill, frequentTraps(read.Traps), second, true)
+		if len(cands) == 0 {
+			return Choice{}, false
+		}
+		return Choice{Kind: ChoiceTask, ID: cands[0].id, Reason: ReasonSkillChosen}, true
+	}
+	return Choice{}, false
 }

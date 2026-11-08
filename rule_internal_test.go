@@ -38,7 +38,7 @@ func (w *world) last(task string, left bool, results ...SkillResult) {
 }
 
 func (w *world) choose(second bool) (Choice, bool) {
-	return prepared{in: w.in, p: [][]learnermodel.TaskReadout{w.p}}.chooseIn(0, second)
+	return ready(w.in, [][]learnermodel.TaskReadout{w.p}).pass(second)
 }
 
 // want checks the choice of the first pass: a task by name and a code, or nothing when task is
