@@ -1,0 +1,12 @@
+{
+  "code-imports": [
+    "cmp", "errors", "math", "math/bits", "slices", "strconv", "strings",
+    "github.com/altnovatrail/learner-model"
+  ],
+  "test-imports": [
+    "bytes", "compress/gzip", "crypto/sha256", "encoding/json", "fmt", "math/rand/v2", "os",
+    "path/filepath", "testing"
+  ],
+  "requires": ["github.com/altnovatrail/learner-model"],
+  "nested-modules": [".devcontainer/gopls"]
+}

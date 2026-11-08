@@ -50,80 +50,93 @@ ci-lint:
 # a package that no test runs is in it too, its statements at zero. Every test counts for every
 # package of the module, -coverpkg=./...: a test of golden vectors runs the code of other packages,
 # and its lines count where they are.
-# Then come the checks of the same choice on every build (R10): the tests on the builds where the
-# bits are most at risk, and the comparison of the assembler with and without fusion.
-# Run the tests, with the race detector, and write their coverage; then the same-bits checks.
-ci-test: && test-targets fma-diff
+# The checks of the same choice on every build (R10) are the shared go.yml's, with same-bits:
+# "Go / targets", "Go / fma-diff", "Go / arm64" and "Go / rules". "Go / arm64" runs this recipe on
+# arm64 hardware, then the targets. The recipes test-targets, fma-diff and rules below run the same
+# in the container, and same-bits runs all three; CI calls none of them.
+# Run the tests, with the race detector, and write their coverage.
+ci-test:
     mkdir -p coverage
     go test -race -count=1 -covermode=atomic -coverpkg=./... -coverprofile=coverage/go.out ./...
 
-# The same tests, without the race detector and coverage, which Go does not have on 386 and wasm
-# (docs/architecture.md, section 3.7): on amd64 with GOAMD64 v3, where the compiler fuses an
-# addition; with v1 and GODEBUG=cpu.all=off, with no processor extension for the runtime and the
-# standard library to pick their path by; on 386; and in js/wasm, in the container's Node. A host
-# other than amd64 — the arm64 job of ci.yml — runs no amd64 build and none for 386, and runs its
-# own build with cpu.all=off. wasip1 is built and vetted alone: there is no WASI runtime in the
-# container.
-# Run the tests on the builds the same bits are held on.
+# The checks of the same choice on every build (R10; docs/architecture.md, section 3.7) in the
+# container, as the shared go.yml of .github runs them with same-bits, by its own scripts: .github
+# at the commit ci.yml pins its go.yml to, so that the container runs what CI runs and nothing here
+# is kept in step by hand (the fourth amendment of 2026-11-08 to R10). CI calls none of these
+# recipes. ci.yml must call go.yml once, by a commit's SHA. The checkout of that commit is kept in
+# the user's cache, by the SHA, with the tool of the rules built in it, and reused: the first run of
+# a commit reaches the network. The path of the tool's module holds .github, which go run does not
+# take.
+# Give the folder of the checkout of .github that ci.yml pins, fetching it once.
+[private]
+github:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    shas="$(sed -n 's|^[[:space:]]*uses: altnovatrail/\.github/\.github/workflows/go\.yml@\([0-9a-f]\{40\}\).*$|\1|p' .github/workflows/ci.yml)"
+    if [ "$(printf '%s' "$shas" | grep -c .)" != 1 ]; then
+        echo "same-bits: .github/workflows/ci.yml must call the go.yml of .github once, by a commit's SHA; it calls it ${shas:+by }$(printf '%s' "$shas" | tr '\n' ' ')" >&2
+        exit 1
+    fi
+    dir="${XDG_CACHE_HOME:-$HOME/.cache}/engine-github/$shas"
+    if [ ! -f "$dir/.complete" ]; then
+        rm -rf "$dir.partial"
+        mkdir -p "$(dirname "$dir")"
+        git clone --quiet --filter=blob:none --no-checkout https://github.com/altnovatrail/.github.git "$dir.partial"
+        git -C "$dir.partial" checkout --quiet "$shas"
+        go -C "$dir.partial/tools/coderules" build -o "$dir.partial/coderules" .
+        touch "$dir.partial/.complete"
+        rm -rf "$dir"
+        mv "$dir.partial" "$dir"
+    fi
+    echo "$dir"
+
+# The script a job of the pinned go.yml runs in the toolchain stage: the heredoc SCRIPT of the job,
+# without the indentation of the YAML. A job with no such script stops the recipe with the reason.
+[private]
+script job:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    file="$({{ just_executable() }} github)/.github/workflows/go.yml"
+    awk -v job="{{ job }}" '
+        $0 == "  " job ":" { injob = 1; next }
+        injob && /^  [a-z0-9-]+:$/ { injob = 0 }
+        injob && !inscript && /<<'"'"'SCRIPT'"'"'$/ { inscript = 1; next }
+        inscript && /^[[:space:]]*SCRIPT$/ { done = 1; exit }
+        inscript {
+            if (indent == "") { match($0, /^ */); indent = RLENGTH }
+            print substr($0, indent + 1)
+        }
+        END { if (!done) exit 1 }
+    ' "$file" || { echo "same-bits: the job {{ job }} of $file has no script SCRIPT" >&2; exit 1; }
+
+# The tests on the builds where the bits are most at risk — GOAMD64 v3, v1 with
+# GODEBUG=cpu.all=off, 386 and js/wasm in the container's Node, and wasip1 built and vetted —, by
+# the script of the job targets.
+# Run the tests on the builds the same bits are held on, as "Go / targets" does.
 test-targets:
     #!/usr/bin/env bash
     set -euo pipefail
-    run() { echo "== $*" >&2; env "$@"; }
-    if [ "$(go env GOHOSTARCH)" = amd64 ]; then
-        run GOAMD64=v3 go test -count=1 ./...
-        run GOAMD64=v1 GODEBUG=cpu.all=off go test -count=1 ./...
-        run GOARCH=386 go test -count=1 ./...
-    else
-        run GODEBUG=cpu.all=off go test -count=1 ./...
-    fi
-    run GOOS=js GOARCH=wasm go test -count=1 -exec="$(go env GOROOT)/lib/wasm/go_js_wasm_exec" ./...
-    run GOOS=wasip1 GOARCH=wasm go build ./...
-    run GOOS=wasip1 GOARCH=wasm go vet ./...
+    script="$({{ just_executable() }} script targets)"
+    bash -c "$script"
 
-# Each package of the module is compiled for every target whose compiler fuses a multiplication
-# with an addition or a subtraction, twice: as it is, and with -d=fmahash=n, which turns every rule
-# of fusion off. The assembler must be the same, and the second build must report no place where a
-# rule would have fired, "fmahash triggered". The control, testdata/fma, must differ on every target,
-# or the check has stopped seeing fusion (docs/architecture.md, section 3.7). The packages are built
-# one at a time, so that their output comes in one order. The output does not depend on the host,
-# so the arm64 job repeats it, as the same ci-test.
-# Compare the assembler with fusion and without it, on every target that fuses.
+# The assembler of each package with fusion and without it on six targets, with the job's own
+# control, by the script of the job fma-diff.
+# Compare the assembler with fusion and without it, as "Go / fma-diff" does.
 fma-diff:
     #!/usr/bin/env bash
     set -euo pipefail
-    # A build that fails says why, rather than stopping the script with nothing printed.
-    asm() {
-        local out
-        if ! out="$(go build -gcflags="-S $1" "$2" 2>&1)"; then
-            echo "fma-diff: $GOARCH: $2 does not build:" >&2
-            echo "$out" >&2
-            return 1
-        fi
-        echo "$out"
-    }
-    # The packages with code: one of tests alone has nothing to build.
-    pkgs="$(go list -f '{{{{if .GoFiles}}{{{{.ImportPath}}{{{{end}}' ./...)"
-    status=0
-    for target in arm64 ppc64le s390x riscv64 loong64 amd64/v3; do
-        export GOOS=linux GOARCH="${target%%/*}" GOAMD64=v1
-        if [ "$target" = amd64/v3 ]; then GOAMD64=v3; fi
-        ok=1
-        for pkg in $pkgs; do
-            fused="$(asm "" "$pkg")"
-            plain="$(asm -d=fmahash=n "$pkg")"
-            if [ "$fused" != "$plain" ] || grep -q 'fmahash triggered' <<<"$plain"; then
-                echo "fma-diff: $target: the compiler fuses in $pkg; put float64() round the * or / (R10):" >&2
-                diff <(echo "$fused") <(echo "$plain") | head -n 40 >&2 || true
-                ok=0
-            fi
-        done
-        if [ "$(asm "" ./testdata/fma)" = "$(asm -d=fmahash=n ./testdata/fma)" ]; then
-            echo "fma-diff: $target: the control in testdata/fma was not caught: the check sees no fusion" >&2
-            ok=0
-        fi
-        if [ "$ok" = 1 ]; then echo "fma-diff: $target: ok" >&2; else status=1; fi
-    done
-    exit "$status"
+    script="$({{ just_executable() }} script fma-diff)"
+    bash -c "$script"
+
+# The rules of code, by the tool tools/coderules of the pinned .github and this repository's
+# lists, .github/coderules.json, as the job rules runs it.
+# Check the rules of code, as "Go / rules" does.
+rules:
+    "$({{ just_executable() }} github)/coderules" -lists .github/coderules.json .
+
+# What a task's report names as checked on every target.
+# Run test-targets, fma-diff and rules.
+same-bits: test-targets fma-diff rules
 
 # Fail on a known vulnerability in code this module reaches.
 ci-vuln:
