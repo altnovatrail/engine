@@ -71,7 +71,7 @@ func (w *many) skill(r learnermodel.SkillReadout) {
 }
 
 func (w *many) mastered(skill string) {
-	w.skill(learnermodel.SkillReadout{Skill: skill, EvidenceCount: 10, Mastered: true, MasteryBand: learnermodel.BandRef{Place: 1}})
+	w.skill(learnermodel.SkillReadout{Skill: skill, EvidenceCount: 10, Mastered: true, Review: notDue, MasteryBand: learnermodel.BandRef{Place: 1}})
 }
 
 func (w *many) anchor(id string, status learnermodel.AnchorStatus, reason learnermodel.AnchorReason) {

@@ -8,18 +8,25 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The rule (docs/architecture.md, sections 3.1–3.3; R03, R04, R05): branch 1, the lesson of an
+// The rule (docs/architecture.md, sections 3.1–3.4; R03–R06): branch 1, the lesson of an
 // open run; then "My subjects" — consolidation in the module of the last closed attempt, then the
 // modules in turn, each running branches 4–9 with 6a, the author's order — or the skill chosen on
 // the map, branch 2. Branches 6–9 give the lesson on the skill when there is one. The first branch
-// that fits makes the choice, and its code is the choice's (R07). The repetition comes with T20
-// (RUN.md).
+// that fits makes the choice, and its code is the choice's (R07). Branch 5, the repetition, comes
+// on the module's turn of the repetition and, when branches 6, 6a and 7 give nothing, before
+// branches 8 and 9 (R06).
 
 // The turn of the probe: the module's n-th choice, counted before this one, with n > 5 and
-// n mod 6 = 5, as in standalone. Only a run of sim changes them.
+// n mod 6 = 5, as in standalone. The turn of the repetition: n > 5 and n mod 3 = 1 — n = 7, 10,
+// 13 and so on —, which the turn of the probe, with n mod 3 = 2, never meets (R06). Only a run of
+// sim changes them.
 const (
 	probeEvery int64 = 6
 	probeAfter int64 = 5
+
+	repetitionEvery int64 = 3
+	repetitionAt    int64 = 1
+	repetitionAfter int64 = 5
 )
 
 // choose runs the rule: branch 1, which the pause does not touch; then a first pass, a second pass
@@ -142,7 +149,8 @@ func (pr prepared) turns() []int {
 	return places
 }
 
-// turn runs branches 4–9 in the module at place i, on its turn.
+// turn runs branches 4–9 in the module at place i, on its turn: branch 5 on the turn of the
+// repetition and, off it, after branch 7.
 func (pr prepared) turn(i int, skills []skillView, second bool) (Choice, bool) {
 	in := pr.in
 	module := in.Modules[i].Graph.Module
@@ -158,6 +166,12 @@ func (pr prepared) turn(i int, skills []skillView, second bool) (Choice, bool) {
 		if s, ok := longestAgo(skills, func(s skillView) bool { return s.paused() && len(s.candidates) > 0 }); ok {
 			return given(s, true, ReasonProbe)
 		}
+	}
+
+	// Branch 5 on the turn of the repetition: a skill due for review, by repetition.
+	dueSkill, hasDue := dueFirst(skills)
+	if hasDue && n > repetitionAfter && n%repetitionEvery == repetitionAt {
+		return given(dueSkill, false, ReasonRepetition)
 	}
 
 	// Branch 6: a skill within reach not handed out before, the first in the order of the graph.
@@ -181,6 +195,13 @@ func (pr prepared) turn(i int, skills []skillView, second bool) (Choice, bool) {
 			return pr.give(i, s, ReasonRotation)
 		}
 		return pr.give(i, s, ReasonQueue)
+	}
+
+	// Branch 5 off the turn: with nothing new, no author's order and no queue, a skill due for review
+	// comes before branches 8 and 9, which would give the mastered skills with no date or the bottom
+	// of the ladder.
+	if hasDue {
+		return given(dueSkill, false, ReasonRepetition)
 	}
 
 	// Branch 8: every skill within reach is mastered for the queue — the choice of branch 7 among
@@ -220,13 +241,16 @@ func (pr prepared) turn(i int, skills []skillView, second bool) (Choice, bool) {
 // handed out first —, and of as long ago the first in the order of the graph: the skills come in
 // that order.
 func longestAgo(skills []skillView, fits func(skillView) bool) (skillView, bool) {
+	return firstBy(skills, fits, byIssue)
+}
+
+// firstBy gives, of the skills that fit, the first by an order, and of two equal the first in the
+// order of the graph: the skills come in that order.
+func firstBy(skills []skillView, fits func(skillView) bool, order func(a, b skillView) int) (skillView, bool) {
 	var best skillView
 	found := false
 	for _, s := range skills {
-		if !fits(s) {
-			continue
-		}
-		if !found || byIssue(s, best) < 0 {
+		if fits(s) && (!found || order(s, best) < 0) {
 			best, found = s, true
 		}
 	}
@@ -275,4 +299,25 @@ func (pr prepared) onMap(second bool) (Choice, bool) {
 		return Choice{Kind: ChoiceTask, ID: cands[0].id, Reason: ReasonSkillChosen}, true
 	}
 	return Choice{}, false
+}
+
+// dueFirst gives, of the skills due for review, the first: one whose date is marked already — of
+// those, the one practised longest ago (the amendment of 2026-11-08 to R06) —, then the one with
+// the earliest date, then the first in the order of the graph. The repetition is a task, not a
+// lesson (R05; R06).
+func dueFirst(skills []skillView) (skillView, bool) {
+	return firstBy(skills, func(s skillView) bool { return s.due }, byReview)
+}
+
+// byReview orders skills due for review: a date marked already first, and of those the practice
+// longest ago, since practice does not clear the mark; then the earliest date.
+func byReview(a, b skillView) int {
+	ra, rb := a.read.Review, b.read.Review
+	if c := falseFirst(!ra.Already, !rb.Already); c != 0 {
+		return c
+	}
+	if ra.Already {
+		return cmp.Compare(a.read.LastPractice, b.read.LastPractice)
+	}
+	return cmp.Compare(ra.At, rb.At)
 }

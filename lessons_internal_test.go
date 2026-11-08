@@ -170,7 +170,7 @@ func TestLessonsOlympiad(t *testing.T) {
 
 	w.probabilities([]px{{"enum-12-*", 0.99}, {"enum-34-*", 0.97}, {"enum-56-d1-1", 0.78}})
 	w.wantChoice(lessonChoice(lid(olympiadMath, "combinatorics-enumeration-grades-5-6"), ReasonQueue))
-	w.skill(learnermodel.SkillReadout{Skill: enum, EvidenceCount: 10, Mastered: true, MasteryBand: learnermodel.BandRef{Place: 2, ID: "grades-3-4"}})
+	w.skill(learnermodel.SkillReadout{Skill: enum, EvidenceCount: 10, Mastered: true, Review: notDue, MasteryBand: learnermodel.BandRef{Place: 2, ID: "grades-3-4"}})
 	w.wantChoice(lessonChoice(lid(olympiadMath, "pigeonhole-basic-grades-1-2"), ReasonNewSkill)) // mastered, enum opens pigeonhole-basic
 	w.issue(sid(olympiadMath, "pigeonhole-basic"), 300)
 	w.wantChoice(lessonChoice(lid(olympiadMath, "combinatorics-enumeration-grades-5-6"), ReasonRotation))
