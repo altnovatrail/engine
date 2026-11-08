@@ -18,51 +18,33 @@ concurrency:
 jobs:
   secrets:
     name: Secrets
-    uses: altnovatrail/.github/.github/workflows/secrets.yml@89d3ceee0b9977b3334488a4133d084d76474e0d # v0.1.15
+    uses: altnovatrail/.github/.github/workflows/secrets.yml@706f4067a66c91b0442033f82a7924eeb8b60497 # v0.1.21
 
   # A pull request's commits are what it checks; a push to main has been checked as one.
   dco:
     name: DCO
     if: github.event_name == 'pull_request'
-    uses: altnovatrail/.github/.github/workflows/dco.yml@89d3ceee0b9977b3334488a4133d084d76474e0d # v0.1.15
+    uses: altnovatrail/.github/.github/workflows/dco.yml@706f4067a66c91b0442033f82a7924eeb8b60497 # v0.1.21
 
   documents:
     name: Documents
-    uses: altnovatrail/.github/.github/workflows/documents.yml@89d3ceee0b9977b3334488a4133d084d76474e0d # v0.1.15
+    uses: altnovatrail/.github/.github/workflows/documents.yml@706f4067a66c91b0442033f82a7924eeb8b60497 # v0.1.21
 
   # The repository's Go code, by its own ci- recipes in its toolchain stage, and the coverage of
   # its tests, which the shared workflow sends to Codecov (R16 .github). id-token: write is for its
   # coverage job alone, which asks for an OIDC token: a called workflow can only lower what this
-  # job gives it.
+  # job gives it. With same-bits it holds the bits the same on every build too (R10;
+  # docs/architecture.md, section 3.7): "Go / targets", "Go / fma-diff", "Go / arm64" on arm64
+  # hardware, and "Go / rules", the rules of code by the tool of .github and the lists of
+  # .github/coderules.json — in place of this repository's own job, recipes and port of the test.
   go:
     name: Go
     permissions:
       contents: read
       id-token: write
-    uses: altnovatrail/.github/.github/workflows/go.yml@89d3ceee0b9977b3334488a4133d084d76474e0d # v0.1.15
-
-  # The same ci-test on arm64 hardware, where the compiler fuses a multiplication with an addition
-  # or a subtraction (R10; docs/architecture.md, section 3.7): the same toolchain stage, run as
-  # go.yml runs it. The shared go.yml runs on ubuntu-24.04 alone; once its option for these runs
-  # comes, it takes this job's place (Д114 in table 4 of spec's RUN.md). The coverage this run
-  # writes is not sent.
-  go-arm64:
-    name: Go arm64
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Toolchain image
-        run: docker build --target toolchain --tag toolchain - < .devcontainer/Dockerfile
-
-      - name: ci-test
-        run: |
-          docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp \
-              --volume "$PWD:/work" --workdir /work \
-              toolchain just ci-test
+    uses: altnovatrail/.github/.github/workflows/go.yml@706f4067a66c91b0442033f82a7924eeb8b60497 # v0.1.21
+    with:
+      same-bits: true
 
   # ReasonCode, ChoiceKind and RunEnd against cause.proto in the spec submodule, at the tag this
   # repository pins (docs/architecture.md, section 3.6; R09): the shared go.yml checks out no
