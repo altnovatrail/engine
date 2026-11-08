@@ -1,2 +1,4 @@
 # What ci-test writes, for .github's shared go.yml to send to Codecov.
 /coverage/
+# What release-files writes, for the shared release to sign.
+/dist/
