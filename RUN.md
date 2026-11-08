@@ -197,8 +197,7 @@
   - проверено в контейнере: `just ci-lint ci-test ci-vuln` и `ci-licenses` со списком `go.yml` зелёные, профиль — `mode: atomic`, govulncheck — «No vulnerabilities found.»; `ci-licenses` без списка падает с подсказкой; `ci-lint` красный на файле, который переписал бы `gofmt`, при `GOPLS_VERSION=0.24.1` и без `ARG GOPLS_VERSION`; lock-файл во временной папке собирает gopls тем же `go install -mod=readonly tool`, и `gopls version` — `golang.org/x/tools/gopls v0.24.0`; `just -f spec/justfile docs-check-repo` — ok;
   - `/code-review high`, один круг: исправлено — `doc.go` обещал одни биты шире подраздела 3.7 и называл источником входа только `api`; в R13 не было отвергнутого `go install …@v0.24.0`; «Status» README говорил, что кода нет; фраза CLAUDE.md о `justfile` читалась как второе отличие контейнера. Оставлено как у `learner-model`, слово в слово по R13: сверка gopls в `ci-lint`, разбор `ARG` в ней, комментарий шага gopls и `go run` инструментов на каждом прогоне.
 - **Открыто:**
-  - мой шаг: Rebuild Container — образ здесь не собирался, Docker в контейнере нет; push и pull request T13;
-  - по моему поручению, после зелёного прогона pull request: обязательные проверки ruleset `main` — «Go / lint», «Go / test», «Go / vuln», «Go / licenses», «CodeQL / analyze (go)»; после мержа — закрыть #5–#9 с комментарием, если не закроются сами; что вышло, — поправкой к R12;
+  - Rebuild Container, pull request, ruleset `main` и #5–#9 — сделаны 2026-11-08: gopls в образе — v0.24.0; #19 слит merge-коммитом fc5fbab; ruleset требует пять новых проверок; #5–#9 закрыл сам Dependabot (поправка 2026-11-08 к R12);
   - `codecov/patch` в ruleset — первым шагом задачи, перед которой статус впервые пришёл, вероятно T15; тогда же — значок покрытия.
 
 #### T14. Проверки одних битов (R10)
