@@ -145,6 +145,12 @@ func TestChooseInvalid(t *testing.T) {
 			// The skill is the other module's: the graph that counts is the lesson's module's.
 			in.Modules[0].Lessons[1].Skills = append(in.Modules[0].Lessons[1].Skills, skillID(workbook, "a"))
 		}, `skill "example/workbook/skill/a" of lesson "example/olympiad/lesson/a" is not in the graph of module "example/olympiad"`},
+		{"traps of an item twice", func(t *testing.T, in *engine.Input) {
+			in.Modules[0].Pool[0].Traps = append(in.Modules[0].Pool[0].Traps, engine.ItemTraps{Place: 1})
+		}, `item 1 of task "example/olympiad/task/a-1" has its traps twice`},
+		{"traps where the task has no item", func(t *testing.T, in *engine.Input) {
+			in.Modules[0].Pool[1].Traps = []engine.ItemTraps{{Place: 3}}
+		}, `traps of item 3 of task "example/olympiad/task/b-1", which has no item there`},
 		{"end of a run off the list", func(t *testing.T, in *engine.Input) {
 			in.Runs[0].End = engine.RunAbandoned + 1
 		}, `run of lesson "example/olympiad/lesson/a" ended by 5, which RunEnd does not name`},
@@ -166,6 +172,22 @@ func TestChooseInvalid(t *testing.T) {
 		{"reason code of the summary off the list", func(t *testing.T, in *engine.Input) {
 			in.Summary.Skills[0].LastCode = engine.ReasonRotation + 1
 		}, `skill "example/olympiad/skill/a" of the summary has the reason code 10, which ReasonCode does not name`},
+		{"skill twice in the results of the last attempt", func(t *testing.T, in *engine.Input) {
+			in.Last.Results = append(in.Last.Results, in.Last.Results[0])
+		}, `skill "example/olympiad/skill/a" comes twice in the results of the last attempt`},
+		{"more first right verdicts than first verdicts", func(t *testing.T, in *engine.Input) {
+			in.Last.Results[0].FirstRight = 3
+		}, `result on skill "example/olympiad/skill/a" of the last attempt has 3 first right verdicts of 2`},
+		{"fewer first right verdicts than none", func(t *testing.T, in *engine.Input) {
+			in.Summary.Skills[1].LastResult.FirstRight, in.Summary.Skills[1].HasLast = -1, true
+		}, `result on skill "example/olympiad/skill/b" of the summary has -1 first right verdicts of 0`},
+		{"results without a meaning", func(t *testing.T, in *engine.Input) {
+			// Without HasLast a result means nothing and is not checked: the next check fails.
+			in.HasLast = false
+			in.Last.Results = append(in.Last.Results, in.Last.Results[0])
+			in.Summary.Skills[1].LastResult.FirstRight = -1
+			in.Readout = readout(t, in.Modules, []string{olympiad})
+		}, `module "example/workbook" of the engine has no reading of the learner model`},
 		{"module of the engine with no reading", func(t *testing.T, in *engine.Input) {
 			in.Readout = readout(t, in.Modules, []string{olympiad})
 		}, `module "example/workbook" of the engine has no reading of the learner model`},
@@ -220,7 +242,19 @@ func TestChooseOrder(t *testing.T) {
 		{"tasks of other modules", func(in *engine.Input) {
 			in.Modules[0].Pool = append(in.Modules[0].Pool, engine.Candidate{Task: fixtureTask(workbook, "y", skillID(workbook, "a"))})
 			in.Modules[1].Pool = append(in.Modules[1].Pool, engine.Candidate{Task: fixtureTask(olympiad, "x", skillID(olympiad, "a"))})
-		}, `task "example/workbook/task/y" of the pool of module "example/olympiad"`},
+		}, `task "example/olympiad/task/x" of the pool of module "example/workbook"`},
+		{"traps off their items", func(in *engine.Input) {
+			in.Modules[1].Pool[0].Traps = append(in.Modules[1].Pool[0].Traps, engine.ItemTraps{Place: 1})
+			in.Modules[0].Pool[1].Traps = []engine.ItemTraps{{Place: 5}, {Place: 4}}
+		}, `traps of item 4 of task "example/olympiad/task/b-1"`},
+		{"least task across modules whose IDs begin alike", func(in *engine.Input) {
+			// "example/olympiad-2/…" is less than "example/olympiad/…": '-' comes before '/'.
+			second := "example/olympiad-2"
+			in.Modules = append(in.Modules, fixtureModule(t, second))
+			in.Readout = readout(t, in.Modules, append(slices.Clone(fixtureModules), second))
+			in.Modules[0].Pool[1].Traps = []engine.ItemTraps{{Place: 7}}
+			in.Modules[2].Pool[1].Traps = []engine.ItemTraps{{Place: 8}}
+		}, `traps of item 8 of task "example/olympiad-2/task/b-1"`},
 		{"ends off the list", func(in *engine.Input) {
 			in.Runs = append(in.Runs,
 				engine.Run{Lesson: workbook + "/lesson/a", End: 7},
@@ -236,6 +270,11 @@ func TestChooseOrder(t *testing.T) {
 			in.Summary.Skills[1].LastCode, in.Summary.Skills[1].HasLast = 12, true
 			in.Summary.Skills[0].LastCode = 11
 		}, `skill "example/olympiad/skill/a" of the summary has the reason code 11`},
+		{"results off", func(in *engine.Input) {
+			in.Last.Results = append(in.Last.Results,
+				engine.SkillResult{Skill: skillID(workbook, "a"), Answered: 1, FirstRight: 5},
+				engine.SkillResult{Skill: skillID(olympiad, "b"), Answered: 1, FirstRight: 4})
+		}, `result on skill "example/olympiad/skill/b" of the last attempt has 4`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			input := func() engine.Input {
@@ -255,10 +294,14 @@ func TestChooseOrder(t *testing.T) {
 					shuffle(rng, in.Modules[i].Pool)
 					shuffle(rng, in.Modules[i].Lessons)
 					shuffle(rng, in.Modules[i].Lessons[0].Skills)
+					for k := range in.Modules[i].Pool {
+						shuffle(rng, in.Modules[i].Pool[k].Traps)
+					}
 				}
 				shuffle(rng, in.Runs)
 				shuffle(rng, in.RubricDone)
 				shuffle(rng, in.Summary.Skills)
+				shuffle(rng, in.Last.Results)
 				got, err := engine.Choose(in)
 				if got != wantChoice || errorText(err) != errorText(wantErr) {
 					t.Fatalf("Choose = %+v, %v; in the input's order it was %+v, %v", got, err, wantChoice, wantErr)
