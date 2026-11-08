@@ -8,6 +8,7 @@ import "C" // want cgo
 import (
 	"cmp"
 	"encoding/binary" // want import
+	"encoding/json"   // want import
 	"errors"
 	"math"
 	"math/bits"
@@ -31,6 +32,7 @@ var (
 	_ = slices.Sort[[]int]
 	_ = strconv.Itoa
 	_ = binary.LittleEndian
+	_ = json.Valid
 	_ = utf8.RuneLen
 )
 

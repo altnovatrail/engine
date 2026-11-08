@@ -1,0 +1,8 @@
+adult-step-1 branch=6a lesson novatrail/english-essays/lesson/first-sentences REASON_CODE_AUTHOR_ORDER
+adult-step-2 branch=6a lesson novatrail/english-essays/lesson/reading-model-essays REASON_CODE_AUTHOR_ORDER
+adult-step-3 branch=6a lesson novatrail/english-essays/lesson/paragraphs REASON_CODE_AUTHOR_ORDER
+adult-step-4 branch=6a lesson novatrail/english-essays/lesson/endings REASON_CODE_AUTHOR_ORDER
+adult-step-5 branch=6a lesson novatrail/english-essays/lesson/improving-an-essay REASON_CODE_AUTHOR_ORDER
+adult-step-6 branch=6a lesson novatrail/english-essays/lesson/writing-about-a-day REASON_CODE_AUTHOR_ORDER
+under_13-step-6 branch=7 task novatrail/english-essays/task/best-first-sentence-2 REASON_CODE_QUEUE p:choosing-a-first-sentence=3fe5555555555556
+adult-step-7 branch=7 task novatrail/english-essays/task/best-first-sentence-2 REASON_CODE_QUEUE p:choosing-a-first-sentence=3fe5555555555556

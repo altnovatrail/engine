@@ -1,0 +1,10 @@
+new-learner branch=6 lesson novatrail/olympiad-math/lesson/combinatorics-enumeration-grades-3-4 REASON_CODE_NEW_SKILL
+queue branch=7 task novatrail/olympiad-math/task/enum-34-d1-1 REASON_CODE_QUEUE p:combinatorics-enumeration=3fe9dc5fb2a50b17
+consolidation branch=3 task novatrail/olympiad-math/task/gaps-34-d1-1 REASON_CODE_CONSOLIDATION p:counting-gaps=3fe9f5cefe8ca9a4
+probe branch=4 task novatrail/olympiad-math/task/gaps-12-d2-1 REASON_CODE_PROBE p:counting-gaps=3fdfc0b05bea556f
+lesson-of-a-new-band branch=7 lesson novatrail/olympiad-math/lesson/combinatorics-enumeration-grades-5-6 REASON_CODE_QUEUE
+rotation-above-mastery-band branch=7-mastered lesson novatrail/olympiad-math/lesson/combinatorics-enumeration-grades-5-6 REASON_CODE_ROTATION
+map-closed-skill branch=2 lesson novatrail/olympiad-math/lesson/pigeonhole-basic-grades-3-4 REASON_CODE_SKILL_CHOSEN
+open-run branch=1 lesson novatrail/olympiad-math/lesson/pigeonhole-basic-grades-3-4 REASON_CODE_OPEN_RUN
+bottom-of-the-ladder-new branch=9-new lesson novatrail/olympiad-math/lesson/combinatorics-enumeration-grades-1-2 REASON_CODE_NEW_SKILL
+bottom-of-the-ladder branch=9 lesson novatrail/olympiad-math/lesson/combinatorics-enumeration-grades-1-2 REASON_CODE_ROTATION
