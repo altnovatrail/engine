@@ -19,11 +19,11 @@ A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.9.9), a 
 
 ## Status
 
-Detailing is done: the first epic, archived in [docs/plan/E1.md](docs/plan/E1.md), decided everything the component's card left open, and spec has recorded it. The current epic of [RUN.md](RUN.md), E2, has built the first version of the rule, which starts from the one by which MathTrail's standalone chose the next task: lessons and tasks with their reason codes over several modules, with golden vectors of the choice on the graphs of the first slice, and the same bits on every build. It comes out as the baseline before sim's first tag.
+Detailing is done: the first epic, archived in [docs/plan/E1.md](docs/plan/E1.md), decided everything the component's card left open, and spec has recorded it. The current epic of [RUN.md](RUN.md), E2, has built the first version of the rule, which starts from the one by which MathTrail's standalone chose the next task: lessons and tasks with their reason codes over several modules, with golden vectors of the choice on the graphs of the first slice, and the same bits on every build. It came out as `v0.1.0`, the baseline before sim's first tag.
 
 ## Releases
 
-Releases come out by themselves: each commit of `main` whose CI has passed and which changes the code, `go.mod`, `go.sum` or what builds the release's file gets the next patch of the line `0.1` — the first is `v0.1.0` — with its tag, by .github's shared release workflow ([R15](docs/decisions.md)). Nobody tags by hand, and a release is immutable.
+Releases come out by themselves: each commit of `main` whose CI has passed and which changes the code, `go.mod`, `go.sum` or what builds the release's file gets the next patch of the line `0.1` — the first, `v0.1.0`, came out on 2026-11-08 — with its tag, by .github's shared release workflow ([R15](docs/decisions.md)). Nobody tags by hand, and a release is immutable.
 
 - **Go code** takes the library as a Go module, by the tag: `go get github.com/altnovatrail/engine@v0.1.0`. `go.sum` and the Go checksum database hold the version from then on.
 - **The release's one file** is the code a consumer builds: `engine-<tag>.tar.gz`, with `LICENSE`, `go.mod`, `go.sum` and the Go files of the module but its tests and `testdata/`, signed without a key. Verify it where it enters NovaTrail with spec's recipe, `just -f spec/justfile release-verify engine <tag> engine-<tag>.tar.gz`, with its bundle `<file>.sigstore.json` beside it. `just release-files <tag>`, in the toolchain stage of the tag's `.devcontainer/Dockerfile`, builds the same bytes from the tag's tree.
