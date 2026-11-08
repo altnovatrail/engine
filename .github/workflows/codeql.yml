@@ -20,4 +20,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    uses: altnovatrail/.github/.github/workflows/codeql.yml@ff2a3597769ca85e59e476b1a41bdcbc1f50e3ed # v0.1.0
+    uses: altnovatrail/.github/.github/workflows/codeql.yml@89d3ceee0b9977b3334488a4133d084d76474e0d # v0.1.15
+    # Go is read from a build, with the Go of the toolchain stage of .devcontainer/Dockerfile (R12).
+    with:
+      languages: go

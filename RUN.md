@@ -101,7 +101,7 @@
 
 | Статус | ID | Задача | Кто | План | Зависит от |
 |---|---|---|---|---|---|
-| [ ] | T13 | Каркас и общий CI | я + Claude | да | — |
+| [x] | T13 | Каркас и общий CI | я + Claude | да | — |
 | [ ] | T14 | Проверки одних битов (R10) | Claude | — | T13 |
 | [ ] | T15 | Типы входа и выхода (R09) | Claude, проверяю я | да | T13 |
 | [ ] | T16 | Состояния навыка и задача на навыке (R03) | Claude, проверяю я | да | T14, T15 |
@@ -136,7 +136,7 @@
 
 ## Таблица 4. Технический долг
 
-Д1 и Д2 — образ devcontainer — закрыты 2026-11-07 пересборкой контейнера (R02; [docs/plan/E1.md](docs/plan/E1.md), T07 и T08). Номера не переиспользуются: следующий — Д8.
+Д1 и Д2 — образ devcontainer — закрыты 2026-11-07 пересборкой контейнера (R02; [docs/plan/E1.md](docs/plan/E1.md), T07 и T08). Номера не переиспользуются: следующий — Д9.
 
 | ID | Долг | Откуда | Чем грозит, пока не закрыт | Когда вернуться |
 |---|---|---|---|---|
@@ -145,6 +145,7 @@
 | Д5 | Оформления задачи под интересы ученика нет: в формате v0 вариантов оформления нет (R51 spec), и правило интересов не читает | T01; R03; R09 | Задачи одинаковы для всех учеников одного состояния | Когда формат даст варианты оформления — минорной версией; тогда же поле во входе (R09) |
 | Д6 | Ловушки, которые предположил ИИ, в выборе задачи не читаются: в модель они не идут (concepts 9.4 spec), и частые ловушки — только находки программы | T01; R03 | Ошибку, которую видит только ИИ по работе ученика, выбор задачи не прорабатывает | Когда стенд или прогресс взрослого покажут, что ловушек программы мало |
 | Д7 | Задачи с бумаги, склейки с приложением для устройства и офлайна нет | T09, T05; R04, R10 | Нет — это этап 5; но если склейку добавят без поправки к R10, тест правил её отвергнет | Этап 5, по О-11 и Т-10 |
+| Д8 | gopls — своим шагом: lock-файл `.devcontainer/gopls/`, шаг стадии `devcontainer` Dockerfile, настройки расширения Go и сверка версий в `ci-lint` (R13). Заготовка `spec` v0.9.8 его виду `go` не даёт | T13; R13 | Dockerfile и `devcontainer.json` не совпадают побайтно с рецептом `spec`; переход на тег `spec` без шага в заготовке снял бы его, и `ci-lint` покраснел бы | Переход на тег `spec`, где эпик E7 даст gopls виду `go` (R102 spec): снять свой шаг и заменить R13 |
 
 
 ## Эпик E2. Первая версия правила выбора
@@ -156,15 +157,49 @@
 #### T13. Каркас и общий CI
 
 - **Цель:** у репозитория есть модуль Go и проверки CI, на которых пойдёт весь код эпика.
+- **Почему:** без `go.mod`, рецептов и job «Go» коду T14–T21 негде проходить проверки, а тесты и `codecov/patch` идут с каждым изменением кода (RULES.md, How we work; R48 spec). Что код добавляет к файлам CI — job языка, вход CodeQL, экосистему Dependabot, значки, — пишет сессия самого репозитория (поправка 2026-10-21 к R30 spec; repositories 2.3 spec). Образец — T12 `learner-model`: R13 и R14 learner-model с поправками после мержа.
+- **Решено автором (2026-11-08):** четыре ответа при планировании, все — по рекомендациям плана.
+  1. gopls — своим шагом, как R14 learner-model: lock-файл `.devcontainer/gopls/` с gopls v0.24.0, шаг в стадии `devcontainer` Dockerfile, настройки расширения Go в `devcontainer.json` и сверка версий в `ci-lint`; своей записью журнала, отдельно от записи о каркасе, чтобы её можно было заменить, когда заготовка `spec` даст gopls виду `go` (R102 spec; эпик E7 в таблице 2 RUN.md `spec`). Отвергнуто: ждать заготовку — до тех пор расширение Go ставит gopls незакреплённой версии.
+  2. Все ссылки на общие workflow `.github` — на последний релиз, v0.1.15, а не только `go.yml` и `codeql.yml`: один релиз во всех файлах, а pull request Dependabot #5–#9 устаревают.
+  3. `ci-lint` — только `gofmt` и `go vet` и сверка версий gopls. Отвергнут staticcheck: правила R10 ловит тест правил T14, запахи кода — SonarCloud, а ещё один инструмент вне Dependabot пришлось бы поднимать руками с каждой версией Go.
+  4. Шаги на GitHub делает исполнитель по моему поручению, как у `learner-model`: после зелёного прогона pull request T13 — обязательные проверки ruleset `main` и закрытие #5–#9 с комментарием, если не закроются сами; `codecov/patch` — первым шагом той задачи, перед которой статус Codecov хоть раз пришёл.
+- **Выяснилось при планировании** (2026-11-08):
+  - `.github` v0.1.15 — последний релиз, от 2026-11-02, коммит `89d3ceee0b9977b3334488a4133d084d76474e0d`; `gh release verify` его подтвердил. Его `go.yml` гоняет `ci-lint`, `ci-test`, `ci-vuln` и `ci-licenses` в стадии `toolchain`, без подмодуля `spec`, и передаёт контейнеру `ALLOWED_LICENSES`; job `coverage` шлёт `coverage/go.out` в Codecov по OIDC, а job «Go» вызывающего даёт ему `contents: read` и `id-token: write`. Здесь все ссылки стояли на v0.1.0, коммит ff2a359, а `secrets.yml`, `dco.yml`, `documents.yml` и `scorecard.yml` между v0.1.0 и v0.1.15 не менялись;
+  - заготовка `spec` v0.9.8 gopls виду `go` не даёт: в `repo-template/kinds.json` у него только расширение. В19 `module-kit` решён R102 spec, но эпик E7 не вышел;
+  - gopls v0.24.0, govulncheck v1.9.0 и go-licenses v2.0.1 — последние (`proxy.golang.org/<модуль>/@latest`), те же, что у `learner-model`;
+  - ruleset `main` (id 25506231) требует Secrets, DCO, Documents, «CodeQL / analyze (actions)» и SonarCloud;
+  - открыты pull request Dependabot #5–#9 — `.github` 0.1.0 → 0.1.10; у `learner-model` такие сами не закрылись (поправка 2026-11-07 к R13 learner-model);
+  - Codecov: `engine` в нём есть, с `active: false`, — включит первая загрузка. Модуль из одного `doc.go` строк не даёт, и статуса `codecov/patch` не будет, как у #18 и #19 `learner-model`: первые строки под тестами — вероятно, T15;
+  - правило 12 по T12: открыты те же семь находок Scorecard с 2026-10-20, все из общего списка R33 spec; CodeQL находок нет, у SonarCloud нет ни замечаний в New Code, ни мест для проверки. Править нечего.
 - **Сделать:**
-  - `go.mod` — `module github.com/altnovatrail/engine`, `go 1.27.3`; `doc.go` на английском — что это за библиотека (раздел 1 [docs/architecture.md](docs/architecture.md));
-  - `justfile` по образцу `learner-model` (`main`, T12 `learner-model`): `ci-lint`, `ci-test` с `-race` и покрытием в `coverage/go.out`, `ci-vuln`, `ci-licenses`;
-  - CI: все ссылки на общие workflow `.github` — на последний релиз; job «Go» общего `go.yml`; `codeql.yml` с `languages: go`; `.github/codecov.yml`; `gomod` в `dependabot.yml`; `.gitignore`;
-  - записи журнала о каркасе и CI и, если нужен gopls своим шагом, об отличии контейнера от контейнера `spec` (CLAUDE.md, Environment).
-- **Решить при планировании:** версия `.github`; инструменты `ci-lint` сверх `gofmt` и `go vet`; gopls в Dockerfile, как у `learner-model`; Codecov и ruleset `main` — мой шаг.
-- **Мой шаг:** Rebuild Container, если меняется Dockerfile; Codecov и обязательные проверки ruleset `main`.
-- **Как проверить:** `just ci-lint` и `just ci-test` зелёные в контейнере; pull request проходит job «Go»; `/code-review high`.
+  - перед задачей — правило 12 по T12;
+  - `go.mod` — `module github.com/altnovatrail/engine`, `go 1.27.3`, без `require`; `doc.go` на английском — что это за библиотека (раздел 1 [docs/architecture.md](docs/architecture.md));
+  - `justfile` по образцу `learner-model` (`main` 50f1b51), без рецептов схемы, релиза и одних битов: `default`; `ci-lint` — `gofmt` по файлам, которые знает git, кроме `testdata/`, `go vet ./...` и сверка `GOPLS_VERSION` Dockerfile с версией в `.devcontainer/gopls/go.mod`; `ci-test` — `go test -race -count=1 -covermode=atomic -coverpkg=./... -coverprofile=coverage/go.out ./...`, а прогоны на целях и `fma-diff` добавит T14; `ci-vuln` — govulncheck v1.9.0, `ci-licenses` — go-licenses v2.0.1 со списком `ALLOWED_LICENSES`; инструменты — `go run` по точной версии;
+  - gopls: `.devcontainer/gopls/` — `go.mod` и `go.sum` от `go mod init` и `go get -tool golang.org/x/tools/gopls@v0.24.0`; шаг стадии `devcontainer` Dockerfile и настройки `devcontainer.json`, как у `learner-model`;
+  - CI: в `ci.yml`, `codeql.yml` и `scorecard.yml` все ссылки — на v0.1.15; job «Go» в `ci.yml`; `languages: go` в `codeql.yml`; `.github/codecov.yml` — текст `learner-model`; экосистема `gomod` в `dependabot.yml`; `.gitignore` — `coverage/`;
+  - README.md — значок версии Go (repositories 2.3 spec); значка покрытия пока нет;
+  - журнал — две записи: каркас и CI; gopls — отличие контейнера от контейнера `spec`. Начало журнала называет следующий свободный номер;
+  - [docs/architecture.md](docs/architecture.md), подраздел 3.7 «Чем проверяет CI», — что стоит с T13, а раздел 4 — источники с датой; CLAUDE.md, «Environment», — отличие контейнера;
+  - таблица 4 — долг: gopls своим шагом, пока заготовка `spec` его не даёт.
+- **Не делать:** прогоны на целях, `fma-diff`, тест правил кода и job arm64 — это T14; зависимость `learner-model` — T15; `release.yml` и `dist/` — T22; `codecov/patch` в ruleset — пока статус не пришёл; не коммитить (правило 7).
+- **Мой шаг:**
+  - Rebuild Container — `gopls version` называет `golang.org/x/tools/gopls v0.24.0`;
+  - push и pull request T13. После его зелёного прогона исполнитель по моему поручению ставит в ruleset `main` «Go / lint», «Go / test», «Go / vuln», «Go / licenses» и «CodeQL / analyze (go)» с `integration_id` 15368, а после мержа закрывает #5–#9 с комментарием, если они не закрылись сами, и записывает это поправкой к записи о каркасе.
+- **Как проверить:** `just ci-lint`, `just ci-test`, `just ci-vuln` и `just ci-licenses` со списком `go.yml` зелёные в контейнере; `ci-lint` красный на файле, который переписал бы `gofmt`, и на разных версиях gopls; pull request проходит job «Go» и «CodeQL / analyze (go)»; `/code-review high`.
 - **Разделы:** repositories 2.3, 4 spec; R11, R30, R48, R64, R77 spec; architecture 1, 3.7.
+- **Сделано (2026-11-08):**
+  - правило 12 по T12: открыты те же семь находок Scorecard, все из общего списка R33 spec; CodeQL находок нет, у SonarCloud нет ни замечаний в New Code, ни мест для проверки (API SonarCloud, 2026-11-08). Править нечего;
+  - `go.mod` — `go mod init` записал `go 1.27.3`, без `require`; `doc.go` пакета `engine`;
+  - `justfile` — `default`, `ci-lint`, `ci-test`, `ci-vuln`, `ci-licenses`, тексты `learner-model` с её `main` 50f1b51 со своими номерами записей;
+  - gopls: `.devcontainer/gopls/` — `go.sum` совпал с `go.sum` `learner-model` побайтно, `go mod verify` — «all modules verified»; шаг стадии `devcontainer` Dockerfile и настройки `devcontainer.json` — как у `learner-model`, кроме имени и номера записи;
+  - CI: `ci.yml`, `codeql.yml`, `scorecard.yml` — на v0.1.15; job «Go»; `languages: go`; `.github/codecov.yml`; `gomod` в `dependabot.yml`; `.gitignore` — `/coverage/`;
+  - README — значок версии Go и «Status»; CLAUDE.md, «Environment», — отличие контейнера; журнал — R12 и R13, следующий — R14; [docs/architecture.md](docs/architecture.md) — подраздел 3.7 — что стоит с T13, — и источники в разделе 4; таблица 4 — Д8;
+  - проверено в контейнере: `just ci-lint ci-test ci-vuln` и `ci-licenses` со списком `go.yml` зелёные, профиль — `mode: atomic`, govulncheck — «No vulnerabilities found.»; `ci-licenses` без списка падает с подсказкой; `ci-lint` красный на файле, который переписал бы `gofmt`, при `GOPLS_VERSION=0.24.1` и без `ARG GOPLS_VERSION`; lock-файл во временной папке собирает gopls тем же `go install -mod=readonly tool`, и `gopls version` — `golang.org/x/tools/gopls v0.24.0`; `just -f spec/justfile docs-check-repo` — ok;
+  - `/code-review high`, один круг: исправлено — `doc.go` обещал одни биты шире подраздела 3.7 и называл источником входа только `api`; в R13 не было отвергнутого `go install …@v0.24.0`; «Status» README говорил, что кода нет; фраза CLAUDE.md о `justfile` читалась как второе отличие контейнера. Оставлено как у `learner-model`, слово в слово по R13: сверка gopls в `ci-lint`, разбор `ARG` в ней, комментарий шага gopls и `go run` инструментов на каждом прогоне.
+- **Открыто:**
+  - мой шаг: Rebuild Container — образ здесь не собирался, Docker в контейнере нет; push и pull request T13;
+  - по моему поручению, после зелёного прогона pull request: обязательные проверки ruleset `main` — «Go / lint», «Go / test», «Go / vuln», «Go / licenses», «CodeQL / analyze (go)»; после мержа — закрыть #5–#9 с комментарием, если не закроются сами; что вышло, — поправкой к R12;
+  - `codecov/patch` в ruleset — первым шагом задачи, перед которой статус впервые пришёл, вероятно T15; тогда же — значок покрытия.
 
 #### T14. Проверки одних битов (R10)
 

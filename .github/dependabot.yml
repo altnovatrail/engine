@@ -15,3 +15,17 @@ updates:
       interval: weekly
     cooldown:
       default-days: 3
+
+  # The Go modules the code is built from, as in every Go repository of NovaTrail (architecture 3.3
+  # .github). go.mod requires none yet, so it has nothing to raise; learner-model comes with the
+  # types of T15 in RUN.md, which says how its versions are raised (R77 spec; R103 spec). Go itself,
+  # in the Dockerfile, and the tools the recipes run by `go run` at an exact version are not among
+  # them: those are raised by hand. Neither is .devcontainer/gopls/, the lock file of gopls: its
+  # version goes up together with GOPLS_VERSION in the Dockerfile, by hand (R13 in
+  # docs/decisions.md).
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 3
