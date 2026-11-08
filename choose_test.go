@@ -346,3 +346,81 @@ func TestChooseLeavesInput(t *testing.T) {
 		t.Fatalf("Choose reordered the skills of a lesson: %v, was %v", in.Modules[0].Lessons[0].Skills, lessonSkills)
 	}
 }
+
+// With one module of the engine, Choose runs the rule, on the learner model's own reading: with no
+// evidence, the trial series gives a new skill — the one open, as the graph orders it — whatever
+// the order of the input's lists.
+func TestChooseOneModule(t *testing.T) {
+	olympiad := fixtureModules[0]
+	input := func() engine.Input {
+		in := fixture(t)
+		in.Modules = in.Modules[:1]
+		in.Readout = readout(t, in.Modules, fixtureModules[:1])
+		in.Runs = in.Runs[:1] // no open run
+		in.Summary.Skills = nil
+		return in
+	}
+	want := engine.Choice{Kind: engine.ChoiceTask, ID: olympiad + "/task/a-1", Reason: engine.ReasonNewSkill}
+	if got, err := engine.Choose(input()); err != nil || got != want {
+		t.Fatalf("Choose = %+v, %v; want %+v", got, err, want)
+	}
+	rng := rand.New(rand.NewPCG(5, 6))
+	for range 20 {
+		in := input()
+		shuffle(rng, in.Modules[0].Pool)
+		shuffle(rng, in.Modules[0].Lessons)
+		shuffle(rng, in.Runs)
+		in.Modules[0].Graph.Skills = slices.Clone(in.Modules[0].Graph.Skills)
+		shuffle(rng, in.Modules[0].Graph.Skills)
+		in.Summary.Tasks = append(in.Summary.Tasks, engine.TaskSolution{Task: olympiad + "/task/b-1", SolutionSentAt: 1})
+		shuffle(rng, in.Summary.Tasks)
+		in.Summary.Modules = append(in.Summary.Modules, engine.ModuleChoices{Module: fixtureModules[1], Choices: 11})
+		shuffle(rng, in.Summary.Modules)
+		in.Last.Results = append(in.Last.Results, engine.SkillResult{Skill: skillID(olympiad, "b"), Answered: 1})
+		shuffle(rng, in.Last.Results)
+		if got, err := engine.Choose(in); err != nil || got != want {
+			t.Fatalf("Choose = %+v, %v in another order; want %+v", got, err, want)
+		}
+	}
+
+	// A skill chosen on the map and an open run take the branches that come first, and several
+	// modules take turns: until they come (RUN.md, T18 and T19), Choose gives nothing to give.
+	for _, tc := range []struct {
+		name   string
+		change func(*engine.Input)
+	}{
+		{"skill on the map", func(in *engine.Input) { in.MapSkill = skillID(olympiad, "b") }},
+		{"open run", func(in *engine.Input) { in.Runs = append(in.Runs, engine.Run{Lesson: olympiad + "/lesson/a"}) }},
+		{"several modules", func(in *engine.Input) {
+			full := fixture(t)
+			in.Modules, in.Readout = full.Modules, full.Readout
+		}},
+	} {
+		in := input()
+		tc.change(&in)
+		if got, err := engine.Choose(in); err != nil || got != (engine.Choice{Kind: engine.ChoiceNothing}) {
+			t.Errorf("%s: Choose = %+v, %v; want nothing to give", tc.name, got, err)
+		}
+	}
+}
+
+// With every candidate on the pause before a seen solution, the second pass gives one, but not the
+// task of the last closed attempt; with nothing else, Choose gives nothing to give.
+func TestChooseSecondPass(t *testing.T) {
+	olympiad := fixtureModules[0]
+	in := fixture(t)
+	in.Modules = in.Modules[:1]
+	in.Readout = readout(t, in.Modules, fixtureModules[:1])
+	in.Runs = in.Runs[:1]
+	in.Summary.Skills = nil
+	in.Summary.Tasks = []engine.TaskSolution{{Task: olympiad + "/task/a-1", SolutionSentAt: in.Time - 60}}
+	in.Last.Task = olympiad + "/task/b-1"
+	want := engine.Choice{Kind: engine.ChoiceTask, ID: olympiad + "/task/a-1", Reason: engine.ReasonNewSkill}
+	if got, err := engine.Choose(in); err != nil || got != want {
+		t.Errorf("Choose = %+v, %v; want %+v", got, err, want)
+	}
+	in.Last.Task = olympiad + "/task/a-1"
+	if got, err := engine.Choose(in); err != nil || got != (engine.Choice{Kind: engine.ChoiceNothing}) {
+		t.Errorf("Choose = %+v, %v; want nothing to give", got, err)
+	}
+}

@@ -21,11 +21,24 @@ import (
 // [0, 1], NaN and the infinities included. The checks run in one order and each names the least
 // ID that breaks it, so that the order of the input's lists does not change the error either.
 //
-// The branches of the rule are still to come (RUN.md, T17 and on): an input that passes its
-// checks gives nothing to give.
+// With one module of the engine, Choose runs the branches of the rule in it, for the skills with
+// a verdict, and a second pass with the tasks on pause, and gives a task with the code of its
+// branch or nothing to give. The turn of the modules, the open run, the skill chosen on the map,
+// the anchor skills, the repetition, the author's order and the lessons are still to come
+// (RUN.md, T18–T20): an input with several modules, a skill chosen on the map or an open run gives
+// nothing to give, since the branches that come first for them are not there yet.
 func Choose(in Input) (Choice, error) {
-	if _, err := prepare(in); err != nil {
+	pr, err := prepare(in)
+	if err != nil {
 		return Choice{}, err
+	}
+	open := slices.ContainsFunc(in.Runs, func(r Run) bool { return r.End == RunOpen })
+	if len(in.Modules) == 1 && in.MapSkill == "" && !open {
+		for _, second := range []bool{false, true} {
+			if c, ok := pr.chooseIn(0, second); ok {
+				return c, nil
+			}
+		}
 	}
 	return Choice{Kind: ChoiceNothing}, nil
 }
