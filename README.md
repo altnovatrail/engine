@@ -17,7 +17,7 @@ A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.9.8), a 
 
 ## Status
 
-Detailing is done: the first epic, archived in [docs/plan/E1.md](docs/plan/E1.md), decided everything the component's card left open, and spec has recorded it. There is no code here yet: the next epic, the first version of the rule, is proposed in table 2 of [RUN.md](RUN.md). The rule starts from the one by which MathTrail's standalone chose the next task.
+Detailing is done: the first epic, archived in [docs/plan/E1.md](docs/plan/E1.md), decided everything the component's card left open, and spec has recorded it. There is no code here yet: the current epic of [RUN.md](RUN.md), E2, builds the first version of the rule. The rule starts from the one by which MathTrail's standalone chose the next task.
 
 ## Documents
 
