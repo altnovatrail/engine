@@ -103,22 +103,21 @@ func frequentTraps(traps []learnermodel.TrapCount) []string {
 // the one whose solution went longest ago (R82 of spec); the task of the last closed attempt, back
 // on the map, comes after them all.
 func bySolution(a, b candidate) int {
-	if a.last != b.last {
-		if b.last {
-			return -1
-		}
-		return 1
+	if c := cmp.Or(falseFirst(a.last, b.last), falseFirst(a.seen, b.seen)); c != 0 || !a.seen {
+		return c
 	}
-	if a.seen != b.seen {
-		if b.seen {
-			return -1
-		}
-		return 1
+	return cmp.Compare(a.seenAt, b.seenAt)
+}
+
+// falseFirst orders false before true.
+func falseFirst(a, b bool) int {
+	switch {
+	case a == b:
+		return 0
+	case !a:
+		return -1
 	}
-	if a.seen {
-		return cmp.Compare(a.seenAt, b.seenAt)
-	}
-	return 0
+	return 1
 }
 
 func inCorridor(p float64) bool { return p >= corridorLow && p <= corridorHigh }

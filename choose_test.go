@@ -106,14 +106,14 @@ func fixture(t *testing.T) engine.Input {
 	}
 }
 
-// A valid input gives nothing to give until the rule comes, with no code, and the runs of one
-// lesson repeat when only one of them is open.
+// A valid input — where the runs of one lesson repeat, only one of them open — gives the lesson of
+// the open run, branch 1.
 func TestChooseValid(t *testing.T) {
 	got, err := engine.Choose(fixture(t))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := (engine.Choice{Kind: engine.ChoiceNothing}); got != want {
+	if want := (engine.Choice{Kind: engine.ChoiceLesson, ID: fixtureModules[0] + "/lesson/a", Reason: engine.ReasonOpenRun}); got != want {
 		t.Errorf("Choose = %+v, want %+v", got, want)
 	}
 }
@@ -395,9 +395,10 @@ func TestChooseOneModule(t *testing.T) {
 		}
 	}
 
-	// The skill chosen on the map is given closed, with its own code; several modules take turns,
-	// the one never handed out first, by ID; an open run takes branch 1, which is still to come
-	// (RUN.md, T19): until then Choose gives nothing to give.
+	// The skill chosen on the map is given closed, with its own code — the lesson on it first, whose
+	// other skill a is open or not —; several modules take turns, the one never handed out first, by
+	// ID, and a new skill gets the lesson on it, when the lesson is not passed and its skills are all
+	// open; an open run takes branch 1, but not the run the learner has just left.
 	workbook := fixtureModules[1]
 	for _, tc := range []struct {
 		name   string
@@ -405,7 +406,7 @@ func TestChooseOneModule(t *testing.T) {
 		want   engine.Choice
 	}{
 		{"skill on the map", func(in *engine.Input) { in.MapSkill = skillID(olympiad, "b") },
-			engine.Choice{Kind: engine.ChoiceTask, ID: olympiad + "/task/b-1", Reason: engine.ReasonSkillChosen}},
+			engine.Choice{Kind: engine.ChoiceLesson, ID: olympiad + "/lesson/b", Reason: engine.ReasonSkillChosen}},
 		{"skill on the map of no module of the engine", func(in *engine.Input) { in.MapSkill = skillID(workbook, "b") },
 			engine.Choice{Kind: engine.ChoiceNothing}},
 		{"several modules", func(in *engine.Input) {
@@ -416,9 +417,17 @@ func TestChooseOneModule(t *testing.T) {
 			full := fixture(t)
 			in.Modules, in.Readout = full.Modules, full.Readout
 			in.Summary.Skills = []engine.SkillIssue{{Skill: skillID(olympiad, "a"), Issued: true, LastIssued: 900_000}}
-		}, engine.Choice{Kind: engine.ChoiceTask, ID: workbook + "/task/a-1", Reason: engine.ReasonNewSkill}},
+		}, engine.Choice{Kind: engine.ChoiceLesson, ID: workbook + "/lesson/a", Reason: engine.ReasonNewSkill}},
+		{"skill on the map, the lesson on it passed", func(in *engine.Input) {
+			in.MapSkill = skillID(olympiad, "b")
+			in.Runs = append(in.Runs, engine.Run{Lesson: olympiad + "/lesson/b", End: engine.RunPassed, EndedAt: 950_000})
+		}, engine.Choice{Kind: engine.ChoiceTask, ID: olympiad + "/task/b-1", Reason: engine.ReasonSkillChosen}},
 		{"open run", func(in *engine.Input) { in.Runs = append(in.Runs, engine.Run{Lesson: olympiad + "/lesson/a"}) },
-			engine.Choice{Kind: engine.ChoiceNothing}},
+			engine.Choice{Kind: engine.ChoiceLesson, ID: olympiad + "/lesson/a", Reason: engine.ReasonOpenRun}},
+		{"open run just left", func(in *engine.Input) {
+			in.Runs = append(in.Runs, engine.Run{Lesson: olympiad + "/lesson/a"})
+			in.Last.Left, in.Last.InLesson, in.Last.Lesson = true, true, olympiad+"/lesson/a"
+		}, want},
 	} {
 		in := input()
 		tc.change(&in)

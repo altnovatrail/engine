@@ -373,8 +373,8 @@ func TestGrade3Mastered(t *testing.T) {
 }
 
 // A skill with evidence of its own is open whatever came of its prerequisites; a prerequisite
-// with a rubric holds it until T19 comes, and so does an anchor skill with no reading, which
-// Choose refuses.
+// with a rubric holds it while it has a lesson not passed, and an anchor skill with no reading,
+// which Choose refuses, holds it too.
 func TestOpen(t *testing.T) {
 	module := "example/open"
 	band := learnermodel.BandRef{Place: 1, ID: "b"}
@@ -385,7 +385,8 @@ func TestOpen(t *testing.T) {
 		{ID: b, Assessability: learnermodel.AssessabilityVerdict, Prerequisites: []string{a}, Tier: 2},
 		{ID: sid(module, "c"), Assessability: learnermodel.AssessabilityVerdict, Prerequisites: []string{essay}, Tier: 2},
 		{ID: sid(module, "d"), Assessability: learnermodel.AssessabilityVerdict, Prerequisites: []string{"core.counting"}, Tier: 1},
-	}, []learnermodel.Task{exampleTask(module, "b-1", band, 1, b)})
+	}, []learnermodel.Task{exampleTask(module, "a-1", band, 1, a), exampleTask(module, "b-1", band, 1, b)})
+	m.Lessons = []Lesson{{ID: module + "/lesson/essay", Skills: []string{essay}}}
 	w := newWorld(t, m)
 	if v := w.view(b, false); v.open {
 		t.Fatalf("b is open with a not mastered, want it closed")

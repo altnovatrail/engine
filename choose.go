@@ -22,12 +22,11 @@ import (
 // infinities included. The checks run in one order and each names the least ID that breaks it, so
 // that the order of the input's lists does not change the error either.
 //
-// Choose runs the rule for the skills with a verdict: on the skill chosen on the map, or in "My
-// subjects" — consolidation in the module of the last closed attempt, then the modules in turn —,
-// then a second pass with the tasks on pause, and gives a task with the code of its branch or
-// nothing to give. The open run, the repetition, the author's order and the lessons are still to
-// come (RUN.md, T19 and T20): an input with an open run gives nothing to give, since branch 1,
-// which comes first for it, is not there yet.
+// Choose runs the rule: the lesson of an open run; then on the skill chosen on the map, or in "My
+// subjects" — consolidation in the module of the last closed attempt, then the modules in turn,
+// with the lessons on the new and the author's order —; then a second pass with the tasks on
+// pause, and gives a lesson or a task with the code of its branch, or nothing to give. The
+// repetition is still to come (RUN.md, T20).
 func Choose(in Input) (Choice, error) {
 	pr, err := prepare(in)
 	if err != nil {
@@ -44,11 +43,66 @@ type prepared struct {
 	open []string // the open skills of the modules of the engine, by full ID, sorted
 	// The tasks whose solution went to the device, by ID, sorted.
 	solutions []TaskSolution
+	mods      []moduleSkills // what the lessons read of each module's graph, by place
+	// The lessons with a run that ended "passed", and those with an open run, sorted.
+	passed, running []string
+	// The skills a run that ended "passed" names, and those primary in a task of an attempt closed
+	// by "Done", sorted: a prerequisite with a rubric or none is counted by them.
+	passedSkills, doneSkills []string
+	// The skills handed out before, by the summary, sorted; and the latest "Done" of each task with a
+	// rubric, by task, sorted.
+	issued []string
+	done   []RubricDone
 }
 
-// ready puts what the rule reads beside the input: the P of the candidates, and the open skills.
+// ready puts what the rule reads beside the input: the P of the candidates, what the lessons read
+// of the graphs and the runs, and the open skills.
 func ready(in Input, p [][]learnermodel.TaskReadout) prepared {
 	pr := prepared{in: in, p: p, solutions: sortedBy(in.Summary.Tasks, func(t TaskSolution) string { return t.Task })}
+	for _, m := range in.Modules {
+		pr.mods = append(pr.mods, newModuleSkills(m.Graph))
+	}
+	for _, r := range in.Runs {
+		switch r.End {
+		case RunPassed:
+			pr.passed = append(pr.passed, r.Lesson)
+			pr.passedSkills = append(pr.passedSkills, r.Skills...)
+		case RunOpen:
+			pr.running = append(pr.running, r.Lesson)
+		}
+	}
+	// The task of an attempt closed by "Done" is read by its description in a pool or a lesson of
+	// the modules of the engine: one found in neither counts for nothing.
+	for _, d := range sortedBy(in.RubricDone, func(d RubricDone) string { return d.Task }) {
+		if k := len(pr.done) - 1; k >= 0 && pr.done[k].Task == d.Task {
+			pr.done[k].At = max(pr.done[k].At, d.At)
+		} else {
+			pr.done = append(pr.done, d)
+		}
+	}
+	countDone := func(t learnermodel.Task) {
+		if pr.isDone(t.ID) {
+			pr.doneSkills = append(pr.doneSkills, primaries(t)...)
+		}
+	}
+	for _, m := range in.Modules {
+		for _, c := range m.Pool {
+			countDone(c.Task)
+		}
+		for _, l := range m.Lessons {
+			for _, t := range l.Tasks {
+				countDone(t)
+			}
+		}
+	}
+	for _, s := range in.Summary.Skills {
+		if s.Issued {
+			pr.issued = append(pr.issued, s.Skill)
+		}
+	}
+	for _, s := range []*[]string{&pr.passed, &pr.running, &pr.passedSkills, &pr.doneSkills, &pr.issued} {
+		*s = slices.Compact(sortedCopy(*s))
+	}
 	pr.open = pr.openSkills()
 	return pr
 }

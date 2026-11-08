@@ -46,6 +46,9 @@ type skillView struct {
 	// ladder of branch 9.
 	lowestBand    int32
 	hasLowestBand bool
+	// Not handed out, and taught by a lesson of the author's order not passed: it comes by that
+	// lesson, and branches 6–9 do not take it (the amendment of 2026-11-08 to R05).
+	awaitsLesson bool
 }
 
 // paused is a skill open, with evidence, and out of reach.
@@ -91,6 +94,7 @@ func (pr prepared) skills(i int, second bool) []skillView {
 		}
 		v.reachable = v.open && len(v.candidates) > 0 && (withinReach || backFromPause(issue))
 		v.masteredForQueue = v.read.Mastered && (!v.hasRecommended || v.recommended.band <= v.read.MasteryBand.Place)
+		v.awaitsLesson = !v.issued && pr.awaitsLesson(i, s.ID)
 		out = append(out, v)
 	}
 	return out
@@ -104,29 +108,43 @@ func (pr prepared) skills(i int, second bool) []skillView {
 // 2026-11-07 to R03) — on the map it is, after all the others (the amendment of 2026-11-07 to
 // R04).
 func (pr prepared) candidates(pool []poolTask, skill string, frequent []string, second, onMap bool) (cands, all []candidate) {
-	in := pr.in
 	for _, t := range pool {
 		cd, ok := candidateOf(t, skill, frequent)
 		if !ok || !onMap && !othersOpen(t.primaries, skill, pr.isOpen) {
 			continue
 		}
 		all = append(all, cd)
-		if !t.c.Task.Template {
-			if sent, ok := lookup(pr.solutions, func(t TaskSolution) string { return t.Task }, cd.id); ok {
-				cd.seen, cd.seenAt = true, sent.SolutionSentAt
-			}
+		sp, ok := pr.pause(t.c.Task, second, onMap)
+		if !ok {
+			continue
 		}
-		if cd.seen && pausedSince(in.Time, cd.seenAt) {
-			last := in.HasLast && in.Last.Task == cd.id
-			if !second || last && !onMap {
-				continue
-			}
-			cd.last = last
-		}
+		cd.seen, cd.seenAt, cd.last = sp.seen, sp.seenAt, sp.last
 		cands = append(cands, cd)
 	}
 	slices.SortFunc(cands, byCorridor)
 	return cands, all
+}
+
+// pause reads the pause before a task with a seen solution in the pass: whether the task is a
+// candidate in it, and, as a candidate with its ID alone, how bySolution orders it. A task whose
+// solution went to the device less than 24 hours ago is none in the first pass; in the second it
+// is, but the task of the last closed attempt is not — on the map it is, after all the others.
+func (pr prepared) pause(t learnermodel.Task, second, onMap bool) (candidate, bool) {
+	in := pr.in
+	cd := candidate{id: t.ID, band: t.Band.Place}
+	if !t.Template {
+		if sent, ok := lookup(pr.solutions, func(t TaskSolution) string { return t.Task }, t.ID); ok {
+			cd.seen, cd.seenAt = true, sent.SolutionSentAt
+		}
+	}
+	if cd.seen && pausedSince(in.Time, cd.seenAt) {
+		last := in.HasLast && in.Last.Task == cd.id
+		if !second || last && !onMap {
+			return cd, false
+		}
+		cd.last = last
+	}
+	return cd, true
 }
 
 // poolOf reads the tasks of the pool of the module at place i.
