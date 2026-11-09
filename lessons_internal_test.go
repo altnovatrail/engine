@@ -515,6 +515,67 @@ func TestMapLesson(t *testing.T) {
 	w.wantChoice(lessonChoice(lid(olympiadMath, "pigeonhole-basic-grades-1-2"), ReasonSkillChosen))
 }
 
+// The skill chosen on the map with a verdict and no task on it: its lesson not passed of verdicts
+// alone, then, on the second pass, its lesson of the author's order, then the lesson whose latest
+// run "passed" ended longest ago — never nothing while a lesson teaches it (R104 spec; the
+// amendment of 2026-11-09 to R04).
+func TestMapLessonAgain(t *testing.T) {
+	module := "example/map-again"
+	band := learnermodel.BandRef{Place: 1, ID: "b"}
+	v, r := sid(module, "v"), sid(module, "r")
+	m := exampleModule(t, module, []learnermodel.Band{{Place: 1, ID: "b"}}, []learnermodel.Skill{
+		{ID: v, Assessability: learnermodel.AssessabilityVerdict, Tier: 1},
+		{ID: r, Assessability: learnermodel.AssessabilityRubric, Tier: 1},
+	}, []learnermodel.Task{exampleTask(module, "r-1", band, 1, r)})
+	plain, mixed := lessonOf(m, "plain", "", v), lessonOf(m, "mixed", "", v, r)
+	m.Lessons = []Lesson{mixed, plain}
+	w := newMany(t, m)
+	w.in.MapSkill = v
+	w.wantChoice(lessonChoice(plain.ID, ReasonSkillChosen))
+	w.passRun(plain, 100)
+	w.wantChoice(lessonChoice(mixed.ID, ReasonSkillChosen))
+	w.passRun(mixed, 200)
+	w.wantChoice(lessonChoice(plain.ID, ReasonSkillChosen))
+	w.passRun(plain, 300)
+	w.wantChoice(lessonChoice(mixed.ID, ReasonSkillChosen))
+
+	// A lesson with an open run is branch 1's, and the other is given again.
+	w.in.Runs = append(w.in.Runs, Run{Lesson: mixed.ID, Skills: mixed.Skills, End: RunOpen})
+	w.wantChoice(lessonChoice(mixed.ID, ReasonOpenRun))
+	// The run just left is not branch 1's, and its lesson is not given again by a new run.
+	w.in.Last, w.in.HasLast = Last{Task: tid(module, "r-1"), Left: true, InLesson: true, Lesson: mixed.ID}, true
+	w.wantChoice(lessonChoice(plain.ID, ReasonSkillChosen))
+	w.in.Last, w.in.HasLast = Last{}, false
+	w.in.Modules[0].Lessons = []Lesson{plain}
+	w.in.Runs = slices.DeleteFunc(w.in.Runs, func(run Run) bool { return run.Lesson == mixed.ID })
+	w.wantChoice(lessonChoice(plain.ID, ReasonSkillChosen))
+
+	// With no lesson on it, nothing.
+	w.in.Modules[0].Lessons = nil
+	w.wantChoice(Choice{Kind: ChoiceNothing})
+}
+
+// On the map, a skill with a verdict whose one task is on pause before a solution seen: a lesson
+// of the author's order on it comes on the first pass, before the task; the task on pause comes on
+// the second, before a lesson passed.
+func TestMapLessonAgainPause(t *testing.T) {
+	module := "example/map-pause"
+	band := learnermodel.BandRef{Place: 1, ID: "b"}
+	v, r := sid(module, "v"), sid(module, "r")
+	m := exampleModule(t, module, []learnermodel.Band{{Place: 1, ID: "b"}}, []learnermodel.Skill{
+		{ID: v, Assessability: learnermodel.AssessabilityVerdict, Tier: 1},
+		{ID: r, Assessability: learnermodel.AssessabilityRubric, Tier: 1},
+	}, []learnermodel.Task{exampleTask(module, "v-1", band, 1, v)})
+	mixed := lessonOf(m, "mixed", "", v, r)
+	m.Lessons = []Lesson{mixed}
+	w := newMany(t, m)
+	w.in.MapSkill = v
+	w.solutions(TaskSolution{tid(module, "v-1"), exampleTime - 100})
+	w.wantChoice(lessonChoice(mixed.ID, ReasonSkillChosen))
+	w.passRun(mixed, exampleTime-50)
+	w.wantChoice(taskChoice(tid(module, "v-1"), ReasonSkillChosen))
+}
+
 // The order of the lessons: one after another by the graph, transitively through the module's
 // prerequisites, but not after a lesson of one of its own skills; an anchor skill orders nothing.
 func TestLessonAfter(t *testing.T) {
@@ -702,5 +763,78 @@ func TestNothingToTeachRubricAndPassed(t *testing.T) {
 	w.in.Runs = []Run{{Lesson: lid(module, "v"), Skills: []string{v}, End: RunPassed, EndedAt: 10}}
 	if !w.open(d) {
 		t.Errorf("%s is held by %s, whose lesson is passed and whose one task has %s closed, want it open", d, v, d)
+	}
+}
+
+// A prerequisite with none and no lesson is taught by a task with a rubric where it is primary,
+// as that task's "Done" counts it: it holds until the "Done" (the amendment of 2026-11-09 to R05).
+func TestNothingToTeachNoneByRubricTask(t *testing.T) {
+	module := "example/teach-none"
+	band := learnermodel.BandRef{Place: 1, ID: "b"}
+	reading, essay, after := sid(module, "reading"), sid(module, "essay"), sid(module, "after")
+	m := exampleModule(t, module, []learnermodel.Band{{Place: 1, ID: "b"}}, []learnermodel.Skill{
+		{ID: reading, Assessability: learnermodel.AssessabilityNone, Tier: 1},
+		{ID: essay, Assessability: learnermodel.AssessabilityRubric, Tier: 1},
+		{ID: after, Assessability: learnermodel.AssessabilityVerdict, Prerequisites: []string{reading}, Tier: 2},
+	}, []learnermodel.Task{exampleTask(module, "essay-reading", band, 1, essay, reading), exampleTask(module, "after-1", band, 1, after)})
+	w := newMany(t, m)
+	if w.open(after) {
+		t.Errorf("%s is open, though a task with a rubric teaches %s, want it held", after, reading)
+	}
+	w.in.RubricDone = []RubricDone{{Task: tid(module, "essay-reading"), At: 10}}
+	if !w.open(after) {
+		t.Errorf("%s is held after the task with a rubric on %s closed by Done, want it open", after, reading)
+	}
+
+	// A task with no rubric teaches the skill with none nothing, and the prerequisite holds nothing.
+	w.in.RubricDone = nil
+	w.in.Modules[0].Graph = exampleModule(t, module, []learnermodel.Band{{Place: 1, ID: "b"}}, []learnermodel.Skill{
+		{ID: reading, Assessability: learnermodel.AssessabilityNone, Tier: 1},
+		{ID: essay, Assessability: learnermodel.AssessabilityVerdict, Tier: 1},
+		{ID: after, Assessability: learnermodel.AssessabilityVerdict, Prerequisites: []string{reading}, Tier: 2},
+	}, []learnermodel.Task{exampleTask(module, "essay-reading", band, 1, essay, reading), exampleTask(module, "after-1", band, 1, after)}).Graph
+	if !w.open(after) {
+		t.Errorf("%s is held by %s, whose one task has no rubric, want it open", after, reading)
+	}
+}
+
+// A task with a rubric teaches a prerequisite with a rubric or none only when branch 6a could give
+// it: one where a skill with a verdict after the prerequisite is primary too teaches nothing, or
+// both would wait on each other and the rule give nothing; nor does one in a lesson of its module,
+// which comes with its lesson (the amendment of 2026-11-09 to R05).
+func TestNothingToTeachRubricTaskGiven(t *testing.T) {
+	module := "example/teach-given"
+	band := learnermodel.BandRef{Place: 1, ID: "b"}
+	reading, essay, after, later := sid(module, "reading"), sid(module, "essay"), sid(module, "after"), sid(module, "later")
+	build := func(tasks ...learnermodel.Task) Module {
+		return exampleModule(t, module, []learnermodel.Band{{Place: 1, ID: "b"}}, []learnermodel.Skill{
+			{ID: reading, Assessability: learnermodel.AssessabilityNone, Tier: 1},
+			{ID: essay, Assessability: learnermodel.AssessabilityRubric, Tier: 1},
+			{ID: after, Assessability: learnermodel.AssessabilityVerdict, Prerequisites: []string{reading}, Tier: 2},
+			{ID: later, Assessability: learnermodel.AssessabilityVerdict, Prerequisites: []string{essay}, Tier: 2},
+		}, tasks)
+	}
+
+	// One task on reading, essay and after: it teaches neither prerequisite, and it is given.
+	w := newMany(t, build(exampleTask(module, "all", band, 1, essay, reading, after), exampleTask(module, "later-1", band, 1, later)))
+	for _, id := range []string{after, later} {
+		if !w.open(id) {
+			t.Errorf("%s is held by a prerequisite whose one task needs it open, want it open", id)
+		}
+	}
+	if got := ready(w.in, w.p).choose(); got.Kind == ChoiceNothing {
+		t.Errorf("chose nothing, want the task or one on %s", later)
+	}
+
+	// A task on essay and reading in a lesson of essay that is passed teaches reading nothing.
+	m := build(exampleTask(module, "essay-reading", band, 1, essay, reading), exampleTask(module, "after-1", band, 1, after))
+	m.Lessons = []Lesson{lessonOf(m, "essay", "essay-", essay)}
+	w = newMany(t, m)
+	if w.open(after) {
+		t.Errorf("%s is open while the lesson with the task on %s is not passed, want it held", after, reading)
+	}
+	w.passRun(m.Lessons[0], 10)
+	if !w.open(after) {
+		t.Errorf("%s is held by %s, whose one task is in a lesson passed, want it open", after, reading)
 	}
 }

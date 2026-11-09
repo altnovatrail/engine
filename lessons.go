@@ -308,6 +308,47 @@ func (pr prepared) authorOrder(i int, second bool) (Choice, bool) {
 	return Choice{Kind: ChoiceTask, ID: t.cd.id, Reason: ReasonAuthorOrder}, true
 }
 
+// lessonsOn splits the lessons of the module at place i that teach a skill into those not passed
+// and those passed, leaving out a lesson with an open run, which is branch 1's.
+func (pr prepared) lessonsOn(i int, skill string) (fresh, passed []lessonAt) {
+	for _, l := range pr.in.Modules[i].Lessons {
+		if !slices.Contains(l.Skills, skill) || pr.isRunning(l.ID) {
+			continue
+		}
+		if pr.isPassed(l.ID) {
+			passed = append(passed, lessonAt{i, l.ID, l.Skills})
+		} else {
+			fresh = append(fresh, lessonAt{i, l.ID, l.Skills})
+		}
+	}
+	return fresh, passed
+}
+
+// passedLongestAgo gives, of lessons passed, the one whose latest run "passed" ended longest ago,
+// then by ID, for a new run.
+func (pr prepared) passedLongestAgo(passed []lessonAt) lessonAt {
+	return slices.MinFunc(passed, func(a, b lessonAt) int {
+		return cmp.Or(cmp.Compare(pr.lastPassed(a.id), pr.lastPassed(b.id)), strings.Compare(a.id, b.id))
+	})
+}
+
+// mapLessonAgain is the last step of the skill chosen on the map with a verdict, in the module at
+// place i, when no lesson on the skill and no task on it is left: a lesson not passed that teaches
+// it — of the author's order, or of another band than the skill's recommended task on pause —, in
+// the order of the lessons; and on the second pass, after the tasks on pause, the lesson passed
+// longest ago, by a new run, as mapAuthor gives one. So the learner's choice gives something while
+// the lessons hold one (R104 spec; the amendment of 2026-11-09 to R04).
+func (pr prepared) mapLessonAgain(i int, skill string, second bool) (Choice, bool) {
+	fresh, passed := pr.lessonsOn(i, skill)
+	if l, ok := pr.firstLesson(fresh); ok {
+		return Choice{Kind: ChoiceLesson, ID: l.id, Reason: ReasonSkillChosen}, true
+	}
+	if !second || len(passed) == 0 {
+		return Choice{}, false
+	}
+	return Choice{Kind: ChoiceLesson, ID: pr.passedLongestAgo(passed).id, Reason: ReasonSkillChosen}, true
+}
+
 // verdictsOpen tells whether every primary skill with a verdict of a task is open: otherwise its
 // evidence would open a closed skill past its prerequisites, as for a candidate.
 func (pr prepared) verdictsOpen(ms moduleSkills, t learnermodel.Task) bool {
@@ -323,17 +364,7 @@ func (pr prepared) verdictsOpen(ms moduleSkills, t learnermodel.Task) bool {
 // open run is branch 1's.
 func (pr prepared) mapAuthor(i int, skill string, second bool) (Choice, bool) {
 	m := pr.in.Modules[i]
-	var fresh, passed []lessonAt
-	for _, l := range m.Lessons {
-		if !slices.Contains(l.Skills, skill) || pr.isRunning(l.ID) {
-			continue
-		}
-		if pr.isPassed(l.ID) {
-			passed = append(passed, lessonAt{i, l.ID, l.Skills})
-		} else {
-			fresh = append(fresh, lessonAt{i, l.ID, l.Skills})
-		}
-	}
+	fresh, passed := pr.lessonsOn(i, skill)
 	lesson := func(id string) (Choice, bool) {
 		return Choice{Kind: ChoiceLesson, ID: id, Reason: ReasonSkillChosen}, true
 	}
@@ -372,10 +403,7 @@ func (pr prepared) mapAuthor(i int, skill string, second bool) (Choice, bool) {
 		return task(outside), true
 	}
 	if len(passed) > 0 {
-		l := slices.MinFunc(passed, func(a, b lessonAt) int {
-			return cmp.Or(cmp.Compare(pr.lastPassed(a.id), pr.lastPassed(b.id)), strings.Compare(a.id, b.id))
-		})
-		return lesson(l.id)
+		return lesson(pr.passedLongestAgo(passed).id)
 	}
 	if len(all) > 0 {
 		return task(all), true
