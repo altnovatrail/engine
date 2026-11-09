@@ -19,7 +19,7 @@ A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.9.16), a
 
 ## Status
 
-Detailing is done: the first epic, archived in [docs/plan/E1.md](docs/plan/E1.md), decided everything the component's card left open, and spec has recorded it. The second epic of [RUN.md](RUN.md), E2, built the first version of the rule, which starts from the one by which MathTrail's standalone chose the next task: lessons and tasks with their reason codes over several modules, with golden vectors of the choice on the graphs of the first slice, and the same bits on every build. It came out as `v0.1.0`, the baseline before sim's first tag, and its gate now holds every change after it. The next epic, the first candidates of the rule judged by sim, waits for the author's choice in table 2 of RUN.md.
+Detailing is done: the first epic, archived in [docs/plan/E1.md](docs/plan/E1.md), decided everything the component's card left open, and spec has recorded it. The second epic, E2, archived in [docs/plan/E2.md](docs/plan/E2.md), built the first version of the rule, which starts from the one by which MathTrail's standalone chose the next task: lessons and tasks with their reason codes over several modules, with golden vectors of the choice on the graphs of the first slice, and the same bits on every build. It came out as `v0.1.0`, the baseline before sim's first tag, and its gate now holds every change after it. The current epic of [RUN.md](RUN.md), E3, works on the first candidates of the rule, which sim judges: why the base gives tasks outside the corridor of success, and variants that close the gap.
 
 ## The gate
 
