@@ -32,16 +32,17 @@ ci-lint:
         exit 1
     fi
     go vet ./...
-    # gopls comes into the devcontainer image from its lock file, .devcontainer/gopls/, and the
-    # image's build stops when the gopls it built does not name GOPLS_VERSION (R13). CI never
-    # builds that stage, so the two are held to each other here: a pull request that raises one
-    # alone, or a move to a new tag of spec that drops the step from the Dockerfile, fails here.
+    # gopls comes into the devcontainer image from its lock file, .devcontainer/gopls/, which the
+    # go kind of spec's repo-template gives (R16; R102 spec), and the image's build stops when the
+    # gopls it built does not name GOPLS_VERSION. CI never builds that stage, so the two are held
+    # to each other here: a pull request that raises one alone, or a move to a new tag of spec
+    # that drops the step from the Dockerfile, fails here.
     lock="$(sed -n 's/^[[:space:]]*\(require[[:space:]]\{1,\}\)\{0,1\}golang\.org\/x\/tools\/gopls[[:space:]]\{1,\}v\([^[:space:]]\{1,\}\).*$/\2/p' \
         .devcontainer/gopls/go.mod)"
     arg="$(sed -n 's/^ARG GOPLS_VERSION=\(.*\)$/\1/p' .devcontainer/Dockerfile)"
     if [ -z "$lock" ] || [ "$arg" != "$lock" ]; then
         echo "ci-lint: .devcontainer/gopls/go.mod names gopls ${lock:-at no version} and" \
-            ".devcontainer/Dockerfile has GOPLS_VERSION ${arg:-unset}; raise them together (R13)" >&2
+            ".devcontainer/Dockerfile has GOPLS_VERSION ${arg:-unset}; raise them together (R16)" >&2
         exit 1
     fi
     # The release's file is the code, the same bytes on every build (R15).

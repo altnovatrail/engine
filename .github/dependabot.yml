@@ -23,8 +23,9 @@ updates:
   # the consumers of spec leave its module out (R64 spec). The ecosystem stays all the same, as in
   # every Go repository, with nothing to raise. Go itself, in the Dockerfile, and the tools the
   # recipes run by `go run` at an exact version are not among them: those are raised by hand.
-  # Neither is .devcontainer/gopls/, the lock file of gopls: its version goes up together with
-  # GOPLS_VERSION in the Dockerfile, by hand (R13 in docs/decisions.md).
+  # Neither is .devcontainer/gopls/, the lock file of gopls: it comes with spec's repo-template,
+  # and its version goes up with GOPLS_VERSION in the Dockerfile by a move to a tag of spec
+  # (R16 in docs/decisions.md; R102 spec).
   - package-ecosystem: gomod
     directory: /
     schedule:
