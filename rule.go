@@ -270,9 +270,9 @@ func byIssue(a, b skillView) int {
 
 // onMap is branch 2, the skill chosen on the map (R04), with the code REASON_CODE_SKILL_CHOSEN,
 // whatever its state — closed, on pause, in the trial series. A skill with a verdict gets the
-// lesson on it when there is one, else a task on it among all its tasks; one with a rubric or none
-// goes by mapAuthor (docs/architecture.md, section 3.3). A skill outside the modules of the engine
-// gives nothing.
+// lesson on it when there is one, else a task on it among all its tasks, and with neither, another
+// lesson that teaches it, by mapLessonAgain; one with a rubric or none goes by mapAuthor
+// (docs/architecture.md, section 3.3). A skill outside the modules of the engine gives nothing.
 func (pr prepared) onMap(second bool) (Choice, bool) {
 	skill := pr.in.MapSkill
 	for i, m := range pr.in.Modules {
@@ -293,10 +293,10 @@ func (pr prepared) onMap(second bool) (Choice, bool) {
 		if id, ok := pr.lessonOnSkill(i, skill, rec, len(all) > 0, true); ok {
 			return Choice{Kind: ChoiceLesson, ID: id, Reason: ReasonSkillChosen}, true
 		}
-		if len(cands) == 0 {
-			return Choice{}, false
+		if len(cands) > 0 {
+			return Choice{Kind: ChoiceTask, ID: cands[0].id, Reason: ReasonSkillChosen}, true
 		}
-		return Choice{Kind: ChoiceTask, ID: cands[0].id, Reason: ReasonSkillChosen}, true
+		return pr.mapLessonAgain(i, skill, second)
 	}
 	return Choice{}, false
 }

@@ -35,8 +35,8 @@ type node struct {
 // none when a lesson that teaches it is passed or a task where it is primary was closed by "Done"
 // (docs/architecture.md, section 3.3). One with nothing to teach it holds nothing either, by the
 // same one step: one with a verdict has no lesson and no task as the teacher of an anchor has none,
-// and one with a rubric or none has no lesson and no task of the pool where it is primary (the
-// amendment of 2026-11-08 to R05).
+// and one with a rubric or none has no lesson and no task with a rubric of the pool, where it is
+// primary, that the rule could give (the amendments of 2026-11-08 and 2026-11-09 to R05).
 func (pr prepared) openSkills() []string {
 	in := pr.in
 	var nodes []node
@@ -137,7 +137,9 @@ func (pr prepared) openSkills() []string {
 	// taught at, as learner-model reads a teacher — and a lesson not passed names it, or a task the
 	// rule could give it, an item with a verdict where it is primary, has every other primary skill
 	// open; a skill with a rubric or none, when a lesson not passed names it or a task with a rubric
-	// of the pool has it primary. A lesson passed teaches nothing more: no branch gives it again.
+	// of the pool teaches it — has it primary, outside the lessons of its module or in one not
+	// passed, with every primary skill with a verdict open. A lesson passed teaches nothing more: no
+	// branch of "My subjects" gives it again.
 	first := openWith(nil)
 	isOpen := func(id string) bool {
 		_, found := slices.BinarySearch(first, id)
@@ -164,7 +166,22 @@ func (pr prepared) openSkills() []string {
 		}
 		can[k] = slices.ContainsFunc(pools[n.module], func(t poolTask) bool {
 			if !verdict {
-				return slices.Contains(pr.mods[n.module].rubricOf(t.c.Task), n.skill.ID)
+				// A task with a rubric teaches a skill with a rubric primary in its item with a
+				// rubric, and a skill with none primary in it, as its "Done" counts either; and only
+				// when the rule could give it: outside the lessons of its module, by branch 6a, or in
+				// a lesson of it not passed, by that lesson — one passed is not given again —, and
+				// with every primary skill with a verdict open, or the prerequisite and a skill after
+				// it, primary in one task, would wait on each other (the amendment of 2026-11-09 to
+				// R05).
+				ms := pr.mods[n.module]
+				rubric := ms.rubricOf(t.c.Task)
+				teaches := slices.Contains(rubric, n.skill.ID) ||
+					n.skill.Assessability == learnermodel.AssessabilityNone && len(rubric) > 0 && slices.Contains(t.primaries, n.skill.ID)
+				lessons := in.Modules[n.module].Lessons
+				given := !inLessons(lessons, t.c.Task.ID) || slices.ContainsFunc(lessons, func(l Lesson) bool {
+					return !pr.isPassed(l.ID) && slices.ContainsFunc(l.Tasks, func(lt learnermodel.Task) bool { return lt.ID == t.c.Task.ID })
+				})
+				return teaches && given && !slices.ContainsFunc(t.primaries, func(s string) bool { return ms.verdict(s) && !isOpen(s) })
 			}
 			_, ok := candidateOf(t, n.skill.ID, nil)
 			return ok && othersOpen(t.primaries, n.skill.ID, isOpen)
