@@ -141,6 +141,85 @@ rules:
 # Run test-targets, fma-diff and rules.
 same-bits: test-targets fma-diff rules
 
+# The gate of sim (R17; R103 spec): sim's own recipe gate, in its bands mode, on this working tree
+# in place of engine — GATE_ENGINE —, and on learner-model at the commit sim's gate.json names. sim
+# is taken by the tag and the SHA of its commit that the job gate of ci.yml names, SIM_TAG and
+# SIM_COMMIT, once each, so that here and in CI it is the same sim with the same bands: from
+# SIM_DIR when it is set, as the job sets it to its checkout of sim, or else fetched once into the
+# user's cache, by the SHA. Either way the folder must be at that commit with nothing changed in it,
+# and the tag must still be on it. Its status is sim's: 0 green, 1 red or refused, 2 a call it does
+# not know. CI runs it in the toolchain stage of sim's devcontainer at that tag; here it runs in
+# this repository's, which has the same Go today but is not held to it. sim names engine by its
+# HEAD, so a working tree with changes is run but named so on the way.
+# Run the gate of sim on this working tree, as "Gate" does.
+gate:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # A value of the job's env, bare or in quotes, as YAML takes either.
+    pinned() {
+        local values
+        values="$(sed -n "s/^[[:space:]]*$1:[[:space:]]*[\"']\{0,1\}\([^[:space:]#\"']\{1,\}\)[\"']\{0,1\}[[:space:]]*\(#.*\)\{0,1\}$/\1/p" .github/workflows/ci.yml)"
+        if [ "$(printf '%s' "$values" | grep -c .)" != 1 ]; then
+            echo "gate: .github/workflows/ci.yml must name $1 once; it names it ${values:+as }$(printf '%s' "$values" | tr '\n' ' ')" >&2
+            exit 1
+        fi
+        printf '%s' "$values"
+    }
+    tag="$(pinned SIM_TAG)"
+    commit="$(pinned SIM_COMMIT)"
+    if ! printf '%s' "$commit" | grep -qx '[0-9a-f]\{40\}'; then
+        echo "gate: SIM_COMMIT in .github/workflows/ci.yml is $commit, not the SHA of a commit" >&2
+        exit 1
+    fi
+    repo=https://github.com/altnovatrail/sim
+    dir="${SIM_DIR:-}"
+    if [ -z "$dir" ]; then
+        dir="${XDG_CACHE_HOME:-$HOME/.cache}/engine-sim/$commit"
+        # The mark of a whole checkout lies in .git, out of sim's working tree. Each run fills a
+        # folder of its own, so that two runs at once do not undo each other: the first to finish
+        # puts its checkout in place, and the other drops its own.
+        if [ ! -f "$dir/.git/engine-complete" ]; then
+            mkdir -p "$(dirname "$dir")"
+            partial="$(mktemp -d "$dir.partial.XXXXXX")"
+            git -C "$partial" init --quiet
+            if ! git -C "$partial" fetch --quiet --depth 1 "$repo" "$commit"; then
+                rm -rf "$partial"
+                echo "gate: could not fetch $commit, which .github/workflows/ci.yml names, from $repo: git says why above" >&2
+                exit 1
+            fi
+            git -C "$partial" -c advice.detachedHead=false checkout --quiet FETCH_HEAD
+            touch "$partial/.git/engine-complete"
+            if [ -f "$dir/.git/engine-complete" ]; then
+                rm -rf "$partial"
+            else
+                rm -rf "$dir"
+                mv "$partial" "$dir"
+            fi
+        fi
+    fi
+    head="$(git -C "$dir" rev-parse HEAD)"
+    if [ "$head" != "$commit" ]; then
+        echo "gate: sim in $dir is at $head, and .github/workflows/ci.yml names $commit" >&2
+        exit 1
+    fi
+    if [ -n "$(git -C "$dir" status --porcelain)" ]; then
+        echo "gate: sim in $dir has changes of its own, so its bands may not be those of $commit:" >&2
+        git -C "$dir" status --short >&2
+        exit 1
+    fi
+    # The commit of the tag: the peeled ref of an annotated tag, or else the tag's own.
+    tagged="$(git ls-remote "$repo" "refs/tags/$tag" "refs/tags/$tag^{}" \
+        | awk -v ref="refs/tags/$tag" '$2 == ref "^{}" { peeled = $1 } $2 == ref { own = $1 } END { print (peeled != "" ? peeled : own) }')"
+    if [ "$tagged" != "$commit" ]; then
+        echo "gate: sim $tag is on ${tagged:-no commit}, and .github/workflows/ci.yml names $commit" >&2
+        exit 1
+    fi
+    if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+        echo "gate: engine has changes not committed; sim runs them but names them $(git rev-parse --short HEAD)" >&2
+    fi
+    echo "gate: sim $tag at $commit, engine from $PWD" >&2
+    GATE_ENGINE="$PWD" {{ just_executable() }} -f "$dir/justfile" gate
+
 # The release's one file (R15): engine-<version>.tar.gz, a folder of that name with LICENSE,
 # go.mod, go.sum and the Go code of the module but its tests and testdata/ — what a consumer builds,
 # the paths that give a release. The tar is written the same by every build: names in order, no

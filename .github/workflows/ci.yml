@@ -68,3 +68,41 @@ jobs:
           docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp \
               --volume "$PWD:/work" --workdir /work \
               toolchain just ci-contracts
+
+  # The gate of sim (R17; R103 spec; repositories 4 spec): the choice of this commit on the bench,
+  # its numbers held to the bands of sim's gate.json, on every pull request and every commit of
+  # main. sim comes by the tag and the SHA of its commit below, which the recipe gate reads and
+  # checks against each other; learner-model, by the commit gate.json names. They are inputs of a
+  # checkout, not a uses, so Dependabot does not move them: a task of this repository raises them,
+  # by the order of releases of repositories 4 spec. The run goes in the toolchain stage of sim's
+  # devcontainer at that tag, built from its checkout, with no context.
+  gate:
+    name: Gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      SIM_TAG: v0.1.0
+      SIM_COMMIT: 09e5a84f8a26fedcf5c8996bf81bf29c616917a2
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          path: engine
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          repository: altnovatrail/sim
+          ref: ${{ env.SIM_COMMIT }}
+          path: sim
+
+      - name: Toolchain image
+        run: docker build --target toolchain --tag toolchain - < sim/.devcontainer/Dockerfile
+
+      - name: gate
+        run: |
+          set -o pipefail
+          docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp \
+              --env SIM_DIR=/work/sim \
+              --volume "$PWD:/work" --workdir /work/engine \
+              toolchain just gate | tee -a "$GITHUB_STEP_SUMMARY"

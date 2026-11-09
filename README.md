@@ -21,6 +21,10 @@ A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.9.16), a
 
 Detailing is done: the first epic, archived in [docs/plan/E1.md](docs/plan/E1.md), decided everything the component's card left open, and spec has recorded it. The current epic of [RUN.md](RUN.md), E2, has built the first version of the rule, which starts from the one by which MathTrail's standalone chose the next task: lessons and tasks with their reason codes over several modules, with golden vectors of the choice on the graphs of the first slice, and the same bits on every build. It came out as `v0.1.0`, the baseline before sim's first tag.
 
+## The gate
+
+Every change after the baseline passes the gate of [sim](https://github.com/altnovatrail/sim), the learner simulator: the job "Gate" of CI runs sim, by the tag and the SHA of its commit that `.github/workflows/ci.yml` names, on the commit's code in place of engine, and a pull request whose numbers leave their bands, or whose choices break an invariant, does not merge ([R17](docs/decisions.md)). `just gate` runs the same gate on the working tree, with sim fetched once into the user's cache.
+
 ## Releases
 
 Releases come out by themselves: each commit of `main` whose CI has passed and which changes the code, `go.mod`, `go.sum` or what builds the release's file gets the next patch of the line `0.1` — the first, `v0.1.0`, came out on 2026-11-08 — with its tag, by .github's shared release workflow ([R15](docs/decisions.md)). Nobody tags by hand, and a release is immutable.
