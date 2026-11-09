@@ -521,7 +521,10 @@
   - журнал — R16, R13 — «Заменено», следующий номер — R17; тег — в CLAUDE.md, README.md, начале RUN.md и строке статуса архитектуры; CLAUDE.md, Environment, — отличий контейнера нет; таблицы 3 и 4 — без В20 и Д8;
   - проверено в контейнере: `just ci-lint`, `just ci-contracts`, `go test ./...`, `go mod verify` в `.devcontainer/gopls` и `just -f spec/justfile docs-check-repo` — зелёные. Docker в контейнере нет: образ не собирался.
 - **Открыто:**
-  - ничего: Rebuild Container автор сделал 2026-11-09, `gopls version` в новом образе — `golang.org/x/tools/gopls v0.24.0`; push, pull request и мерж — исполнитель по поручению автора.
+  - ничего: Rebuild Container автор сделал 2026-11-09, `gopls version` в новом образе — `golang.org/x/tools/gopls v0.24.0`; #34 смержен по поручению автора, ниже.
+- **Сделано (2026-11-09), мерж и релиз:**
+  - все проверки #34 зелёные; мерж выпускал релиз — `justfile` и `Dockerfile` в `paths` (R15), — и автор, предупреждённый, велел мержить; #34 смержен, cc95af2;
+  - прогон «Release» выпустил `v0.1.1` на cc95af2 — неизменяемый релиз с `engine-v0.1.1.tar.gz` и бандлом; `gh release verify` и `release-verify` `spec` его принимают; `just release-files v0.1.1` из дерева тега даёт те же байты; прокси отдаёт модуль с Origin на cc95af2; код с `v0.1.0` не менялся (поправка 2026-11-09 к R16).
 
 #### T23. Гейт `sim` в CI
 
