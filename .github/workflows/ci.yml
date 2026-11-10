@@ -75,11 +75,13 @@ jobs:
   # checks against each other; learner-model, by the commit gate.json names. They are inputs of a
   # checkout, not a uses, so Dependabot does not move them: a task of this repository raises them,
   # by the order of releases of repositories 4 spec. The run goes in the toolchain stage of sim's
-  # devcontainer at that tag, built from its checkout, with no context.
+  # devcontainer at that tag, built from its checkout, with no context. The limit is a guard against
+  # a hung run, not sim's budget: the gate took 7 to 12 minutes on the runner (amendment of
+  # 2026-11-10 to R17, the second).
   gate:
     name: Gate
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     env:
       SIM_TAG: v0.1.2
       SIM_COMMIT: e61f90aa1bd894d1ce8f35547e0757d38f28c0b2
