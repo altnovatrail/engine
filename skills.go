@@ -133,7 +133,9 @@ func (pr prepared) candidates(pool []poolTask, skill string, frequent []string, 
 // pause reads the pause before a task with a seen solution in the pass: whether the task is a
 // candidate in it, and, as a candidate with its ID alone, how bySolution orders it. A task whose
 // solution went to the device less than 24 hours ago is none in the first pass; in the second it
-// is, but the task of the last closed attempt is not — on the map it is, after all the others.
+// is, but the task of the last closed attempt is not — on the map it is, after all the others. The
+// task of the last closed attempt whose solution went to the device is on pause however long ago
+// that was: R82 of spec keeps it from being the next task.
 func (pr prepared) pause(t learnermodel.Task, second, onMap bool) (candidate, bool) {
 	in := pr.in
 	cd := candidate{id: t.ID, band: t.Band.Place}
@@ -142,8 +144,8 @@ func (pr prepared) pause(t learnermodel.Task, second, onMap bool) (candidate, bo
 			cd.seen, cd.seenAt = true, sent.SolutionSentAt
 		}
 	}
-	if cd.seen && pausedSince(in.Time, cd.seenAt) {
-		last := in.HasLast && in.Last.Task == cd.id
+	last := in.HasLast && in.Last.Task == cd.id
+	if cd.seen && (pausedSince(in.Time, cd.seenAt) || last) {
 		if !second || last && !onMap {
 			return cd, false
 		}
