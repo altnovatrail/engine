@@ -295,7 +295,7 @@ func (pr prepared) authorOrder(i int, second bool) (Choice, bool) {
 		if len(rubric) == 0 || inLessons(m.Lessons, c.Task.ID) || pr.isDone(c.Task.ID) || waits(rubric, true) || !pr.verdictsOpen(ms, c.Task) {
 			continue
 		}
-		if cd, ok := pr.pause(c.Task, second, false); ok {
+		if cd, ok := pr.pause(&c.Task, second, false); ok {
 			ts = append(ts, rubricTask{cd, rank(rubric)})
 		}
 	}
@@ -382,7 +382,7 @@ func (pr prepared) mapAuthor(i int, skill string, second bool) (Choice, bool) {
 		if !slices.Contains(pr.mods[i].rubricOf(c.Task), skill) {
 			continue
 		}
-		cd, ok := pr.pause(c.Task, second, true)
+		cd, ok := pr.pause(&c.Task, second, true)
 		if !ok {
 			continue
 		}

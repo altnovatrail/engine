@@ -177,8 +177,12 @@ func ids(vs []skillView) []string {
 	return out
 }
 
+// candidateIDs gives the local IDs of the candidates in the order of the task on the skill: the
+// rule takes the first by byCorridor and never sorts them, so the test does.
 func candidateIDs(cs []candidate) []string {
 	var out []string
+	cs = slices.Clone(cs)
+	slices.SortFunc(cs, byCorridor)
 	for _, c := range cs {
 		out = append(out, c.id[strings.LastIndex(c.id, "/")+1:])
 	}

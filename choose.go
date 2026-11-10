@@ -35,12 +35,15 @@ func Choose(in Input) (Choice, error) {
 	return pr.choose(), nil
 }
 
-// prepared is the input once its checks have passed, with what the rule reads beside it: the P
-// of each candidate, by the module's place in Input.Modules and the candidate's in its pool.
+// prepared is the input once its checks have passed, with what the rule reads beside it.
 type prepared struct {
-	in   Input
-	p    [][]learnermodel.TaskReadout
-	open []string // the open skills of the modules of the engine, by full ID, sorted
+	in Input
+	// The tasks of each module's pool with their P, by the module's place in Input.Modules and the
+	// task's in its pool, read once a choice; and the skills primary in them, with the places of
+	// their tasks.
+	pools   [][]poolTask
+	bySkill [][]skillTasks
+	open    []string // the open skills of the modules of the engine, by full ID, sorted
 	// The tasks whose solution went to the device, by ID, sorted.
 	solutions []TaskSolution
 	mods      []moduleSkills // what the lessons read of each module's graph, by place
@@ -55,12 +58,27 @@ type prepared struct {
 	done   []RubricDone
 }
 
-// ready puts what the rule reads beside the input: the P of the candidates, what the lessons read
-// of the graphs and the runs, and the open skills.
+// ready puts what the rule reads beside the input: the P of the candidates, the tasks of the pools
+// by skill, what the lessons read of the graphs and the runs, and the open skills.
 func ready(in Input, p [][]learnermodel.TaskReadout) prepared {
-	pr := prepared{in: in, p: p, solutions: sortedBy(in.Summary.Tasks, func(t TaskSolution) string { return t.Task })}
-	for _, m := range in.Modules {
+	return readyBy(in, p, tasksByID(in))
+}
+
+// readyBy is ready with the tasks of the pools by ID, which prepare has already.
+func readyBy(in Input, p [][]learnermodel.TaskReadout, tasks []at) prepared {
+	pr := prepared{in: in, solutions: sortedBy(in.Summary.Tasks, func(t TaskSolution) string { return t.Task })}
+	order := make([][]int, len(in.Modules)) // the places of each pool's tasks by ID
+	for _, a := range tasks {
+		order[a.module] = append(order[a.module], a.item)
+	}
+	for i, m := range in.Modules {
 		pr.mods = append(pr.mods, newModuleSkills(m.Graph))
+		pool := make([]poolTask, len(m.Pool))
+		for j := range m.Pool {
+			pool[j] = newPoolTask(&m.Pool[j], p[i][j])
+		}
+		pr.pools = append(pr.pools, pool)
+		pr.bySkill = append(pr.bySkill, bySkill(pool, order[i]))
 	}
 	for _, r := range in.Runs {
 		switch r.End {
@@ -80,18 +98,17 @@ func ready(in Input, p [][]learnermodel.TaskReadout) prepared {
 			pr.done = append(pr.done, d)
 		}
 	}
-	countDone := func(t learnermodel.Task) {
-		if pr.isDone(t.ID) {
-			pr.doneSkills = append(pr.doneSkills, primaries(t)...)
-		}
-	}
-	for _, m := range in.Modules {
-		for _, c := range m.Pool {
-			countDone(c.Task)
+	for i, m := range in.Modules {
+		for _, t := range pr.pools[i] {
+			if pr.isDone(t.c.Task.ID) {
+				pr.doneSkills = append(pr.doneSkills, t.primaries...)
+			}
 		}
 		for _, l := range m.Lessons {
 			for _, t := range l.Tasks {
-				countDone(t)
+				if pr.isDone(t.ID) {
+					pr.doneSkills = append(pr.doneSkills, primaries(t)...)
+				}
 			}
 		}
 	}
@@ -114,40 +131,46 @@ func (pr prepared) isOpen(id string) bool {
 }
 
 func prepare(in Input) (prepared, error) {
+	// The tasks of the pools by ID, once: three checks and the reading of P go in that order.
+	tasks := tasksByID(in)
+	byTasks := func(check func(Input, []at) error) func(Input) error {
+		return func(in Input) error { return check(in, tasks) }
+	}
 	for _, check := range []func(Input) error{
-		checkIDs, checkOwnModule, checkLessonSkills, checkTraps, checkRuns, checkSummary, checkResults, checkReadout, checkAnchors,
+		byTasks(checkIDs), byTasks(checkOwnModule), checkLessonSkills, byTasks(checkTraps), checkRuns, checkSummary, checkResults, checkReadout, checkAnchors,
 	} {
 		if err := check(in); err != nil {
 			return prepared{}, err
 		}
 	}
-	p, err := probabilities(in)
+	p, err := probabilities(in, tasks)
 	if err != nil {
 		return prepared{}, err
 	}
-	return ready(in, p), nil
+	return readyBy(in, p, tasks), nil
 }
 
 // checkIDs refuses a module, a task of the pool or a lesson twice by its full ID, across the
-// modules.
-func checkIDs(in Input) error {
-	var modules, tasks, lessons []string
+// modules. The tasks come by ID, so the least that comes twice is the first beside its equal.
+func checkIDs(in Input, tasks []at) error {
+	var modules, lessons []string
 	for _, m := range in.Modules {
 		modules = append(modules, m.Graph.Module)
-		for _, c := range m.Pool {
-			tasks = append(tasks, c.Task.ID)
-		}
 		for _, l := range m.Lessons {
 			lessons = append(lessons, l.ID)
 		}
 	}
-	for _, list := range []struct {
-		what string
-		ids  []string
-	}{{"module", modules}, {"task of the pool", tasks}, {"lesson", lessons}} {
-		if id, ok := firstDuplicate(list.ids); ok {
-			return invalid(list.what + " " + shown(id) + " comes twice")
+	taskID := func(a at) string { return in.Modules[a.module].Pool[a.item].Task.ID }
+	if id, ok := firstDuplicate(modules); ok {
+		return invalid("module " + shown(id) + " comes twice")
+	}
+	for k := 1; k < len(tasks); k++ {
+		if id := taskID(tasks[k]); id == taskID(tasks[k-1]) {
+			return invalid("task of the pool " + shown(id) + " comes twice")
 		}
+	}
+	if id, ok := firstDuplicate(lessons); ok {
+		return invalid("lesson " + shown(id) + " comes twice")
 	}
 	return nil
 }
@@ -157,7 +180,7 @@ func checkIDs(in Input) error {
 // candidate would get the P of another module's graph; and the rule reads the skills of all the
 // modules together — the skill chosen on the map, the anchor skills —, where a skill of two
 // modules would be read by the order of the modules.
-func checkOwnModule(in Input) error {
+func checkOwnModule(in Input, tasks []at) error {
 	graphs := acrossModules(in, func(m Module) int { return len(m.Graph.Skills) }, func(m Module, j int) string { return m.Graph.Skills[j].ID })
 	for _, at := range graphs {
 		m := in.Modules[at.module]
@@ -165,7 +188,7 @@ func checkOwnModule(in Input) error {
 			return invalid("skill " + shown(id) + " of the graph of module " + shown(m.Graph.Module) + " is not that module's")
 		}
 	}
-	for _, at := range tasksByID(in) {
+	for _, at := range tasks {
 		m := in.Modules[at.module]
 		if id := m.Pool[at.item].Task.ID; !strings.HasPrefix(id, m.Graph.Module+"/") {
 			return invalid("task " + shown(id) + " of the pool of module " + shown(m.Graph.Module) + " is not that module's")
@@ -202,25 +225,57 @@ func checkLessonSkills(in Input) error {
 }
 
 // checkTraps refuses the traps of an item twice for a task of the pool, and traps at a place
-// where the task has no item.
-func checkTraps(in Input) error {
-	for _, at := range tasksByID(in) {
-		c := in.Modules[at.module].Pool[at.item]
-		var places, items []int32
-		for _, it := range c.Traps {
-			places = append(places, it.Place)
-		}
-		for _, it := range c.Task.Items {
-			items = append(items, it.Place)
-		}
-		if p, ok := firstDuplicate(places); ok {
-			return invalid("item " + itoa(int64(p)) + " of task " + shown(c.Task.ID) + " has its traps twice")
-		}
-		slices.Sort(items)
-		for _, p := range sortedCopy(places) {
-			if _, found := slices.BinarySearch(items, p); !found {
-				return invalid("traps of item " + itoa(int64(p)) + " of task " + shown(c.Task.ID) + ", which has no item there")
+// where the task has no item: of each, the least place. A task has few items as a rule, and their
+// places are compared pair by pair, with nothing copied or sorted; past trapsByPair of them, they
+// are sorted, so that a page of many lines costs no more than before.
+func checkTraps(in Input, tasks []at) error {
+	for _, at := range tasks {
+		c := &in.Modules[at.module].Pool[at.item]
+		if len(c.Traps) > trapsByPair {
+			if err := checkManyTraps(c); err != nil {
+				return err
 			}
+			continue
+		}
+		var twice, missing int32
+		hasTwice, hasMissing := false, false
+		for k, it := range c.Traps {
+			if (!hasTwice || it.Place < twice) && slices.ContainsFunc(c.Traps[k+1:], func(o ItemTraps) bool { return o.Place == it.Place }) {
+				twice, hasTwice = it.Place, true
+			}
+			if (!hasMissing || it.Place < missing) && !slices.ContainsFunc(c.Task.Items, func(i learnermodel.TaskItem) bool { return i.Place == it.Place }) {
+				missing, hasMissing = it.Place, true
+			}
+		}
+		if hasTwice {
+			return invalid("item " + itoa(int64(twice)) + " of task " + shown(c.Task.ID) + " has its traps twice")
+		}
+		if hasMissing {
+			return invalid("traps of item " + itoa(int64(missing)) + " of task " + shown(c.Task.ID) + ", which has no item there")
+		}
+	}
+	return nil
+}
+
+// trapsByPair is the most traps of a task checkTraps compares pair by pair.
+const trapsByPair = 16
+
+// checkManyTraps is checkTraps on a task with many traps, by sorted places.
+func checkManyTraps(c *Candidate) error {
+	var places, items []int32
+	for _, it := range c.Traps {
+		places = append(places, it.Place)
+	}
+	for _, it := range c.Task.Items {
+		items = append(items, it.Place)
+	}
+	if p, ok := firstDuplicate(places); ok {
+		return invalid("item " + itoa(int64(p)) + " of task " + shown(c.Task.ID) + " has its traps twice")
+	}
+	slices.Sort(items)
+	for _, p := range sortedCopy(places) {
+		if _, found := slices.BinarySearch(items, p); !found {
+			return invalid("traps of item " + itoa(int64(p)) + " of task " + shown(c.Task.ID) + ", which has no item there")
 		}
 	}
 	return nil
@@ -369,12 +424,12 @@ func checkAnchors(in Input) error {
 // probabilities reads the P of every candidate of the pools once, before the rule, by
 // Readout.Task (R09): a P outside [0, 1] is an error whichever branch of the rule would come to
 // the candidate. The result is by the input's places; the reading goes by ID.
-func probabilities(in Input) ([][]learnermodel.TaskReadout, error) {
+func probabilities(in Input, tasks []at) ([][]learnermodel.TaskReadout, error) {
 	p := make([][]learnermodel.TaskReadout, len(in.Modules))
 	for i, m := range in.Modules {
 		p[i] = make([]learnermodel.TaskReadout, len(m.Pool))
 	}
-	for _, at := range tasksByID(in) {
+	for _, at := range tasks {
 		task := in.Modules[at.module].Pool[at.item].Task
 		tr, err := in.Readout.Task(task)
 		if err != nil {
@@ -427,7 +482,11 @@ func lessonsByID(in Input) []at {
 }
 
 func acrossModules(in Input, n func(Module) int, id func(Module, int) string) []at {
-	var out []at
+	size := 0
+	for _, m := range in.Modules {
+		size += n(m)
+	}
+	out := make([]at, 0, size)
 	for i, m := range in.Modules {
 		for j := range n(m) {
 			out = append(out, at{i, j})

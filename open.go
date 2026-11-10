@@ -146,7 +146,6 @@ func (pr prepared) openSkills() []string {
 		return found
 	}
 	known, can := make([]bool, len(nodes)), make([]bool, len(nodes))
-	pools := make([][]poolTask, len(in.Modules))
 	canTeach := func(k int) bool {
 		if known[k] {
 			return can[k]
@@ -161,10 +160,9 @@ func (pr prepared) openSkills() []string {
 			can[k] = true
 			return true
 		}
-		if pools[n.module] == nil {
-			pools[n.module] = pr.poolOf(n.module)
-		}
-		can[k] = slices.ContainsFunc(pools[n.module], func(t poolTask) bool {
+		// Only a task the skill is primary in can teach it, of either kind.
+		can[k] = slices.ContainsFunc(pr.tasksOn(n.module, n.skill.ID), func(j int) bool {
+			t := pr.pools[n.module][j]
 			if !verdict {
 				// A task with a rubric teaches a skill with a rubric primary in its item with a
 				// rubric, and a skill with none primary in it, as its "Done" counts either; and only

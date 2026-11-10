@@ -86,7 +86,7 @@ func somethingToGive(t *testing.T, in Input) string {
 			if !slices.ContainsFunc(m.Graph.Skills, func(s learnermodel.Skill) bool { return s.ID == in.MapSkill }) {
 				continue
 			}
-			for _, t := range pr.poolOf(i) {
+			for _, t := range pr.pools[i] {
 				if _, ok := candidateOf(t, in.MapSkill, nil); ok || slices.Contains(pr.mods[i].rubricOf(t.c.Task), in.MapSkill) {
 					return "task " + t.c.Task.ID + " is on the skill chosen on the map"
 				}
