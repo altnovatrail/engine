@@ -103,7 +103,8 @@ func otherModule(t *testing.T) Module {
 // Step 1 of the example: school maths for grade 3. A new times-tables gets its lesson. After the
 // lesson its three pages are on pause, and consolidation of a mistake in the last finds no
 // candidate: with another module the turn goes there; with this module alone the second pass gives
-// consolidation by the page whose solution went longest ago, not the last.
+// consolidation by a page on pause in the order of the task on the skill — in the corridor, then
+// nearest to the aim —, not the last.
 func TestLessonsGrade3(t *testing.T) {
 	m := gradeLessons(t)
 	times := sid(grade3Math, "times-tables")

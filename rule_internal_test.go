@@ -265,8 +265,8 @@ func TestBottomOfTheLadder(t *testing.T) {
 	w.want("b-high", ReasonRotation)
 }
 
-// The second pass takes the tasks on pause back, after the others, but not the task of the last
-// closed attempt; with nothing even then, the rule gives nothing.
+// The second pass takes the tasks on pause back, after the others, the one in the corridor first,
+// but not the task of the last closed attempt; with nothing even then, the rule gives nothing.
 func TestSecondPassChoice(t *testing.T) {
 	w := grade3World(t)
 	w.in.Summary.Tasks = []TaskSolution{
@@ -277,7 +277,7 @@ func TestSecondPassChoice(t *testing.T) {
 	w.last("times-tables-d5", false, wrong(timesTables))
 	w.want("", ReasonUnspecified)
 	got, ok := w.choose(true)
-	if want := (Choice{Kind: ChoiceTask, ID: grade3Math + "/task/times-tables-d1", Reason: ReasonNewSkill}); !ok || got != want {
+	if want := (Choice{Kind: ChoiceTask, ID: grade3Math + "/task/times-tables-d3", Reason: ReasonNewSkill}); !ok || got != want {
 		t.Errorf("second pass: %+v, want %+v", got, want)
 	}
 
