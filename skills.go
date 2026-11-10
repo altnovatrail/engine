@@ -134,7 +134,9 @@ func (pr prepared) candidates(pool []poolTask, skill string, frequent []string, 
 // candidate in it, and, as a candidate with its ID alone, what bySolution and byCorridor order it
 // by — seen, seenAt, recentSolution and last. A task whose solution went to the device less than
 // 24 hours ago is none in the first pass; in the second it is, after the rest, but the task of the
-// last closed attempt is not — on the map it is, after all the others.
+// last closed attempt is not — on the map it is, after all the others. The task of the last closed
+// attempt whose solution went to the device is on pause however long ago that was: past the 24
+// hours it would come first by the corridor, and R82 of spec keeps it from being the next task.
 func (pr prepared) pause(t learnermodel.Task, second, onMap bool) (candidate, bool) {
 	in := pr.in
 	cd := candidate{id: t.ID, band: t.Band.Place}
@@ -143,8 +145,8 @@ func (pr prepared) pause(t learnermodel.Task, second, onMap bool) (candidate, bo
 			cd.seen, cd.seenAt = true, sent.SolutionSentAt
 		}
 	}
-	if cd.seen && pausedSince(in.Time, cd.seenAt) {
-		last := in.HasLast && in.Last.Task == cd.id
+	last := in.HasLast && in.Last.Task == cd.id
+	if cd.seen && (pausedSince(in.Time, cd.seenAt) || last) {
 		if !second || last && !onMap {
 			return cd, false
 		}
