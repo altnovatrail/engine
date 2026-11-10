@@ -95,9 +95,11 @@ func (pr prepared) lastModule() (int, bool) {
 }
 
 // consolidation is branch 3 in the module of the last closed attempt: a failure on a primary
-// skill, past the trial series, and not left; of its skills within reach, the first in the order
-// of the graph. In the trial series, and on its last answer, a mistake is not worked on. It runs
-// once, before the turn of the modules, and not again on a module's turn.
+// skill, past the trial series, and not left; of its skills within reach whose task has a P in
+// the corridor, the first in the order of the graph. A skill whose task is outside the corridor is
+// not worked on now: the turn of the modules gives what comes. In the trial series, and on its last
+// answer, a mistake is not worked on. It runs once, before the turn of the modules, and not again
+// on a module's turn.
 func (pr prepared) consolidation(i int, skills []skillView) (Choice, bool) {
 	in := pr.in
 	mr := moduleReadout(in, in.Modules[i].Graph.Module)
@@ -105,8 +107,11 @@ func (pr prepared) consolidation(i int, skills []skillView) (Choice, bool) {
 		return Choice{}, false
 	}
 	for _, s := range skills {
-		if s.reachable && slices.ContainsFunc(in.Last.Results, func(r SkillResult) bool { return r.Skill == s.id && failed(r) }) {
-			return given(s, false, ReasonConsolidation)
+		if !s.reachable || !slices.ContainsFunc(in.Last.Results, func(r SkillResult) bool { return r.Skill == s.id && failed(r) }) {
+			continue
+		}
+		if c, _ := s.task(false); inCorridor(c.p) {
+			return Choice{Kind: ChoiceTask, ID: c.id, Reason: ReasonConsolidation}, true
 		}
 	}
 	return Choice{}, false

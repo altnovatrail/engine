@@ -157,6 +157,14 @@ var olympiadScenarios = []scenario{
 		g.in.Last, g.in.HasLast = failedOn(tid(releaseOlympiad, "gaps-34-d3-1"), oGaps), true
 		return g
 	}},
+	// The one task of counting-gaps in the corridor had its solution seen two days ago: it comes
+	// before the unseen ones outside the corridor (the amendment of 2026-11-10 to R03, candidate C).
+	{"consolidation-seen-in-the-corridor", "3", func(rel map[string]release) golden {
+		g := olympiadQueue(rel)
+		g.in.Last, g.in.HasLast = failedOn(tid(releaseOlympiad, "gaps-34-d3-1"), oGaps), true
+		g.in.Summary.Tasks = []TaskSolution{{Task: tid(releaseOlympiad, "gaps-34-d1-1"), SolutionSentAt: goldenTime - 2*day}}
+		return g
+	}},
 	{"probe", "4", func(rel map[string]release) golden {
 		g := olympiadQueue(rel)
 		g.state.Modules[0].Skills[1] = practised(oGaps, -3, 6, goldenTime-2*day)
@@ -207,7 +215,9 @@ var grade3Scenarios = []scenario{
 	{"times-tables-lesson", "6", func(rel map[string]release) golden {
 		return golden{modules: []Module{rel[releaseGrade3].forAge("under_13")}, grade: learnerGrade3}
 	}},
-	{"after-the-lesson-second-pass", "3", func(rel map[string]release) golden {
+	// Candidate C: the task of times-tables is outside the corridor, so the mistake is not worked on,
+	// and the second pass gives the same page by the queue.
+	{"after-the-lesson-second-pass", "7", func(rel map[string]release) golden {
 		m := rel[releaseGrade3].forAge("under_13")
 		return golden{modules: []Module{m}, grade: learnerGrade3,
 			state: learnermodel.State{Modules: []learnermodel.ModuleState{module(releaseGrade3, 0, grade3Band, practised(gTimes, 0, 6, goldenTime-60))}},

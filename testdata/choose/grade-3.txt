@@ -1,5 +1,5 @@
 times-tables-lesson branch=6 lesson novatrail/grade-3-math/lesson/times-tables REASON_CODE_NEW_SKILL
-after-the-lesson-second-pass branch=3 task novatrail/grade-3-math/task/times-tables-d1 REASON_CODE_CONSOLIDATION p:times-tables=3fec2f7856bc9630
+after-the-lesson-second-pass branch=7 task novatrail/grade-3-math/task/times-tables-d1 REASON_CODE_QUEUE p:times-tables=3fec2f7856bc9630
 repetition-on-its-turn branch=5 task novatrail/grade-3-math/task/times-tables-d1 REASON_CODE_REPETITION p:times-tables=3fe64fa86979fdff
 queue-off-the-turn branch=7 task novatrail/grade-3-math/task/division-with-remainder-d1 REASON_CODE_QUEUE p:division-with-remainder=3fed752535ac0549
 all-mastered branch=8 task novatrail/grade-3-math/task/times-tables-d5 REASON_CODE_ROTATION p:times-tables=3fe75dd1fd3cafef

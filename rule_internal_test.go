@@ -120,6 +120,27 @@ func TestOlympiadConsolidation(t *testing.T) {
 		w.last("gaps-34-d3-1", false, wrong(gapsSkill), wrong(enumSkill))
 		w.want("enum-34-d1-1", ReasonConsolidation)
 	})
+	// Candidate C: a skill whose task is outside the corridor is not worked on now, and of two
+	// failed skills the first whose task is in the corridor is.
+	fresh := func(t *testing.T) *world {
+		w := olympiadWorld(t)
+		w.issue(enumSkill, exampleTime-100)
+		w.issue(gapsSkill, exampleTime-10)
+		w.trial(true, false)
+		return w
+	}
+	t.Run("its task outside the corridor", func(t *testing.T) {
+		w := fresh(t)
+		w.probabilities([]px{{"gaps-*", 0.9}})
+		w.last("gaps-34-d3-1", false, wrong(gapsSkill))
+		w.want("enum-34-d1-1", ReasonQueue)
+	})
+	t.Run("of two, the first whose task is in the corridor", func(t *testing.T) {
+		w := fresh(t)
+		w.probabilities([]px{{"enum-*", 0.9}})
+		w.last("gaps-34-d3-1", false, wrong(enumSkill), wrong(gapsSkill))
+		w.want("gaps-34-d1-1", ReasonConsolidation)
+	})
 	t.Run("out of reach", func(t *testing.T) {
 		w.probabilities([]px{{"gaps-*", 0.5}})
 		w.last("gaps-34-d3-1", false, wrong(gapsSkill))
@@ -265,8 +286,8 @@ func TestBottomOfTheLadder(t *testing.T) {
 	w.want("b-high", ReasonRotation)
 }
 
-// The second pass takes the tasks on pause back, after the others, but not the task of the last
-// closed attempt; with nothing even then, the rule gives nothing.
+// The second pass takes the tasks on pause back, after the others, the one in the corridor first,
+// but not the task of the last closed attempt; with nothing even then, the rule gives nothing.
 func TestSecondPassChoice(t *testing.T) {
 	w := grade3World(t)
 	w.in.Summary.Tasks = []TaskSolution{
@@ -277,7 +298,7 @@ func TestSecondPassChoice(t *testing.T) {
 	w.last("times-tables-d5", false, wrong(timesTables))
 	w.want("", ReasonUnspecified)
 	got, ok := w.choose(true)
-	if want := (Choice{Kind: ChoiceTask, ID: grade3Math + "/task/times-tables-d1", Reason: ReasonNewSkill}); !ok || got != want {
+	if want := (Choice{Kind: ChoiceTask, ID: grade3Math + "/task/times-tables-d3", Reason: ReasonNewSkill}); !ok || got != want {
 		t.Errorf("second pass: %+v, want %+v", got, want)
 	}
 
