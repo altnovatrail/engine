@@ -58,8 +58,8 @@ type golden struct {
 	in      Input
 }
 
-func (g golden) input(t *testing.T) Input {
-	t.Helper()
+func (g golden) input(tb testing.TB) Input {
+	tb.Helper()
 	graphs := learnermodel.Graphs{}
 	var ids []string
 	for _, m := range g.modules {
@@ -76,7 +76,7 @@ func (g golden) input(t *testing.T) Input {
 	}
 	r, err := learnermodel.Read(st, graphs, goldenTime, g.grade, ids)
 	if err != nil {
-		t.Fatal(err)
+		tb.Fatal(err)
 	}
 	in := g.in
 	in.Time, in.Readout, in.Modules = goldenTime, r, g.modules

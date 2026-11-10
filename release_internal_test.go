@@ -16,23 +16,34 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The packages of the first slice, from the release v0.1.0 of altnovatrail/modules, which
-// release-verify accepted on 2026-11-08 (docs/architecture.md, section 4): they stand in
-// testdata/modules as the release has them, and a chain of digests holds them from then on. The
-// digest of the release's module index is pinned here; the index names each package's digest,
+// The packages of the first slice, from the release v0.1.0 of altnovatrail/modules, and the
+// package of olympiad-math 0.1.1, from its release v0.1.1, which release-verify accepted on
+// 2026-11-08 and 2026-11-10 (docs/architecture.md, section 4): they stand in testdata/modules as
+// the releases have them, and a chain of digests holds them from then on. The index is the module
+// index of the release v0.1.4: it names both versions of olympiad-math, and the same 0.1.0 of each
+// module as the index of v0.1.0. Its digest is pinned here; the index names each package's digest,
 // which is the SHA-256 of its inventory.json; and the inventory names the SHA-256 of server.json
 // (the format's text, sections 25 and 26). Reading a package checks every link.
+//
+// The golden vectors stand on the packages 0.1.0, and the benchmark of the choice on the large
+// pool of olympiad-math 0.1.1 (docs/architecture.md, section 2.10).
 //
 // The translation of server.json into the engine's types is this test's, not api's or sim's: the
 // golden vectors do not catch a difference between them.
 
-const moduleIndexDigest = "ed4d8bb325fdcb3ea54da439e08c58d927f773ba0f097338f7767ad76be8c90e"
+const moduleIndexDigest = "a244c0ba2832ba6360f45bc74d293572b84b491fc823c7b01bdf6004ff9edb2a"
 
 // The three modules of the first slice, by full ID.
 const (
 	releaseOlympiad = "novatrail/olympiad-math"
 	releaseGrade3   = "novatrail/grade-3-math"
 	releaseEssays   = "novatrail/english-essays"
+)
+
+// The versions of the packages: the first slice's, and olympiad-math's large pool.
+const (
+	versionFirst = "0.1.0"
+	versionLarge = "0.1.1"
 )
 
 // release is a module of the release as the engine gets it: its graph, its pool and its lessons,
@@ -65,6 +76,7 @@ type serverPart struct {
 	} `json:"skill_graph"`
 	SkillTiers map[string]int32 `json:"skill_tiers"`
 	Tasks      map[string]struct {
+		Template      *struct{}  `json:"template"` // a template's alone
 		Band          string     `json:"band"`
 		Difficulty    int32      `json:"difficulty"`
 		AgeCategories []string   `json:"age_categories"`
@@ -102,21 +114,38 @@ type answerSlot struct {
 	} `json:"check"`
 }
 
-// releaseRead holds the release once read: the tests run one at a time, and every test that
-// reads it gets the same.
-var releaseRead map[string]release
+// packagesRead holds each package once read, by module ID and version: the tests run one at a
+// time, and every test that reads a package gets the same.
+var packagesRead = map[string]release{}
 
-// readRelease reads the three packages of the release, by module ID, checking the chain of
-// digests from the pinned index; once a run.
-func readRelease(t *testing.T) map[string]release {
-	t.Helper()
-	if releaseRead != nil {
-		return releaseRead
+// readRelease reads the three packages of the first slice, by module ID.
+func readRelease(tb testing.TB) map[string]release {
+	tb.Helper()
+	out := map[string]release{}
+	for _, id := range []string{releaseOlympiad, releaseGrade3, releaseEssays} {
+		out[id] = readPackage(tb, id, versionFirst)
+	}
+	return out
+}
+
+// readLarge reads the package of olympiad-math 0.1.1, the pool of 772 tasks.
+func readLarge(tb testing.TB) release {
+	tb.Helper()
+	return readPackage(tb, releaseOlympiad, versionLarge)
+}
+
+// readPackage reads the package of a module at a version, checking the chain of digests from the
+// pinned index; once a run.
+func readPackage(tb testing.TB, id, version string) release {
+	tb.Helper()
+	key := id + "@" + version
+	if r, ok := packagesRead[key]; ok {
+		return r
 	}
 	dir := filepath.Join("testdata", "modules")
-	index := readFile(t, filepath.Join(dir, "module-index.json"))
+	index := readFile(tb, filepath.Join(dir, "module-index.json"))
 	if got := fmt.Sprintf("%x", sha256.Sum256(index)); got != moduleIndexDigest {
-		t.Fatalf("module-index.json has the digest %s, not %s", got, moduleIndexDigest)
+		tb.Fatalf("module-index.json has the digest %s, not %s", got, moduleIndexDigest)
 	}
 	var idx struct {
 		Modules map[string]map[string]struct {
@@ -124,38 +153,39 @@ func readRelease(t *testing.T) map[string]release {
 		} `json:"modules"`
 	}
 	if err := json.Unmarshal(index, &idx); err != nil {
-		t.Fatal(err)
+		tb.Fatal(err)
 	}
-	out := map[string]release{}
-	for _, id := range []string{releaseOlympiad, releaseGrade3, releaseEssays} {
-		digest := strings.TrimPrefix(idx.Modules[id]["0.1.0"].PackageDigest, "sha256:")
-		files := untar(t, filepath.Join(dir, "sha256-"+digest+".tar.gz"))
-		inventory, server := files["inventory.json"], files["server.json"]
-		if got := fmt.Sprintf("%x", sha256.Sum256(inventory)); got != digest {
-			t.Fatalf("%s: inventory.json has the digest %s, not the package's %s", id, got, digest)
-		}
-		var inv struct {
-			ServerPart struct {
-				Digest string `json:"digest"`
-			} `json:"server_part"`
-		}
-		if err := json.Unmarshal(inventory, &inv); err != nil {
-			t.Fatal(err)
-		}
-		if got := "sha256:" + fmt.Sprintf("%x", sha256.Sum256(server)); got != inv.ServerPart.Digest {
-			t.Fatalf("%s: server.json has the digest %s, not the inventory's %s", id, got, inv.ServerPart.Digest)
-		}
-		out[id] = translate(t, server)
+	entry, ok := idx.Modules[id][version]
+	if !ok {
+		tb.Fatalf("module-index.json names no %s %s", id, version)
 	}
-	releaseRead = out
-	return out
+	digest := strings.TrimPrefix(entry.PackageDigest, "sha256:")
+	files := untar(tb, filepath.Join(dir, "sha256-"+digest+".tar.gz"))
+	inventory, server := files["inventory.json"], files["server.json"]
+	if got := fmt.Sprintf("%x", sha256.Sum256(inventory)); got != digest {
+		tb.Fatalf("%s %s: inventory.json has the digest %s, not the package's %s", id, version, got, digest)
+	}
+	var inv struct {
+		ServerPart struct {
+			Digest string `json:"digest"`
+		} `json:"server_part"`
+	}
+	if err := json.Unmarshal(inventory, &inv); err != nil {
+		tb.Fatal(err)
+	}
+	if got := "sha256:" + fmt.Sprintf("%x", sha256.Sum256(server)); got != inv.ServerPart.Digest {
+		tb.Fatalf("%s %s: server.json has the digest %s, not the inventory's %s", id, version, got, inv.ServerPart.Digest)
+	}
+	r := translate(tb, server)
+	packagesRead[key] = r
+	return r
 }
 
-func readFile(t *testing.T, path string) []byte {
-	t.Helper()
+func readFile(tb testing.TB, path string) []byte {
+	tb.Helper()
 	b, err := os.ReadFile(path)
 	if err != nil {
-		t.Fatal(err)
+		tb.Fatal(err)
 	}
 	return b
 }
@@ -165,15 +195,15 @@ func readFile(t *testing.T, path string) []byte {
 // 156 — then the file's blocks; the packages name their files short, with no ustar prefix. The test
 // reads it itself, as archive/tar would pull os/user, whose cgo the rules test cannot type-check for
 // every target.
-func untar(t *testing.T, path string) map[string][]byte {
-	t.Helper()
-	zr, err := gzip.NewReader(bytes.NewReader(readFile(t, path)))
+func untar(tb testing.TB, path string) map[string][]byte {
+	tb.Helper()
+	zr, err := gzip.NewReader(bytes.NewReader(readFile(tb, path)))
 	if err != nil {
-		t.Fatal(err)
+		tb.Fatal(err)
 	}
 	var b bytes.Buffer
 	if _, err := b.ReadFrom(zr); err != nil {
-		t.Fatal(err)
+		tb.Fatal(err)
 	}
 	data := b.Bytes()
 	files := map[string][]byte{}
@@ -183,7 +213,7 @@ func untar(t *testing.T, path string) map[string][]byte {
 		size, err := strconv.ParseInt(string(bytes.Trim(h[124:136], " \x00")), 8, 64)
 		next := 512 + (size+511)/512*512
 		if err != nil || size < 0 || int64(len(data)) < next {
-			t.Fatalf("%s: a broken header or a short block at %q", path, name)
+			tb.Fatalf("%s: a broken header or a short block at %q", path, name)
 		}
 		if h[156] == '0' || h[156] == 0 {
 			files[name] = data[512 : 512+size]
@@ -206,11 +236,11 @@ func sortedKeys[V any](m map[string]V) []string {
 // and its local ID joined by / (the format's text, section 10); tiers from skill_tiers; bands by
 // place from the manifest; a slot's kind of check, and a choice's number of options; a check by a
 // rubric gives no slot with a verdict.
-func translate(t *testing.T, server []byte) release {
-	t.Helper()
+func translate(tb testing.TB, server []byte) release {
+	tb.Helper()
 	var s serverPart
 	if err := json.Unmarshal(server, &s); err != nil {
-		t.Fatal(err)
+		tb.Fatal(err)
 	}
 	module := s.Manifest.ID
 	full := func(kind, id string) string {
@@ -240,7 +270,7 @@ func translate(t *testing.T, server []byte) release {
 			"verdict": learnermodel.AssessabilityVerdict, "rubric": learnermodel.AssessabilityRubric, "none": learnermodel.AssessabilityNone,
 		}[sk.Assessability]
 		if a == learnermodel.AssessabilityUnspecified {
-			t.Fatalf("%s: skill %s has the assessability %q", module, id, sk.Assessability)
+			tb.Fatalf("%s: skill %s has the assessability %q", module, id, sk.Assessability)
 		}
 		skills = append(skills, learnermodel.Skill{
 			ID: full("skill", id), Assessability: a, Prerequisites: fulls("skill", sk.Prerequisites),
@@ -255,7 +285,7 @@ func translate(t *testing.T, server []byte) release {
 	for _, id := range sortedKeys(s.Tasks) {
 		st := s.Tasks[id]
 		task := learnermodel.Task{
-			ID: full("task", id), Band: learnermodel.BandRef{Place: place[st.Band], ID: st.Band}, Difficulty: st.Difficulty,
+			ID: full("task", id), Template: st.Template != nil, Band: learnermodel.BandRef{Place: place[st.Band], ID: st.Band}, Difficulty: st.Difficulty,
 			Primary: fulls("skill", st.Skills.Primary), Supporting: fulls("skill", st.Skills.Supporting),
 		}
 		var its []ItemTraps
@@ -274,7 +304,7 @@ func translate(t *testing.T, server []byte) release {
 					"choice": learnermodel.CheckKindChoice, "predicate": learnermodel.CheckKindPredicate,
 				}[sl.Check.Kind]
 				if kind == learnermodel.CheckKindUnspecified {
-					t.Fatalf("%s: task %s has a check of the kind %q", module, id, sl.Check.Kind)
+					tb.Fatalf("%s: task %s has a check of the kind %q", module, id, sl.Check.Kind)
 				}
 				slot := learnermodel.Slot{Check: kind}
 				if kind == learnermodel.CheckKindChoice {
@@ -297,7 +327,7 @@ func translate(t *testing.T, server []byte) release {
 	}
 	g, err := learnermodel.NewGraph(module, bands, skills, nil, tasks)
 	if err != nil {
-		t.Fatalf("%s: %v", module, err)
+		tb.Fatalf("%s: %v", module, err)
 	}
 	r.module.Graph = g
 	for k, task := range tasks {
@@ -312,7 +342,7 @@ func translate(t *testing.T, server []byte) release {
 			}
 			task, ok := byID[seg.Task]
 			if !ok {
-				t.Fatalf("%s: lesson %s names task %s, which the package has not", module, id, seg.Task)
+				tb.Fatalf("%s: lesson %s names task %s, which the package has not", module, id, seg.Task)
 			}
 			l.Tasks = append(l.Tasks, task)
 		}
@@ -384,6 +414,25 @@ func TestReleasePackages(t *testing.T) {
 	// grade 3 is under_13 alone.
 	if adult := rel[releaseGrade3].forAge("adult"); len(adult.Lessons) != 0 || len(adult.Pool) != 0 {
 		t.Errorf("an adult gets %d lessons and %d tasks of school maths for grade 3, want none", len(adult.Lessons), len(adult.Pool))
+	}
+	// The large pool of olympiad-math 0.1.1, which the benchmark of the choice reads: its 19 skills
+	// all get a verdict, and 19 of its tasks are templates.
+	large := readLarge(t).module
+	templates := 0
+	for _, c := range large.Pool {
+		if c.Task.Template {
+			templates++
+		}
+	}
+	verdicts := 0
+	for _, s := range large.Graph.Skills {
+		if s.Assessability == learnermodel.AssessabilityVerdict {
+			verdicts++
+		}
+	}
+	if len(large.Graph.Skills) != 19 || verdicts != 19 || len(large.Graph.Bands) != 3 || len(large.Pool) != 772 || templates != 19 || len(large.Lessons) != 41 {
+		t.Errorf("olympiad-math 0.1.1: %d skills, %d with a verdict, %d bands, %d tasks, %d templates, %d lessons; want 19, 19, 3, 772, 19, 41",
+			len(large.Graph.Skills), verdicts, len(large.Graph.Bands), len(large.Pool), templates, len(large.Lessons))
 	}
 	l := lessonNamed(rel[releaseOlympiad].module, "counting-gaps-grades-3-4")
 	var ids []string
