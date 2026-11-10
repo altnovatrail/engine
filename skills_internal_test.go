@@ -632,3 +632,24 @@ func TestPausedSince(t *testing.T) {
 		}
 	}
 }
+
+// The task of the last closed attempt whose solution went to the device is no candidate for the
+// next choice, however long ago the solution went (R82 spec): past the pause of 24 hours it would
+// otherwise come back as the next task when the skill has no other one. Found by invariant I4 of
+// sim's gate on the candidates of T31.
+func TestLastSeenNotNext(t *testing.T) {
+	w := newWorld(t, grade3(t))
+	tt := sid(grade3Math, "times-tables")
+	w.probabilities([]px{{"times-tables-d1", 0.9}, {"times-tables-d3", 0.78}, {"times-tables-d5", 0.6}})
+	w.in.Summary.Tasks = []TaskSolution{{Task: grade3Math + "/task/times-tables-d3", SolutionSentAt: exampleTime - 2*solutionPause}}
+	w.in.Last, w.in.HasLast = Last{Task: grade3Math + "/task/times-tables-d3"}, true
+	for _, second := range []bool{false, true} {
+		if got := candidateIDs(w.view(tt, second).candidates); !slices.Equal(got, []string{"times-tables-d1", "times-tables-d5"}) {
+			t.Errorf("second pass %v: candidates %v, want [times-tables-d1 times-tables-d5]", second, got)
+		}
+	}
+	w.in.HasLast = false
+	if got := candidateIDs(w.view(tt, false).candidates); !slices.Equal(got, []string{"times-tables-d1", "times-tables-d5", "times-tables-d3"}) {
+		t.Errorf("another last attempt: candidates %v, want times-tables-d3 back, after the unseen", got)
+	}
+}
