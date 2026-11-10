@@ -57,6 +57,18 @@ func TestByCorridor(t *testing.T) {
 	}
 }
 
+// The probe and the tasks with a rubric keep the order of a seen solution: those never seen first,
+// then the one seen longest ago, and the task of the last closed attempt after them all.
+func TestBySolution(t *testing.T) {
+	want := []candidate{{id: "z"}, {id: "y", seen: true, seenAt: 1}, {id: "x", seen: true, seenAt: 2}, {id: "a", seen: true, last: true}}
+	got := slices.Clone(want)
+	slices.Reverse(got)
+	slices.SortStableFunc(got, bySolution)
+	if !slices.EqualFunc(got, want, func(a, b candidate) bool { return a.id == b.id }) {
+		t.Errorf("order %v, want %v", got, want)
+	}
+}
+
 // The task of a probe is the easiest, after those with a seen solution.
 func TestByEase(t *testing.T) {
 	want := []candidate{{id: "z", p: 0.9}, {id: "a", p: 0.8}, {id: "b", p: 0.8}, {id: "c", p: 0.99, seen: true, seenAt: 5}}
