@@ -70,7 +70,7 @@ func TestPrepareKeepsProbabilities(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	items := p.p[0][0].Items
+	items := p.pools[0][0].p
 	if len(items) != 2 || items[0].Place != 1 || items[0].HasVerdict || items[1].Place != 2 || !items[1].HasVerdict {
 		t.Fatalf("P of the candidate: %+v, want item 1 with no verdict and item 2 with one", items)
 	}
@@ -105,5 +105,42 @@ func TestErrorWithCause(t *testing.T) {
 	}
 	if want := `engine: invalid input: task "x" of the pool: learner-model said no`; err.Error() != want {
 		t.Errorf("Error() = %q, want %q", err.Error(), want)
+	}
+}
+
+// The traps of a task are checked pair by pair when it has few, and by sorted places when it has
+// many: both ways name the same least place, whether the traps of an item come twice or stand where
+// the task has no item.
+func TestCheckTrapsFewAndMany(t *testing.T) {
+	const id = "example/m/task/t"
+	for _, n := range []int32{3, trapsByPair + 4} {
+		task := learnermodel.Task{ID: id}
+		var traps []ItemTraps
+		for p := n; p >= 1; p-- { // places from the last, so that the least is found, not the first
+			task.Items = append(task.Items, learnermodel.TaskItem{Place: p})
+			traps = append(traps, ItemTraps{Place: p})
+		}
+		for _, tc := range []struct {
+			name  string
+			extra []ItemTraps
+			want  string
+		}{
+			{"none", nil, ""},
+			{"twice", []ItemTraps{{Place: 3}, {Place: 2}}, `item 2 of task "` + id + `" has its traps twice`},
+			{"no item", []ItemTraps{{Place: n + 5}, {Place: n + 2}}, `traps of item ` + itoa(int64(n+2)) + ` of task "` + id + `", which has no item there`},
+			{"both", []ItemTraps{{Place: n + 2}, {Place: 1}}, `item 1 of task "` + id + `" has its traps twice`},
+		} {
+			c := Candidate{Task: task, Traps: append(append([]ItemTraps(nil), traps...), tc.extra...)}
+			in := Input{Modules: []Module{{Pool: []Candidate{c}}}}
+			err := checkTraps(in, tasksByID(in))
+			if got := ""; err != nil {
+				got = err.Error()
+				if !errors.Is(err, ErrInvalid) || got != "engine: invalid input: "+tc.want {
+					t.Errorf("%d traps, %s: %q, want %q", len(c.Traps), tc.name, got, tc.want)
+				}
+			} else if tc.want != "" {
+				t.Errorf("%d traps, %s: no error, want %q", len(c.Traps), tc.name, tc.want)
+			}
+		}
 	}
 }

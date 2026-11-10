@@ -29,7 +29,7 @@ type skillView struct {
 	read     learnermodel.SkillReadout // zero when the skill has no state
 	evidence bool                      // the skill has evidence of its own, where it is primary
 	open     bool
-	// The candidates of the skill in the pass, in the order of the task on the skill.
+	// The candidates of the skill in the pass, by ID; the task on the skill is the first by byCorridor.
 	candidates []candidate
 	reachable  bool
 	// The recommended task: the task on the skill without the pause before a task with a seen
@@ -75,7 +75,6 @@ func (pr prepared) skills(i int, second bool) []skillView {
 		return r
 	}
 
-	pool := pr.poolOf(i)
 	issues := sortedBy(in.Summary.Skills, func(s SkillIssue) string { return s.Skill })
 	var out []skillView
 	for _, s := range graphOrder(m.Graph.Skills) {
@@ -85,11 +84,7 @@ func (pr prepared) skills(i int, second bool) []skillView {
 		v := skillView{id: s.ID, read: readOf(s.ID), open: pr.isOpen(s.ID)}
 		v.evidence = v.read.EvidenceCount > 0
 		frequent := frequentTraps(v.read.Traps)
-		cands, all := pr.candidates(pool, s.ID, frequent, second, false)
-		v.candidates = cands
-		if len(all) > 0 {
-			v.recommended, v.hasRecommended = slices.MinFunc(all, byCorridor), true
-		}
+		v.candidates, v.recommended, v.hasRecommended = pr.candidates(i, s.ID, frequent, second, false)
 		withinReach := slices.ContainsFunc(v.candidates, func(c candidate) bool { return c.p >= corridorLow })
 		issue, _ := lookup(issues, func(s SkillIssue) string { return s.Skill }, s.ID)
 		v.issued, v.lastIssued = issue.Issued, issue.LastIssued
@@ -105,29 +100,44 @@ func (pr prepared) skills(i int, second bool) []skillView {
 	return out
 }
 
-// candidates gives the candidates of a skill of the module at place i in the pass, in the order
-// of the task on the skill, and all of its tasks without the pause before a seen solution, for the
-// recommended task. A task with another primary skill closed is no candidate, but on the map: the
-// skill chosen there takes all its tasks (R04). In the second pass a task on pause is a candidate
-// again, after the others, but the task of the last closed attempt is not (the amendment of
-// 2026-11-07 to R03) — on the map it is, after all the others (the amendment of 2026-11-07 to
-// R04).
-func (pr prepared) candidates(pool []poolTask, skill string, frequent []string, second, onMap bool) (cands, all []candidate) {
-	for _, t := range pool {
+// candidates gives the candidates of a skill of the module at place i in the pass, in the order of
+// their IDs, and the recommended task: the first by byCorridor of all its tasks without the pause
+// before a seen solution, when it has one. A task with another primary skill closed is no
+// candidate, but on the map: the skill chosen there takes all its tasks (R04). In the second pass
+// a task on pause is a candidate again, after the others, but the task of the last closed attempt
+// is not (the amendment of 2026-11-07 to R03) — on the map it is, after all the others (the
+// amendment of 2026-11-07 to R04). The rule reads of the candidates only the first by an order —
+// byCorridor and byEase are total, by ID last —, so it does not sort them.
+func (pr prepared) candidates(i int, skill string, frequent []string, second, onMap bool) (cands []candidate, rec candidate, hasRec bool) {
+	on := pr.tasksOn(i, skill)
+	cands = make([]candidate, 0, len(on))
+	for _, j := range on {
+		t := pr.pools[i][j]
 		cd, ok := candidateOf(t, skill, frequent)
 		if !ok || !onMap && !othersOpen(t.primaries, skill, pr.isOpen) {
 			continue
 		}
-		all = append(all, cd)
-		sp, ok := pr.pause(t.c.Task, second, onMap)
+		if !hasRec || byCorridor(cd, rec) < 0 {
+			rec, hasRec = cd, true
+		}
+		sp, ok := pr.pause(&t.c.Task, second, onMap)
 		if !ok {
 			continue
 		}
 		cd.seen, cd.seenAt, cd.last = sp.seen, sp.seenAt, sp.last
 		cands = append(cands, cd)
 	}
-	slices.SortFunc(cands, byCorridor)
-	return cands, all
+	return cands, rec, hasRec
+}
+
+// tasksOn gives the places of the tasks of the pool of the module at place i that a skill is
+// primary in, in the order of their IDs.
+func (pr prepared) tasksOn(i int, skill string) []int {
+	k, found := slices.BinarySearchFunc(pr.bySkill[i], skill, func(s skillTasks, id string) int { return strings.Compare(s.skill, id) })
+	if !found {
+		return nil
+	}
+	return pr.bySkill[i][k].tasks
 }
 
 // pause reads the pause before a task with a seen solution in the pass: whether the task is a
@@ -136,7 +146,7 @@ func (pr prepared) candidates(pool []poolTask, skill string, frequent []string, 
 // is, but the task of the last closed attempt is not — on the map it is, after all the others. The
 // task of the last closed attempt whose solution went to the device is on pause however long ago
 // that was: R82 of spec keeps it from being the next task.
-func (pr prepared) pause(t learnermodel.Task, second, onMap bool) (candidate, bool) {
+func (pr prepared) pause(t *learnermodel.Task, second, onMap bool) (candidate, bool) {
 	in := pr.in
 	cd := candidate{id: t.ID, band: t.Band.Place}
 	if !t.Template {
@@ -152,15 +162,6 @@ func (pr prepared) pause(t learnermodel.Task, second, onMap bool) (candidate, bo
 		cd.last = last
 	}
 	return cd, true
-}
-
-// poolOf reads the tasks of the pool of the module at place i.
-func (pr prepared) poolOf(i int) []poolTask {
-	pool := make([]poolTask, len(pr.in.Modules[i].Pool))
-	for j, c := range pr.in.Modules[i].Pool {
-		pool[j] = newPoolTask(c, pr.p[i][j])
-	}
-	return pool
 }
 
 // graphOrder orders the skills of a graph by tier, then by ID byte by byte: the order of the

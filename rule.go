@@ -285,16 +285,13 @@ func (pr prepared) onMap(second bool) (Choice, bool) {
 		}
 		read, _ := lookup(sortedBy(moduleReadout(pr.in, m.Graph.Module).Skills, func(r learnermodel.SkillReadout) string { return r.Skill }),
 			func(r learnermodel.SkillReadout) string { return r.Skill }, skill)
-		cands, all := pr.candidates(pr.poolOf(i), skill, frequentTraps(read.Traps), second, true)
-		var rec candidate
-		if len(all) > 0 {
-			rec = slices.MinFunc(all, byCorridor)
-		}
-		if id, ok := pr.lessonOnSkill(i, skill, rec, len(all) > 0, true); ok {
+		v := skillView{id: skill}
+		v.candidates, v.recommended, v.hasRecommended = pr.candidates(i, skill, frequentTraps(read.Traps), second, true)
+		if id, ok := pr.lessonOnSkill(i, skill, v.recommended, v.hasRecommended, true); ok {
 			return Choice{Kind: ChoiceLesson, ID: id, Reason: ReasonSkillChosen}, true
 		}
-		if len(cands) > 0 {
-			return Choice{Kind: ChoiceTask, ID: cands[0].id, Reason: ReasonSkillChosen}, true
+		if c, ok := v.task(false); ok {
+			return Choice{Kind: ChoiceTask, ID: c.id, Reason: ReasonSkillChosen}, true
 		}
 		return pr.mapLessonAgain(i, skill, second)
 	}

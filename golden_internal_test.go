@@ -338,7 +338,7 @@ func vector(t *testing.T, s scenario, in Input) string {
 				if cd.Task.ID != c.ID {
 					continue
 				}
-				pt := newPoolTask(cd, pr.p[i][j])
+				pt := pr.pools[i][j]
 				for _, skill := range slices.Compact(sortedCopy(pt.primaries)) {
 					if v, ok := candidateOf(pt, skill, nil); ok {
 						line += fmt.Sprintf(" p:%s=%016x", strings.TrimPrefix(skill, m.Graph.Module+"/skill/"), math.Float64bits(v.p))

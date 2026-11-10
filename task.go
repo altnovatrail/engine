@@ -28,17 +28,79 @@ type candidate struct {
 // poolTask is a task of the pool with what the rule reads of it whatever the skill: its items and
 // their P, by place, and its primary skills.
 type poolTask struct {
-	c         Candidate
+	c         *Candidate // the input's, which the rule only reads
 	items     []learnermodel.TaskItem
 	p         []learnermodel.ItemProbability
 	primaries []string
 }
 
-func newPoolTask(c Candidate, tr learnermodel.TaskReadout) poolTask {
-	t := poolTask{c: c, items: slices.Clone(c.Task.Items), p: slices.Clone(tr.Items), primaries: primaries(c.Task)}
-	slices.SortStableFunc(t.items, func(a, b learnermodel.TaskItem) int { return cmp.Compare(a.Place, b.Place) })
-	slices.SortStableFunc(t.p, func(a, b learnermodel.ItemProbability) int { return cmp.Compare(a.Place, b.Place) })
+// newPoolTask reads a task of the pool with its P. The items and their P are read by place: they
+// come in that order as a rule, and are copied to be put in order only when they do not — the rule
+// reads them and never writes them.
+func newPoolTask(c *Candidate, tr learnermodel.TaskReadout) poolTask {
+	byPlace := func(a, b learnermodel.TaskItem) int { return cmp.Compare(a.Place, b.Place) }
+	pByPlace := func(a, b learnermodel.ItemProbability) int { return cmp.Compare(a.Place, b.Place) }
+	t := poolTask{c: c, items: c.Task.Items, p: tr.Items, primaries: primaries(c.Task)}
+	if !slices.IsSortedFunc(t.items, byPlace) {
+		t.items = slices.Clone(t.items)
+		slices.SortStableFunc(t.items, byPlace)
+	}
+	if !slices.IsSortedFunc(t.p, pByPlace) {
+		t.p = slices.Clone(t.p)
+		slices.SortStableFunc(t.p, pByPlace)
+	}
 	return t
+}
+
+// skillTasks is a skill primary in tasks of a pool, and the places of those tasks in the pool, in
+// the order of the tasks' IDs. Every candidate of the skill is among them: a skill primary in an
+// item of a task is among the task's primary skills.
+type skillTasks struct {
+	skill string
+	tasks []int
+}
+
+// bySkill gives the skills primary in the tasks of a pool, by ID byte by byte, each with the places
+// of its tasks: the rule reads the candidates of a skill there, and not through the whole pool for
+// every skill. order is the places of the pool's tasks in the order of their IDs, and the tasks of a
+// skill keep it, so that the order of the pool in the input changes nothing.
+func bySkill(pool []poolTask, order []int) []skillTasks {
+	// The skills, sorted: a pool has many tasks on few skills, so each new one is put in its place.
+	var skills []string
+	for _, t := range pool {
+		for _, s := range t.primaries {
+			if g, found := slices.BinarySearch(skills, s); !found {
+				skills = slices.Insert(skills, g, s)
+			}
+		}
+	}
+	// each calls f with the group of every skill primary in the task at place j, once a skill: a
+	// skill primary in two of its items is one of its primaries twice.
+	each := func(j int, f func(g int)) {
+		ps := pool[j].primaries
+		for k, s := range ps {
+			if !slices.Contains(ps[:k], s) {
+				g, _ := slices.BinarySearch(skills, s)
+				f(g)
+			}
+		}
+	}
+	counts := make([]int, len(skills))
+	total := 0
+	for j := range pool {
+		each(j, func(g int) { counts[g]++; total++ })
+	}
+	places := make([]int, total)
+	out := make([]skillTasks, len(skills))
+	start := 0
+	for g, s := range skills {
+		out[g] = skillTasks{skill: s, tasks: places[start:start:(start + counts[g])]}
+		start += counts[g]
+	}
+	for _, j := range order {
+		each(j, func(g int) { out[g].tasks = append(out[g].tasks, j) })
+	}
+	return out
 }
 
 // onSkill tells whether a skill is primary in the item at a place.
@@ -65,19 +127,22 @@ func candidateOf(t poolTask, skill string, frequent []string) (candidate, bool) 
 		return candidate{}, false
 	}
 
+	cd := candidate{id: t.c.Task.ID, band: t.c.Task.Band.Place, p: float64(sum / float64(n))}
+	if len(frequent) == 0 { // no frequent trap to catch
+		return cd, true
+	}
 	var caught []string
 	for _, it := range t.c.Traps {
 		if t.onSkill(it.Place, skill) {
 			caught = append(caught, it.Traps...)
 		}
 	}
-	var traps []int
 	for place, id := range frequent {
 		if slices.Contains(caught, id) {
-			traps = append(traps, place)
+			cd.traps = append(cd.traps, place)
 		}
 	}
-	return candidate{id: t.c.Task.ID, band: t.c.Task.Band.Place, p: float64(sum / float64(n)), traps: traps}, true
+	return cd, true
 }
 
 // frequentTraps gives the frequent traps of a skill — those at least two pieces of its evidence
@@ -164,5 +229,5 @@ func (s skillView) task(easiest bool) (candidate, bool) {
 	if easiest {
 		return slices.MinFunc(s.candidates, byEase), true
 	}
-	return s.candidates[0], true
+	return slices.MinFunc(s.candidates, byCorridor), true
 }
