@@ -123,7 +123,7 @@ func (pr prepared) candidates(pool []poolTask, skill string, frequent []string, 
 		if !ok {
 			continue
 		}
-		cd.seen, cd.seenAt, cd.last = sp.seen, sp.seenAt, sp.last
+		cd.seen, cd.seenAt, cd.recentSolution, cd.last = sp.seen, sp.seenAt, sp.recentSolution, sp.last
 		cands = append(cands, cd)
 	}
 	slices.SortFunc(cands, byCorridor)
@@ -131,9 +131,10 @@ func (pr prepared) candidates(pool []poolTask, skill string, frequent []string, 
 }
 
 // pause reads the pause before a task with a seen solution in the pass: whether the task is a
-// candidate in it, and, as a candidate with its ID alone, how bySolution orders it. A task whose
-// solution went to the device less than 24 hours ago is none in the first pass; in the second it
-// is, but the task of the last closed attempt is not — on the map it is, after all the others.
+// candidate in it, and, as a candidate with its ID alone, what bySolution and byCorridor order it
+// by — seen, seenAt, recentSolution and last. A task whose solution went to the device less than
+// 24 hours ago is none in the first pass; in the second it is, after the rest, but the task of the
+// last closed attempt is not — on the map it is, after all the others.
 func (pr prepared) pause(t learnermodel.Task, second, onMap bool) (candidate, bool) {
 	in := pr.in
 	cd := candidate{id: t.ID, band: t.Band.Place}
@@ -147,7 +148,7 @@ func (pr prepared) pause(t learnermodel.Task, second, onMap bool) (candidate, bo
 		if !second || last && !onMap {
 			return cd, false
 		}
-		cd.last = last
+		cd.recentSolution, cd.last = true, last
 	}
 	return cd, true
 }

@@ -157,6 +157,14 @@ var olympiadScenarios = []scenario{
 		g.in.Last, g.in.HasLast = failedOn(tid(releaseOlympiad, "gaps-34-d3-1"), oGaps), true
 		return g
 	}},
+	// The one task of counting-gaps in the corridor had its solution seen two days ago: it comes
+	// before the unseen ones outside the corridor (the amendment of 2026-11-10 to R03, candidate A).
+	{"consolidation-seen-in-the-corridor", "3", func(rel map[string]release) golden {
+		g := olympiadQueue(rel)
+		g.in.Last, g.in.HasLast = failedOn(tid(releaseOlympiad, "gaps-34-d3-1"), oGaps), true
+		g.in.Summary.Tasks = []TaskSolution{{Task: tid(releaseOlympiad, "gaps-34-d1-1"), SolutionSentAt: goldenTime - 2*day}}
+		return g
+	}},
 	{"probe", "4", func(rel map[string]release) golden {
 		g := olympiadQueue(rel)
 		g.state.Modules[0].Skills[1] = practised(oGaps, -3, 6, goldenTime-2*day)

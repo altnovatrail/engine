@@ -329,7 +329,8 @@ func TestGrade3Start(t *testing.T) {
 }
 
 // School maths for grade 3, step 2: the solution of times-tables-d3 was shown, and for 24 hours
-// it is no candidate; then it comes after times-tables-d1 and times-tables-d5.
+// it is no candidate; then it comes first again, in the corridor, before times-tables-d1 and
+// times-tables-d5 outside it; in the second pass it comes back on pause, after them.
 func TestGrade3Solution(t *testing.T) {
 	w := newWorld(t, grade3(t))
 	tt := sid(grade3Math, "times-tables")
@@ -342,7 +343,7 @@ func TestGrade3Solution(t *testing.T) {
 	}{
 		{"an hour ago", exampleTime - 3600, false, []string{"times-tables-d1", "times-tables-d5"}},
 		{"a second short of 24 hours", exampleTime - solutionPause + 1, false, []string{"times-tables-d1", "times-tables-d5"}},
-		{"24 hours ago", exampleTime - solutionPause, false, []string{"times-tables-d1", "times-tables-d5", "times-tables-d3"}},
+		{"24 hours ago", exampleTime - solutionPause, false, []string{"times-tables-d3", "times-tables-d1", "times-tables-d5"}},
 		{"an hour ago, second pass", exampleTime - 3600, true, []string{"times-tables-d1", "times-tables-d5", "times-tables-d3"}},
 		{"in the future", exampleTime + 10, false, []string{"times-tables-d1", "times-tables-d5"}},
 	} {
@@ -486,8 +487,8 @@ func TestReach(t *testing.T) {
 	}
 }
 
-// The second pass takes back the tasks on pause, after the others, the one whose solution went
-// longest ago first, but not the task of the last closed attempt; a template is never on pause.
+// The second pass takes back the tasks on pause, after the others, the one in the corridor first,
+// but not the task of the last closed attempt; a template is never on pause.
 func TestSecondPass(t *testing.T) {
 	w := newWorld(t, grade3(t))
 	tt := sid(grade3Math, "times-tables")
@@ -501,8 +502,8 @@ func TestSecondPass(t *testing.T) {
 	if got := candidateIDs(w.view(tt, false).candidates); len(got) != 0 {
 		t.Errorf("first pass: candidates %v, want none", got)
 	}
-	if got := candidateIDs(w.view(tt, true).candidates); !slices.Equal(got, []string{"times-tables-d1", "times-tables-d3"}) {
-		t.Errorf("second pass: candidates %v, want [times-tables-d1 times-tables-d3]", got)
+	if got := candidateIDs(w.view(tt, true).candidates); !slices.Equal(got, []string{"times-tables-d3", "times-tables-d1"}) {
+		t.Errorf("second pass: candidates %v, want [times-tables-d3 times-tables-d1]", got)
 	}
 	w.in.Modules[0].Pool[1].Task.Template = true // times-tables-d3
 	if got := candidateIDs(w.view(tt, false).candidates); !slices.Equal(got, []string{"times-tables-d3"}) {

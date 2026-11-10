@@ -39,8 +39,12 @@ func TestByCorridor(t *testing.T) {
 		{"more frequent traps first", []candidate{{id: "z", p: 0.84, traps: []int{1, 2}}, {id: "a", p: 0.775, traps: []int{0}}, {id: "b", p: 0.775}}},
 		{"of as many, the higher trap", []candidate{{id: "z", p: 0.84, traps: []int{0, 3}}, {id: "a", p: 0.775, traps: []int{1, 2}}}},
 		{"traps count only in the corridor", []candidate{{id: "z", p: 0.69}, {id: "a", p: 0.6, traps: []int{0}}}},
-		{"no seen solution first", []candidate{{id: "z", p: 0.1}, {id: "a", p: 0.775, seen: true, seenAt: 1}}},
-		{"of seen solutions, the longest ago", []candidate{{id: "z", p: 0.1, seen: true, seenAt: 1}, {id: "a", p: 0.775, seen: true, seenAt: 2}}},
+		{"in the corridor before an unseen solution outside it", []candidate{{id: "z", p: 0.775, seen: true, seenAt: 1}, {id: "a", p: 0.1}}},
+		{"in the corridor, no seen solution first", []candidate{{id: "z", p: 0.8}, {id: "a", p: 0.775, seen: true, seenAt: 1}}},
+		{"outside the corridor, no seen solution first", []candidate{{id: "z", p: 0.1}, {id: "a", p: 0.6, seen: true, seenAt: 1}}},
+		{"of seen solutions, the longest ago", []candidate{{id: "z", p: 0.8, seen: true, seenAt: 1}, {id: "a", p: 0.775, seen: true, seenAt: 2}}},
+		{"on pause after the rest", []candidate{{id: "z", p: 0.1}, {id: "a", p: 0.775, seen: true, seenAt: 9, recentSolution: true}}},
+		{"the last after them all", []candidate{{id: "z", p: 0.1, seen: true, seenAt: 9, recentSolution: true}, {id: "a", p: 0.775, seen: true, seenAt: 1, recentSolution: true, last: true}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got := slices.Clone(tc.want)
