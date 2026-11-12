@@ -15,7 +15,7 @@
 
 The NovaTrail engine: it picks what a learner does next — a lesson or a task, on a new skill or on one due for practice again — and gives each choice a reason code that the adult sees. It is a Go library of pure computation that works by a rule, with no AI model: it is handed the skill graphs, the lessons and the task pool and the learner model's estimates, time comes from outside, it takes no seed because the rule needs no randomness, and the same input always gives the same choice, on any build. From stage 2 it runs inside the platform's service, `api`; at stage 1 the learner simulator, `sim`, runs it.
 
-A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.15.1), a universal open platform for adaptive learning, interactive lessons and AI tutoring. It belongs to stage 1, Format and core, with spec, modules, module-kit, learner-model and sim; it comes together with learner-model and sim, since the simulator needs both the learner model and the rule.
+A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.16.3), a universal open platform for adaptive learning, interactive lessons and AI tutoring. It belongs to stage 1, Format and core, with spec, modules, module-kit, learner-model and sim; it comes together with learner-model and sim, since the simulator needs both the learner model and the rule.
 
 ## Status
 
@@ -34,13 +34,16 @@ Releases come out by themselves: each commit of `main` whose CI has passed and w
 
 ## Documents
 
-The documents are in Russian.
+The documents are in Russian until a task of the work plan, T56, translates them into English; the work plan, its technical debt and the archives of its epics stay in Russian.
 
 - [docs/architecture.md](docs/architecture.md) — the component: what it does and does not do, its data and links, what the card left to decide — all of it decided — and how it is built.
 - [docs/decisions.md](docs/decisions.md) — the decision log: what was decided, why, and what was rejected.
+- [docs/sources.md](docs/sources.md) — the records of the external facts the documents rest on, each with its source, its date and its quote.
+- [docs/measurements.md](docs/measurements.md) — the results of measurements: what was measured, how, on what, and the numbers.
 - [RUN.md](RUN.md) — the work plan, in epics.
+- [DEBT.md](DEBT.md) — the technical debt, in Russian: table 4 of the work plan.
 
-The working rules, for people and coding agents alike, are in [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md). The platform's shared vocabulary, formats, contracts and decisions are in [spec](https://github.com/altnovatrail/spec/tree/v0.15.1), checked out here as a git submodule at `v0.15.1`: clone this repository with `git clone --recurse-submodules`.
+The working rules, for people and coding agents alike, are in [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md). The platform's shared vocabulary, formats, contracts and decisions are in [spec](https://github.com/altnovatrail/spec/tree/v0.16.3), checked out here as a git submodule at `v0.16.3`: clone this repository with `git clone --recurse-submodules`.
 
 ## License
 

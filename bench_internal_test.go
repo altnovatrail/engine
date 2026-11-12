@@ -8,7 +8,7 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The benchmark of the choice on a large pool (docs/architecture.md, section 2.10): olympiad maths
+// The benchmark of the choice on a large pool (docs/measurements.md, section 2.1): olympiad maths
 // 0.1.1, 772 tasks, for a learner of grade 3, in four states of the learner model, each read by its
 // real Read at goldenTime. Read is api's call, not the engine's: it runs once, before the loop,
 // which times Choose alone. The states are synthetic, built from the graph by its order, so that a
