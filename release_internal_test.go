@@ -18,7 +18,7 @@ import (
 
 // The packages of the first slice, from the release v0.1.0 of altnovatrail/modules, and the
 // package of olympiad-math 0.1.1, from its release v0.1.1, which release-verify accepted on
-// 2026-11-08 and 2026-11-10 (docs/architecture.md, section 4): they stand in testdata/modules as
+// 2026-11-08 and 2026-11-10 (docs/sources.md, sections 3.4 and 3.5): they stand in testdata/modules as
 // the releases have them, and a chain of digests holds them from then on. The index is the module
 // index of the release v0.1.4: it names both versions of olympiad-math, and the same 0.1.0 of each
 // module as the index of v0.1.0. Its digest is pinned here; the index names each package's digest,
@@ -26,7 +26,7 @@ import (
 // (the format's text, sections 25 and 26). Reading a package checks every link.
 //
 // The golden vectors stand on the packages 0.1.0, and the benchmark of the choice on the large
-// pool of olympiad-math 0.1.1 (docs/architecture.md, section 2.10).
+// pool of olympiad-math 0.1.1 (docs/measurements.md, section 2).
 //
 // The translation of server.json into the engine's types is this test's, not api's or sim's: the
 // golden vectors do not catch a difference between them.
