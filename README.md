@@ -34,7 +34,7 @@ Releases come out by themselves: each commit of `main` whose CI has passed and w
 
 ## Documents
 
-The documents are in Russian until a task of the work plan, T56, translates them into English; the work plan, its technical debt and the archives of its epics stay in Russian.
+The documents are in English; the work plan, its technical debt and the archives of its epics are in Russian.
 
 - [docs/architecture.md](docs/architecture.md) — the component: what it does and does not do, its data and links, what the card left to decide — all of it decided — and how it is built.
 - [docs/decisions.md](docs/decisions.md) — the decision log: what was decided, why, and what was rejected.
