@@ -18,6 +18,9 @@ const (
 	corridorLow  = 0.70  // the corridor of success, from; and the least P of a skill within reach
 	corridorHigh = 0.85  // the corridor of success, to
 	corridorAim  = 0.775 // the aim inside the corridor
+	// Below it, by the model's P, an unseen candidate is overtaken by a seen one in the corridor
+	// (variant F of T58, H7 (b)): not as in standalone, and a judgement of sim decides it.
+	unseenHard = 0.50
 
 	solutionPause int64 = 86_400 // a task whose solution went to the device is no candidate for 24 hours
 	frequentTrap  int64 = 2      // a trap that this many pieces of evidence of a skill found is frequent
@@ -29,8 +32,7 @@ type skillView struct {
 	read     learnermodel.SkillReadout // zero when the skill has no state
 	evidence bool                      // the skill has evidence of its own, where it is primary
 	open     bool
-	// The candidates of the skill in the pass, by ID; the task on the skill is the first by byCorridor,
-	// and the task of consolidation by consolidationOrder.
+	// The candidates of the skill in the pass, by ID; the task on the skill is the first by taskOrder.
 	candidates []candidate
 	reachable  bool
 	// The recommended task: the task on the skill without the pause before a task with a seen
@@ -118,7 +120,8 @@ func (pr prepared) candidates(i int, skill string, frequent []string, second, on
 		if !ok || !onMap && !othersOpen(t.primaries, skill, pr.isOpen) {
 			continue
 		}
-		// No solution is read yet, and with none seen byCorridor and byCorridorFirst give one order.
+		// No solution is read yet, and with none seen byCorridor and byCorridorFirst give one order
+		// (TestUnseenHard).
 		if !hasRec || byCorridor(cd, rec) < 0 {
 			rec, hasRec = cd, true
 		}

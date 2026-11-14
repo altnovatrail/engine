@@ -157,8 +157,9 @@ var olympiadScenarios = []scenario{
 		g.in.Last, g.in.HasLast = failedOn(tid(releaseOlympiad, "gaps-34-d3-1"), oGaps), true
 		return g
 	}},
-	// The one task of counting-gaps in the corridor had its solution seen two days ago: the task of
-	// consolidation, it comes before the unseen ones outside the corridor (variant E of T58).
+	// The one task of counting-gaps in the corridor had its solution seen two days ago: the unseen
+	// gaps-12-d3-1 above the corridor comes before it, as in the base — a seen task overtakes only an
+	// unseen one below unseenHard (variant F of T58, H7 (b)).
 	{"consolidation-seen-in-the-corridor", "3", func(rel map[string]release) golden {
 		g := olympiadQueue(rel)
 		g.in.Last, g.in.HasLast = failedOn(tid(releaseOlympiad, "gaps-34-d3-1"), oGaps), true
@@ -167,7 +168,7 @@ var olympiadScenarios = []scenario{
 	}},
 	// Every task of counting-gaps had its solution seen, three days ago, and the one in the corridor
 	// two days ago: of those seen longest ago the task is by the corridor and the aim, as in the base,
-	// not the one in the corridor (variant E of T58, H6).
+	// not the one in the corridor (variant F of T58, H6).
 	{"consolidation-all-seen", "3", func(rel map[string]release) golden {
 		g := olympiadQueue(rel)
 		g.in.Last, g.in.HasLast = failedOn(tid(releaseOlympiad, "gaps-34-d3-1"), oGaps), true
@@ -183,9 +184,25 @@ var olympiadScenarios = []scenario{
 		}
 		return g
 	}},
-	// The task of the queue in the corridor had its solution seen two days ago: it comes after the
-	// unseen ones outside the corridor, as in the base — only consolidation puts the corridor
-	// before the seen (variant E of T58, H7 (a)).
+	// The task of counting-gaps in the corridor had its solution seen two days ago, and the four
+	// nearest the aim outside it three days ago: the unseen ones left are all well below unseenHard,
+	// gaps-34-d3-1 at 0.375 the nearest, and the seen task in the corridor comes before them, where
+	// the base gives gaps-34-d3-1 (variant F of T58, H7 (b)).
+	{"consolidation-seen-before-the-hard", "3", func(rel map[string]release) golden {
+		g := olympiadQueue(rel)
+		g.in.Last, g.in.HasLast = failedOn(tid(releaseOlympiad, "gaps-34-d3-1"), oGaps), true
+		g.in.Summary.Tasks = seenBeforeTheHard("gaps-12-d2-1", "gaps-12-d3-1", "gaps-12-d5-5", "gaps-34-d1-1")
+		return g
+	}},
+	// The same on the queue: enum-34-d1-1 in the corridor, seen, comes before enum-34-d3-1 at 0.373,
+	// unseen — not only consolidation (variant F of T58, H7 (b)).
+	{"queue-seen-before-the-hard", "7", func(rel map[string]release) golden {
+		g := olympiadQueue(rel)
+		g.in.Summary.Tasks = seenBeforeTheHard("enum-12-d1-3", "enum-12-d3-1", "enum-12-d5-2", "enum-34-d1-1")
+		return g
+	}},
+	// The task of the queue in the corridor had its solution seen two days ago: the unseen
+	// enum-12-d3-1 above the corridor comes before it, as in the base (variant F of T58, H7 (b)).
 	{"queue-seen-in-the-corridor", "7", func(rel map[string]release) golden {
 		g := olympiadQueue(rel)
 		g.in.Summary.Tasks = []TaskSolution{{Task: tid(releaseOlympiad, "enum-34-d1-1"), SolutionSentAt: goldenTime - 2*day}}
@@ -478,4 +495,18 @@ func grade3AllMastered(rel map[string]release) golden {
 	}
 	g.in.Summary.Modules = []ModuleChoices{{Module: releaseGrade3, Choices: 14}}
 	return g
+}
+
+// seenBeforeTheHard is the summary of solutions of olympiad maths where the tasks named had their
+// solutions seen three days ago, the last of them two days ago.
+func seenBeforeTheHard(names ...string) []TaskSolution {
+	var out []TaskSolution
+	for k, n := range names {
+		at := goldenTime - 3*day
+		if k == len(names)-1 {
+			at = goldenTime - 2*day
+		}
+		out = append(out, TaskSolution{Task: tid(releaseOlympiad, n), SolutionSentAt: at})
+	}
+	return out
 }

@@ -178,11 +178,11 @@ func ids(vs []skillView) []string {
 }
 
 // candidateIDs gives the local IDs of the candidates in the order of the task on the skill: the
-// rule takes the first by byCorridor and never sorts them, so the test does.
+// rule takes the first by taskOrder and never sorts them, so the test does.
 func candidateIDs(cs []candidate) []string {
 	var out []string
 	cs = slices.Clone(cs)
-	slices.SortFunc(cs, byCorridor)
+	slices.SortFunc(cs, taskOrder(cs))
 	for _, c := range cs {
 		out = append(out, c.id[strings.LastIndex(c.id, "/")+1:])
 	}
@@ -333,7 +333,9 @@ func TestGrade3Start(t *testing.T) {
 }
 
 // School maths for grade 3, step 2: the solution of times-tables-d3 was shown, and for 24 hours
-// it is no candidate; then it comes after times-tables-d1 and times-tables-d5.
+// it is no candidate; then it comes after times-tables-d1 and times-tables-d5, unseen at a P of
+// at least unseenHard, though it is in the corridor (variant F of T58); in the second pass it
+// comes back on pause, after them.
 func TestGrade3Solution(t *testing.T) {
 	w := newWorld(t, grade3(t))
 	tt := sid(grade3Math, "times-tables")
@@ -637,12 +639,11 @@ func TestPausedSince(t *testing.T) {
 	}
 }
 
-// The task of consolidation on a skill: when every candidate had its solution seen, the one seen
-// longest ago, as in the base, not the one in the corridor — among seen ones alone the model's
-// corridor does not overtake how long ago a solution went (H6) —; when one has a solution never
-// seen, the one in the corridor, though seen. The task on the skill in the other branches keeps the
-// base's order, the unseen first (variant E of T58, H7 (a)).
-func TestConsolidationTask(t *testing.T) {
+// When every candidate of a skill had its solution seen, the one seen longest ago comes first, as
+// in the base, not the one in the corridor: among seen ones alone the model's corridor does not
+// overtake how long ago a solution went (H6). With an unseen one, a seen task in the corridor
+// overtakes it only below unseenHard (variant F of T58, H7 (b)).
+func TestSeenAloneByAge(t *testing.T) {
 	w := newWorld(t, grade3(t))
 	tt := sid(grade3Math, "times-tables")
 	w.probabilities([]px{{"times-tables-d1", 0.9}, {"times-tables-d3", 0.78}, {"times-tables-d5", 0.6}})
@@ -651,25 +652,17 @@ func TestConsolidationTask(t *testing.T) {
 		{Task: grade3Math + "/task/times-tables-d3", SolutionSentAt: exampleTime - 2*solutionPause},
 		{Task: grade3Math + "/task/times-tables-d5", SolutionSentAt: exampleTime - 3*solutionPause},
 	}
-	consolidation := func() string {
-		c, ok := w.view(tt, false).consolidationTask()
-		if !ok {
-			t.Fatal("times-tables has no task of consolidation")
-		}
-		return c.id[strings.LastIndex(c.id, "/")+1:]
-	}
-	if got := consolidation(); got != "times-tables-d1" {
-		t.Errorf("all seen: the task of consolidation is %s, want times-tables-d1, seen longest ago", got)
+	v := w.view(tt, false)
+	if got := candidateIDs(v.candidates); !slices.Equal(got, []string{"times-tables-d1", "times-tables-d5", "times-tables-d3"}) {
+		t.Errorf("all seen: candidates %v, want [times-tables-d1 times-tables-d5 times-tables-d3], by age", got)
 	}
 	w.in.Summary.Tasks = w.in.Summary.Tasks[1:] // times-tables-d1 never seen
-	if got := consolidation(); got != "times-tables-d3" {
-		t.Errorf("one unseen: the task of consolidation is %s, want times-tables-d3, in the corridor", got)
+	if got := candidateIDs(w.view(tt, false).candidates); !slices.Equal(got, []string{"times-tables-d1", "times-tables-d3", "times-tables-d5"}) {
+		t.Errorf("one unseen at 0.9: candidates %v, want [times-tables-d1 times-tables-d3 times-tables-d5], the unseen, then the corridor", got)
 	}
-	if got := taskName(t, w.view(tt, false), false); got != "times-tables-d1" {
-		t.Errorf("one unseen: the task on the skill is %s, want times-tables-d1, the unseen", got)
-	}
-	if _, ok := (skillView{}).consolidationTask(); ok {
-		t.Error("a skill with no candidates has a task of consolidation")
+	w.probabilities([]px{{"times-tables-d1", 0.45}})
+	if got := candidateIDs(w.view(tt, false).candidates); !slices.Equal(got, []string{"times-tables-d3", "times-tables-d1", "times-tables-d5"}) {
+		t.Errorf("one unseen at 0.45: candidates %v, want [times-tables-d3 times-tables-d1 times-tables-d5], the corridor first", got)
 	}
 }
 

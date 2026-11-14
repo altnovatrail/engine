@@ -96,9 +96,8 @@ func (pr prepared) lastModule() (int, bool) {
 
 // consolidation is branch 3 in the module of the last closed attempt: a failure on a primary
 // skill, past the trial series, and not left; of its skills within reach, the first in the order
-// of the graph, by its task of consolidation (variant E of T58). In the trial series, and on its
-// last answer, a mistake is not worked on. It runs once, before the turn of the modules, and not
-// again on a module's turn.
+// of the graph. In the trial series, and on its last answer, a mistake is not worked on. It runs
+// once, before the turn of the modules, and not again on a module's turn.
 func (pr prepared) consolidation(i int, skills []skillView) (Choice, bool) {
 	in := pr.in
 	mr := moduleReadout(in, in.Modules[i].Graph.Module)
@@ -107,9 +106,7 @@ func (pr prepared) consolidation(i int, skills []skillView) (Choice, bool) {
 	}
 	for _, s := range skills {
 		if s.reachable && slices.ContainsFunc(in.Last.Results, func(r SkillResult) bool { return r.Skill == s.id && failed(r) }) {
-			if c, ok := s.consolidationTask(); ok {
-				return Choice{Kind: ChoiceTask, ID: c.id, Reason: ReasonConsolidation}, true
-			}
+			return given(s, false, ReasonConsolidation)
 		}
 	}
 	return Choice{}, false
