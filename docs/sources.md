@@ -244,6 +244,19 @@ For architecture 2.12, 3.3 and 3.7; the 2026-11-14 amendments to R05 and R17.
 - `.devcontainer/Dockerfile` — the stage `toolchain` differs from that of `v0.1.6` only by Go: `GO_VERSION=1.27.4` and its sha256, where `v0.1.6` has 1.27.3;
 - `server.json` of `grade-3-math` 0.3.0 (`internal/published/v0.2.1/sha256-dd2c6eb2….tar.gz`), by `jq`: four lessons, one a skill — `times-tables`, `division-with-remainder`, `fractions-of-a-whole`, `comparing-fractions` —, each with the three tasks of its skill, of the difficulties 1, 3 and 5.
 
+### 6.10. The judgement of consolidation in a lesson at `sim`
+
+For architecture 2.12, 3.3 and 3.7; the second 2026-11-14 amendments to R05 and R17.
+
+[sim `main`](https://github.com/altnovatrail/sim/tree/b171f6f617cfd3b6c8e6342d1b0e98cc78bc104e), commit b171f6f, the merge of pull request #65 of 2026-11-14T15:51:25Z, and the tag `v0.1.17`, read 2026-11-14 from a clone in a temporary folder:
+
+- `docs/decisions.md` of `sim`, R53 sim — "The judgement of the variant of consolidation in a lesson — T52 of `engine`, the commit 0e4680f of the branch `e7-consolidation-in-lesson` — ended in an exit: the candidate fails one constraint of the engine's criterion and is not better than the base. The base stays as it is. There was no confirmation, and `held-out-engine-lesson-1` is still held out. `gate.json`, `go.mod`, the paths and the bands do not change." The judgement ran "on `sim` at the tag `v0.1.17`, one pin for the whole judgement", by decisive runs of "2,000 working learners a cell";
+- the same entry, the table of the report — "`E7` | −0.0018 [−0.0047; 0.0010] | −0.0002 [−0.0010; 0.0006] | 1" (score, group `corridor`, failed "no worse") — and "It fails one check, `M3.lag` of `G2-half` on olympiad maths: worse by at most 0.01812, at a tolerance of 0.01785. `I1`–`I4`, `E2` and `neutral` hold: on school maths and on the essays every learner's sums are the base's to the bit";
+- the same entry, on the note `E6` — "the items of a consolidation are in the corridor 0.27–0.43 of the time, about twice as often as those of the lesson's segments, but on almost every cell the segments themselves go up to 1.4 points less often into the corridor and more often into "hard", and `E6.next`, P* of the next segment after a failure, is lower by up to 0.023. What a consolidation gains in the corridor the lesson loses"; and "The lag of the model on `G2` is the common failure of A and C in `engine-1` too", citing R36 sim;
+- the same entry, the consequences — "T53 of `engine` records the exit by the link to `judgements/engine-lesson-1/` on `main`; T51 of `engine` does not change `spec`'s contract or cards, which change only if a judgement chooses the variant. The outcome goes to `spec` as row В19 «в реестр spec» of table 3 of RUN.md"; "A next judgement of the variant, if `engine` makes one, gets its folder, its own set and its row by an amendment to R04 before its first run";
+- [`judgements/engine-lesson-1/report.md`](https://github.com/altnovatrail/sim/blob/b171f6f617cfd3b6c8e6342d1b0e98cc78bc104e/judgements/engine-lesson-1/report.md) — "holds every constraint: false; better than the base: false"; "fails no worse G2-half/novatrail/olympiad-math M3.lag: worse by at most 0.01812, the tolerance 0.01785"; `E6.next` on `G2-half/novatrail/olympiad-math` — "0.3033 | 0.281 | -0.02229 [-0.02672, -0.01789]";
+- the tag `v0.1.17` — commit 6f5151f5eb241b5b44b11b71296a0e3cd2c201a1, an immutable release of 2026-11-14T05:36:14Z: `gh release verify v0.1.17 -R altnovatrail/sim` — "✓ Release v0.1.17 verified!". Its `gate.json` differs from that of `v0.1.15` only by `"github.com/altnovatrail/spec": "v0.17.3"` in place of `"v0.16.3"`, and is the same on b171f6f; `.devcontainer/Dockerfile` is the same as at `v0.1.15`; `internal/gate/gate.go` — `const Learners = 250`.
+
 ## 7. `.github`
 
 ### 7.1. The shared workflows of `.github` v0.1.15
