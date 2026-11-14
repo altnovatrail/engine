@@ -109,3 +109,26 @@ The first four levers were taken, with the small things that go with them (R20):
 ### 2.3. After T48 (2026-11-11)
 
 `learner-model` `v0.1.6` sped up `Readout.Task` (R29 learner-model), and `go.mod` requires it (R23). The same benchmark, the binaries before the raise and after in turn in one session, 10 measurements each, go1.27.4; the host was loaded, and the time is from the calmest of three sessions. The best measurement is 0.38–0.46 ms instead of 0.72–0.80, the medians 0.41–0.50 ms instead of 0.75–1.13, about 1.8×; memory per choice 0.27–0.33 MB instead of 0.67–0.73, allocations 1.75–2.56 thousand instead of 9.5–11.0. `Readout.Task` is now 36% of `Choose`, not 61%. The choice is the same: the golden vectors and `TestBenchInputs` did not change.
+
+## 3. The rough look of the variant of E7
+
+The variant of T52, consolidation in a lesson (the 2026-11-14 amendment to R05), against the base on `sim` before its judgement (T53), as T31 looked at the variants of E3: a rough look, which decides nothing. The rule of the variant is architecture 2.12; the step and the criterion of `sim` are sources 6.9.
+
+**How it was counted.** 2026-11-14, in the container of `engine`. A clone of `sim` `v0.1.15` (52a3658) in a temporary folder, and its recipe of a rough look (R49 sim): `just rough engine runs/base-300.jsonl` — the base, `engine` `v0.1.6` by `go.mod` of `sim`, — and `CANDIDATE_ENGINE=<folder> just rough engine runs/e7-300.jsonl`, where the folder is a copy of the working tree of `engine` with the variant and a local commit, 492f939, also in the temporary folder: the recipe takes a full SHA on GitHub or a clean folder, and nothing was committed to the repository. The build of the candidate went through the workspace of the gate, with `learner-model` at ab688b2, and held to `gate.json`. 300 working learners a cell, the whole matrix, each run about 6 min 15 s by the clock and 107–109 CPU minutes. SHA-256 of the runs: the base `bcacb08e…125d`, the candidate `d85202c9…b5e`. Then `sim judge` with the judgement file of one candidate: `{"name": "E7", "group": "corridor", "constants": 0, "new_field": false, "distance": 1, "equal_on": ["novatrail/grade-3-math", "novatrail/english-essays"]}`, as R49 sim asks of it. The look ran on the code before the review of T52. Its fixes touch the map, which `sim` does not have, and read the skills of a run from `Run.Skills`; `just gate` after them gives the same 69 numbers to the bit (the 2026-11-14 amendment to R05).
+
+**The outcome.** The report opens "A rough look, which decides nothing": E7 does not hold every constraint and is not better than the base. Its group, the corridor, is +0.00002, with the interval [−0.0019, +0.0020]. It fails "no worse" on three cells of olympiad maths: `E2.stuck` on `G2-half` — worse by at most 0.0333 with the tolerance 0.0316 — and `E4.given` on `G5` — 0.0119 with 0.0103 — and on `S-scale3.5` — 0.0100 with 0.0100. The constraint `neutral` holds: on `grade-3-math` and `english-essays` every learner's sums are the base's to the bit, and the report names no "fails neutral". `E3.end` on `F-model`, `F-exp` and `F-growth5` of `grade-3-math` left the score within the author's tolerance of its path.
+
+**The note `E6`, on the 34 cells of olympiad maths and of the pair with it** — the rows of `G0`, `G2-half` and `G2`, the three cells of the corridor, and the range over all the cells:
+
+| Number | `G0` base → E7 | `G2-half` base → E7 | `G2` base → E7 | Over the 34 cells: E7 − base, or E7 where the base has none |
+|---|---|---|---|---|
+| `E6.consolidations`, consolidations in a lesson a pass | 0 → 0.968 | 0 → 0.909 | 0 → 0.847 | 0.744 to 1.007 |
+| `E6.lesson.corridor`, the items of the lessons' task segments in 0.70–0.85 | 0.183 → 0.172 | 0.182 → 0.170 | 0.179 → 0.170 | −0.018 to +0.003 |
+| `E6.lesson.hard`, the same below 0.50 | 0.341 → 0.358 | 0.312 → 0.325 | 0.286 → 0.298 | +0.004 to +0.019 |
+| `E6.consolidation.corridor`, the items of the consolidations in 0.70–0.85 | — → 0.375 | — → 0.363 | — → 0.299 | 0.277 to 0.429 |
+| `E6.consolidation.hard`, the same below 0.50 | — → 0.103 | — → 0.069 | — → 0.067 | 0.046 to 0.167 |
+| `E6.next`, the mean P* of the next segment after a failed one | 0.286 → 0.266 | 0.301 → 0.278 | 0.318 → 0.316 | −0.028 to −0.001 |
+
+A consolidation's items are in the corridor about twice as often as a segment's, and below 0.50 three to five times less often, yet the corridor of the cell does not move: a consolidation is about one task a pass, and on the segments of the lessons the share in the corridor falls and that below 0.50 grows. The interval of `E6.lesson.hard` is above zero on all 34 cells, that of `E6.lesson.corridor` below zero on 31, and that of `E6.next` below zero on 28: the next segment after a failure is given harder than in the base.
+
+**"Gate" on the variant.** `just gate` on the working tree with the variant, on `sim` `v0.1.15`, 250 learners a cell: red by two bands of zero width alone — `E2.stuck` on `G2-half` of olympiad maths, 0.016, and on `A-linked`, 0.008, with the band 0 ± 0, — the other 67 numbers within their bands, of them the numbers of `grade-3-math` alone and of `english-essays` to the bit; nobody broke an invariant, and no run ended with an error. The same gate on the code of `main` e0fdb3f was green, all 69 numbers to the bit (the 2026-11-14 amendment to R17).
