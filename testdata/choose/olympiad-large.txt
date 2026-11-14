@@ -1,0 +1,2 @@
+consolidation-in-a-lesson branch=0 task novatrail/olympiad-math/task/tri-34-d1-2 REASON_CODE_CONSOLIDATION p:arithmetic-tricks=3fe9322631088026
+further-through-the-lesson branch=1 lesson novatrail/olympiad-math/lesson/combinatorics-enumeration-grades-3-4 REASON_CODE_OPEN_RUN

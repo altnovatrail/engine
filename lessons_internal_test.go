@@ -290,6 +290,156 @@ func TestOpenRun(t *testing.T) {
 	w.in.Runs = []Run{open("times-tables", times)}
 	w.in.Last, w.in.HasLast = Last{Task: tid(grade3Math, "times-tables-d1"), Left: true, InLesson: true, Lesson: lid(grade3Math, "times-tables")}, true
 	w.wantChoice(taskChoice(tid(grade3Math, "times-tables-d1"), ReasonNewSkill))
+
+	// Further through the lesson: at the end of a segment the run of that segment, not the first of
+	// the open runs in the order of the lessons; on the map only when its lesson teaches the skill
+	// chosen there.
+	w = newMany(t, m)
+	w.in.Runs = []Run{open("y-times", times), open("z-fractions", fractions)}
+	w.in.Last, w.in.HasLast = Last{Task: tid(grade3Math, "fractions-of-a-whole-d1"), InLesson: true, Lesson: lid(grade3Math, "z-fractions"),
+		Results: []SkillResult{rightOn(fractions)}}, true
+	w.wantChoice(lessonChoice(lid(grade3Math, "z-fractions"), ReasonOpenRun))
+	permuted(t, w)
+	w.in.Last.InLesson = false // a task outside a lesson: the first in the order of the lessons
+	w.wantChoice(lessonChoice(lid(grade3Math, "y-times"), ReasonOpenRun))
+	w.in.Last.InLesson = true
+	w.in.MapSkill = times
+	w.wantChoice(lessonChoice(lid(grade3Math, "y-times"), ReasonOpenRun))
+	w.in.MapSkill = fractions
+	w.wantChoice(lessonChoice(lid(grade3Math, "z-fractions"), ReasonOpenRun))
+}
+
+// lessonsOutside is olympiad maths with a lesson on each skill and band, and two more tasks of
+// counting-gaps at grades-3-4 outside every lesson, as olympiad-math 0.1.1 has them.
+func lessonsOutside(t *testing.T) Module {
+	t.Helper()
+	m := olympiadLessons(t)
+	gaps := sid(olympiadMath, "counting-gaps")
+	for _, d := range []int32{2, 4} {
+		task := exampleTask(olympiadMath, fmt.Sprintf("gaps-34-d%d-2", d), learnermodel.BandRef{Place: 2, ID: "grades-3-4"}, d, gaps)
+		m.Pool = append(m.Pool, Candidate{Task: task})
+	}
+	return m
+}
+
+// Branch 0, consolidation in a lesson (the amendment of 2026-11-14 to R05): at the end of a segment
+// of an open run whose lesson's skills all have a verdict, past the trial series, a failure on a
+// skill of the lesson within reach by its candidates outside the lesson's tasks gives the task on
+// it among them, in the first pass alone; else further through the lesson. A run that has ended,
+// or one the learner left, is the base's.
+func TestConsolidationInLesson(t *testing.T) {
+	m := lessonsOutside(t)
+	enum, gaps := sid(olympiadMath, "combinatorics-enumeration"), sid(olympiadMath, "counting-gaps")
+	lesson := lid(olympiadMath, "counting-gaps-grades-3-4")
+	start := func() *many {
+		w := newMany(t, m)
+		// The lesson's own task nearest to 0.775 is gaps-34-d3-1; outside it, gaps-34-d2-2.
+		w.probabilities([]px{{"gaps-*", 0.6}, {"gaps-34-d1-1", 0.8}, {"gaps-34-d3-1", 0.775}, {"gaps-34-d5-1", 0.72}, {"gaps-34-d2-2", 0.78}})
+		w.readout(olympiadMath).TrialOver = true
+		w.skill(learnermodel.SkillReadout{Skill: gaps, EvidenceCount: 6})
+		w.issue(gaps, exampleTime-100)
+		w.in.Runs = []Run{{Lesson: lesson, Skills: []string{gaps}}}
+		w.in.Last, w.in.HasLast = Last{Task: tid(olympiadMath, "gaps-34-d1-1"), InLesson: true, Lesson: lesson, Results: []SkillResult{wrong(gaps)}}, true
+		return w
+	}
+	further := lessonChoice(lesson, ReasonOpenRun)
+
+	w := start()
+	w.wantChoice(taskChoice(tid(olympiadMath, "gaps-34-d2-2"), ReasonConsolidation))
+	permuted(t, w)
+	w.in.MapSkill = gaps
+	w.wantChoice(taskChoice(tid(olympiadMath, "gaps-34-d2-2"), ReasonSkillChosen))
+	w.in.MapSkill = enum // the run does not teach the skill chosen on the map: the base
+	if got := ready(w.in, w.p).choose(); got.Reason != ReasonSkillChosen || strings.Contains(got.ID, "gaps") {
+		t.Errorf("on the map of another skill chose %+v, want a choice on %s", got, enum)
+	}
+
+	// Further through the lesson: no failure, the trial series, the lesson not in the input, a skill
+	// within reach only by the lesson's tasks, the tasks outside it on pause — no second pass.
+	for _, c := range []struct {
+		name   string
+		change func(w *many)
+	}{
+		{"right", func(w *many) { w.in.Last.Results = []SkillResult{rightOn(gaps)} }},
+		{"in the series", func(w *many) { w.readout(olympiadMath).TrialOver = false }},
+		{"last in the series", func(w *many) { w.readout(olympiadMath).LastInTrial = true }},
+		{"no lesson", func(w *many) {
+			w.in.Modules[0].Lessons = slices.DeleteFunc(slices.Clone(m.Lessons), func(l Lesson) bool { return l.ID == lesson })
+		}},
+		{"within reach by the lesson alone", func(w *many) { w.probabilities([]px{{"gaps-34-d2-2", 0.6}}) }},
+		{"outside on pause", func(w *many) {
+			w.solutions(TaskSolution{tid(olympiadMath, "gaps-34-d2-2"), exampleTime - 100}, TaskSolution{tid(olympiadMath, "gaps-34-d4-2"), exampleTime - 100})
+		}},
+	} {
+		w := start()
+		c.change(w)
+		if got := ready(w.in, w.p).choose(); got != further {
+			t.Errorf("%s: chose %+v, want %+v", c.name, got, further)
+		}
+	}
+
+	// Back from a pause by a probe answered right, the skill is within reach below 0.70 too.
+	w = start()
+	w.probabilities([]px{{"gaps-34-d2-2", 0.65}})
+	w.in.Summary.Skills[0].HasLast, w.in.Summary.Skills[0].LastCode, w.in.Summary.Skills[0].LastResult = true, ReasonProbe, rightOn(gaps)
+	w.wantChoice(taskChoice(tid(olympiadMath, "gaps-34-d2-2"), ReasonConsolidation))
+
+	// The run ended: branch 3 of the base, among the lesson's tasks too.
+	w = start()
+	w.in.Runs = []Run{{Lesson: lesson, Skills: []string{gaps}, End: RunPassed, EndedAt: exampleTime - 10}}
+	w.wantChoice(taskChoice(tid(olympiadMath, "gaps-34-d3-1"), ReasonConsolidation))
+	// The learner left the segment: neither branch 0 nor 1, nor consolidation.
+	w = start()
+	w.in.Last.Left = true
+	if got := ready(w.in, w.p).choose(); got == further || got.Reason == ReasonConsolidation {
+		t.Errorf("left: chose %+v", got)
+	}
+
+	// A lesson of two skills: of the failed ones within reach, the first in the order of the graph;
+	// on the map, only the skill from the map, and a failure on the other one alone goes further.
+	// Only this lesson's tasks are left out: gaps-34-d3-1, of another lesson, is a candidate.
+	two := Lesson{ID: lid(olympiadMath, "two"), Skills: []string{gaps, enum}}
+	for _, name := range []string{"gaps-34-d1-1", "enum-34-d1-1"} {
+		two.Tasks = append(two.Tasks, learnermodel.Task{ID: tid(olympiadMath, name)})
+	}
+	start2 := func() *many {
+		w := start()
+		w.in.Modules[0].Lessons = append(slices.Clone(m.Lessons), two)
+		w.in.Runs = []Run{{Lesson: two.ID, Skills: two.Skills}}
+		w.in.Last.Lesson, w.in.Last.Results = two.ID, []SkillResult{wrong(gaps), wrong(enum)}
+		return w
+	}
+	w = start2()
+	w.wantChoice(taskChoice(tid(olympiadMath, "enum-12-d1-1"), ReasonConsolidation))
+	w.probabilities([]px{{"enum-*", 0.6}})
+	w.wantChoice(taskChoice(tid(olympiadMath, "gaps-34-d3-1"), ReasonConsolidation))
+	w = start2()
+	w.in.MapSkill = gaps
+	w.wantChoice(taskChoice(tid(olympiadMath, "gaps-34-d3-1"), ReasonSkillChosen))
+	w.in.Last.Results = []SkillResult{wrong(enum)}
+	w.wantChoice(lessonChoice(two.ID, ReasonOpenRun))
+	// The skills are the run's, which may be on a package before: a skill the run does not teach
+	// is not consolidated, and one without a verdict among them stops the branch.
+	w = start2()
+	w.in.Runs[0].Skills = []string{gaps}
+	w.wantChoice(taskChoice(tid(olympiadMath, "gaps-34-d3-1"), ReasonConsolidation))
+	w.in.Last.Results = []SkillResult{wrong(enum)}
+	w.wantChoice(lessonChoice(two.ID, ReasonOpenRun))
+	w = start2()
+	w.in.Runs[0].Skills = []string{gaps, enum, sid(olympiadMath, "gone")}
+	w.wantChoice(lessonChoice(two.ID, ReasonOpenRun))
+
+	// A lesson whose skills are not all with a verdict: the engine adds nothing.
+	e := essays(t, false)
+	choosing := sid(englishEssays, "choosing-a-first-sentence")
+	e.Pool = append(e.Pool, Candidate{Task: exampleTask(englishEssays, "best-first-sentence-4", learnermodel.BandRef{Place: 1, ID: "first-steps"}, 2, choosing)})
+	we := newMany(t, e)
+	we.readout(englishEssays).TrialOver = true
+	we.skill(learnermodel.SkillReadout{Skill: choosing, EvidenceCount: 6})
+	first := lid(englishEssays, "first-sentences")
+	we.in.Runs = []Run{{Lesson: first, Skills: e.Lessons[0].Skills}}
+	we.in.Last, we.in.HasLast = Last{Task: tid(englishEssays, "best-first-sentence-1"), InLesson: true, Lesson: first, Results: []SkillResult{wrong(choosing)}}, true
+	we.wantChoice(lessonChoice(first, ReasonOpenRun))
 }
 
 // A lesson is passed only by a run that ended "passed": one ended unchecked, not suitable or

@@ -8,13 +8,13 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The rule (docs/architecture.md, sections 3.1–3.4; R03–R06): branch 1, the lesson of an
-// open run; then "My subjects" — consolidation in the module of the last closed attempt, then the
-// modules in turn, each running branches 4–9 with 6a, the author's order — or the skill chosen on
-// the map, branch 2. Branches 6–9 give the lesson on the skill when there is one. The first branch
-// that fits makes the choice, and its code is the choice's (R07). Branch 5, the repetition, comes
-// on the module's turn of the repetition and, when branches 6, 6a and 7 give nothing, before
-// branches 8 and 9 (R06).
+// The rule (docs/architecture.md, sections 3.1–3.4; R03–R06): branch 0, consolidation in a
+// lesson, and branch 1, the lesson of an open run; then "My subjects" — consolidation in the module
+// of the last closed attempt, then the modules in turn, each running branches 4–9 with 6a, the
+// author's order — or the skill chosen on the map, branch 2. Branches 6–9 give the lesson on the
+// skill when there is one. The first branch that fits makes the choice, and its code is the
+// choice's (R07). Branch 5, the repetition, comes on the module's turn of the repetition and, when
+// branches 6, 6a and 7 give nothing, before branches 8 and 9 (R06).
 
 // The turn of the probe: the module's n-th choice, counted before this one, with n > 5 and
 // n mod 6 = 5, as in standalone. The turn of the repetition: n > 5 and n mod 3 = 1 — n = 7, 10,
@@ -29,10 +29,14 @@ const (
 	repetitionAfter int64 = 5
 )
 
-// choose runs the rule: branch 1, which the pause does not touch; then a first pass, a second pass
-// with the tasks on pause, then nothing to give.
+// choose runs the rule: branch 0, in the first pass alone, and branch 1, which the pause does not
+// touch; then a first pass, a second pass with the tasks on pause, then nothing to give.
 func (pr prepared) choose() Choice {
-	if c, ok := pr.openRun(); ok {
+	runs := pr.openRuns()
+	if c, ok := pr.inLesson(runs); ok {
+		return c
+	}
+	if c, ok := pr.openRun(runs); ok {
 		return c
 	}
 	for _, second := range []bool{false, true} {
@@ -105,9 +109,59 @@ func (pr prepared) consolidation(i int, skills []skillView) (Choice, bool) {
 		return Choice{}, false
 	}
 	for _, s := range skills {
-		if s.reachable && slices.ContainsFunc(in.Last.Results, func(r SkillResult) bool { return r.Skill == s.id && failed(r) }) {
+		if s.reachable && pr.failedLast(s.id) {
 			return given(s, false, ReasonConsolidation)
 		}
+	}
+	return Choice{}, false
+}
+
+// inLesson is branch 0, consolidation in a lesson (the amendment of 2026-11-14 to R05), a variant
+// before the judgement of sim: the last closed attempt is a segment of an open run of openRuns,
+// of a lesson the engine gets, past the trial series, and a failure on a skill of the run, whose
+// skills all have a verdict; of its skills within reach, the first in the order of the graph. The
+// skills are the run's, which branch 1 reads too, and the lesson in the input gives its tasks.
+// Within reach and the task on it are read among its candidates of the first pass without the
+// tasks of the lesson: those of its segments passed are on pause anyway, one of a segment ahead
+// would show its key, and a task whose key the learner saw minutes ago is weak consolidation (R05).
+// A task of another lesson stays a candidate, as for branch 3. The code is
+// REASON_CODE_CONSOLIDATION. On the map, where openRuns holds only a run of a lesson that teaches
+// the skill chosen there, only that skill is consolidated, with REASON_CODE_SKILL_CHOSEN: the skill
+// from the map holds (R04). Without the lesson in the input its tasks are not known, and the branch
+// gives nothing.
+func (pr prepared) inLesson(runs []lessonAt) (Choice, bool) {
+	in := pr.in
+	run, ok := pr.segmentRun(runs)
+	if !ok {
+		return Choice{}, false
+	}
+	m := in.Modules[run.module]
+	j := slices.IndexFunc(m.Lessons, func(l Lesson) bool { return l.ID == run.id })
+	mr := moduleReadout(in, m.Graph.Module)
+	if j < 0 || pr.mods[run.module].authorOrder(run.skills) || !mr.TrialOver || mr.LastInTrial {
+		return Choice{}, false
+	}
+	l := m.Lessons[j]
+	reads := sortedBy(mr.Skills, func(r learnermodel.SkillReadout) string { return r.Skill })
+	issues := sortedBy(in.Summary.Skills, func(s SkillIssue) string { return s.Skill })
+	for _, s := range graphOrder(m.Graph.Skills) {
+		if !slices.Contains(run.skills, s.ID) || in.MapSkill != "" && s.ID != in.MapSkill || !pr.failedLast(s.ID) {
+			continue
+		}
+		read, _ := lookup(reads, func(r learnermodel.SkillReadout) string { return r.Skill }, s.ID)
+		cands, _, _ := pr.candidates(run.module, s.ID, frequentTraps(read.Traps), false, false)
+		cands = slices.DeleteFunc(cands, func(c candidate) bool {
+			return slices.ContainsFunc(l.Tasks, func(t learnermodel.Task) bool { return t.ID == c.id })
+		})
+		issue, _ := lookup(issues, func(s SkillIssue) string { return s.Skill }, s.ID)
+		if !reachable(pr.isOpen(s.ID), cands, issue) {
+			continue
+		}
+		code := ReasonConsolidation
+		if in.MapSkill != "" {
+			code = ReasonSkillChosen
+		}
+		return given(skillView{id: s.ID, candidates: cands}, false, code)
 	}
 	return Choice{}, false
 }

@@ -214,12 +214,11 @@ func (pr prepared) awaitsLesson(i int, skill string) bool {
 	})
 }
 
-// openRun is branch 1, the lesson of an open run of a module of the engine, with the code
-// REASON_CODE_OPEN_RUN: of several, the first in the order of the lessons, read by the skills of
-// the run, which may be on a package before. It does not give the run whose segment's attempt the
-// learner has just left, asking for something else; on the map it gives only the run of a lesson
-// that teaches the skill chosen there.
-func (pr prepared) openRun() (Choice, bool) {
+// openRuns gives the open runs of the modules of the engine that branches 0 and 1 read, each with
+// its module's place and the skills of the run, which may be on a package before: not the run whose
+// segment's attempt the learner has just left, asking for something else, and on the map only the
+// run of a lesson that teaches the skill chosen there.
+func (pr prepared) openRuns() []lessonAt {
 	in := pr.in
 	var ls []lessonAt
 	for _, r := range in.Runs {
@@ -230,7 +229,33 @@ func (pr prepared) openRun() (Choice, bool) {
 		}
 		ls = append(ls, lessonAt{i, r.Lesson, r.Skills})
 	}
-	if l, ok := pr.firstLesson(ls); ok {
+	return ls
+}
+
+// segmentRun gives, of the open runs of openRuns, the one whose segment the last closed attempt
+// is: the attempt was not left, or openRuns would not hold the run.
+func (pr prepared) segmentRun(ls []lessonAt) (lessonAt, bool) {
+	in := pr.in
+	if !in.HasLast || !in.Last.InLesson {
+		return lessonAt{}, false
+	}
+	k := slices.IndexFunc(ls, func(l lessonAt) bool { return l.id == in.Last.Lesson })
+	if k < 0 {
+		return lessonAt{}, false
+	}
+	return ls[k], true
+}
+
+// openRun is branch 1, the lesson of an open run of openRuns, with the code REASON_CODE_OPEN_RUN:
+// the run whose segment the last closed attempt is — further through the lesson, the next segment
+// (the amendment of 2026-11-14 to R05) —, else, of several, the first in the order of the lessons,
+// read by the skills of the runs.
+func (pr prepared) openRun(ls []lessonAt) (Choice, bool) {
+	l, ok := pr.segmentRun(ls)
+	if !ok {
+		l, ok = pr.firstLesson(ls)
+	}
+	if ok {
 		return Choice{Kind: ChoiceLesson, ID: l.id, Reason: ReasonOpenRun}, true
 	}
 	return Choice{}, false

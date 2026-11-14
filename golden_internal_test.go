@@ -13,10 +13,11 @@ import (
 )
 
 // The golden vectors of the choice (docs/architecture.md, sections 3.5 and 3.7; R07, R10): inputs
-// on the graphs of the three modules of the first slice, from the packages of the release of
-// modules, read by the learner model's real Read; and the choice with its code, and the bits of
-// the P the engine computed of a task it gives. The files in testdata/choose are the same on every
-// target, and change only with a version of engine or learner-model; ENGINE_UPDATE=1 writes them.
+// on the graphs of the three modules of the first slice, and of olympiad-math 0.1.1 for a lesson
+// with tasks outside it, from the packages of the releases of modules, read by the learner model's
+// real Read; and the choice with its code, and the bits of the P the engine computed of a task it
+// gives. The files in testdata/choose are the same on every target, and change only with a version
+// of engine or learner-model; ENGINE_UPDATE=1 writes them.
 //
 // Each scenario names the branch of table 3.5 it is about, and a test holds the pair of branch
 // and code to the table: so the vectors check the codes of every branch, and that the rule gives
@@ -36,10 +37,10 @@ type branchCode struct {
 }
 
 var branchCodes = []branchCode{
-	{"1", ReasonOpenRun}, {"2", ReasonSkillChosen}, {"3", ReasonConsolidation}, {"4", ReasonProbe},
-	{"5", ReasonRepetition}, {"6", ReasonNewSkill}, {"6a", ReasonAuthorOrder}, {"7", ReasonQueue},
-	{"7-mastered", ReasonRotation}, {"8", ReasonRotation}, {"9-new", ReasonNewSkill}, {"9", ReasonRotation},
-	{"nothing", ReasonUnspecified},
+	{"0", ReasonConsolidation}, {"1", ReasonOpenRun}, {"2", ReasonSkillChosen}, {"3", ReasonConsolidation},
+	{"4", ReasonProbe}, {"5", ReasonRepetition}, {"6", ReasonNewSkill}, {"6a", ReasonAuthorOrder},
+	{"7", ReasonQueue}, {"7-mastered", ReasonRotation}, {"8", ReasonRotation}, {"9-new", ReasonNewSkill},
+	{"9", ReasonRotation}, {"nothing", ReasonUnspecified},
 }
 
 // reasonNames are the names of the codes in cause.proto, by number.
@@ -137,6 +138,7 @@ var goldenSets = []struct {
 	{"grade-3", grade3Scenarios},
 	{"essays", essayScenarios},
 	{"modules", moduleScenarios},
+	{"olympiad-large", largeScenarios},
 }
 
 var (
@@ -314,6 +316,55 @@ var moduleScenarios = []scenario{
 	}},
 }
 
+// releaseLarge is the key of olympiad-math 0.1.1 among the packages the golden vectors read.
+const releaseLarge = releaseOlympiad + "@" + versionLarge
+
+// goldenReleases reads the packages of the golden vectors: the three of the first slice, by module
+// ID, and olympiad-math 0.1.1 by releaseLarge.
+func goldenReleases(tb testing.TB) map[string]release {
+	tb.Helper()
+	rel := readRelease(tb)
+	rel[releaseLarge] = readLarge(tb)
+	return rel
+}
+
+// Olympiad maths 0.1.1, whose lessons hold a part of each skill's tasks at their band, for a
+// learner half way (benchMiddle) at the end of a segment of a lesson's open run (section 3.3; the
+// amendment of 2026-11-14 to R05).
+var largeScenarios = []scenario{
+	{"consolidation-in-a-lesson", "0", func(rel map[string]release) golden {
+		return largeInLesson(rel, 0, false)
+	}},
+	{"further-through-the-lesson", "1", func(rel map[string]release) golden {
+		g := largeInLesson(rel, 1, true)
+		first := largeInLesson(rel, 0, true) // an open run first in the order of the lessons
+		g.in.Runs = append(g.in.Runs, first.in.Runs[len(first.in.Runs)-1])
+		return g
+	}},
+}
+
+// largeInLesson is the learner half way at the end of the first segment of a new run of the lesson
+// at grades-3-4 of the skill at place k in the order of the graph, right or failed on it.
+func largeInLesson(rel map[string]release, k int, right bool) golden {
+	m := rel[releaseLarge].forAge("under_13")
+	g := benchMiddle(m)
+	skill := graphOrder(m.Graph.Skills)[k].ID
+	j := slices.IndexFunc(m.Lessons, func(l Lesson) bool {
+		return slices.Contains(l.Skills, skill) && strings.HasSuffix(l.ID, "-grades-3-4")
+	})
+	if j < 0 {
+		panic("no lesson at grades-3-4 teaches " + skill)
+	}
+	l := m.Lessons[j]
+	g.in.Runs = append(g.in.Runs, Run{Lesson: l.ID, Skills: l.Skills})
+	g.in.Last = failedOn(l.Tasks[0].ID, skill)
+	if right {
+		g.in.Last.Results[0].FirstRight = 1
+	}
+	g.in.Last.InLesson, g.in.Last.Lesson, g.in.HasLast = true, l.ID, true
+	return g
+}
+
 // vector writes the line of one vector: its name and branch, the choice, and for a task the bits
 // of the P the engine computed of it on each of its primary skills with a verdict.
 func vector(t *testing.T, s scenario, in Input) string {
@@ -352,7 +403,7 @@ func vector(t *testing.T, s scenario, in Input) string {
 
 // TestGoldenChoose holds the choice of every scenario to its vector in testdata/choose.
 func TestGoldenChoose(t *testing.T) {
-	rel := readRelease(t)
+	rel := goldenReleases(t)
 	for _, set := range goldenSets {
 		t.Run(set.file, func(t *testing.T) {
 			var b strings.Builder
@@ -384,7 +435,7 @@ func TestGoldenChoose(t *testing.T) {
 // requires a scenario of every branch: so every branch gives the code of the table, and the rule
 // gives each of the nine codes, REASON_CODE_ROTATION at its three places.
 func TestGoldenCodes(t *testing.T) {
-	rel := readRelease(t)
+	rel := goldenReleases(t)
 	seen := map[string]bool{}
 	codes := map[ReasonCode]bool{}
 	for _, set := range goldenSets {

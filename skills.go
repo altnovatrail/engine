@@ -85,19 +85,25 @@ func (pr prepared) skills(i int, second bool) []skillView {
 		v.evidence = v.read.EvidenceCount > 0
 		frequent := frequentTraps(v.read.Traps)
 		v.candidates, v.recommended, v.hasRecommended = pr.candidates(i, s.ID, frequent, second, false)
-		withinReach := slices.ContainsFunc(v.candidates, func(c candidate) bool { return c.p >= corridorLow })
 		issue, _ := lookup(issues, func(s SkillIssue) string { return s.Skill }, s.ID)
 		v.issued, v.lastIssued = issue.Issued, issue.LastIssued
 		if len(s.BandsTaught) > 0 {
 			v.lowestBand, v.hasLowestBand = slices.Min(s.BandsTaught), true
 		}
-		v.reachable = v.open && len(v.candidates) > 0 && (withinReach || backFromPause(issue))
+		v.reachable = reachable(v.open, v.candidates, issue)
 		v.masteredForQueue = v.read.Mastered && (!v.hasRecommended || v.recommended.band <= v.read.MasteryBand.Place)
 		v.awaitsLesson = !v.issued && pr.awaitsLesson(i, s.ID)
 		v.due = v.open && v.masteredForQueue && len(v.candidates) > 0 && !v.awaitsLesson && (v.read.Review.Already || in.Time >= v.read.Review.At)
 		out = append(out, v)
 	}
 	return out
+}
+
+// reachable tells whether a skill is within reach by its candidates in the pass: open, with
+// candidates, and one of them with a P of at least 0.70, or back from a pause by its last closed
+// attempt, a probe or a repetition answered right.
+func reachable(open bool, cands []candidate, issue SkillIssue) bool {
+	return open && len(cands) > 0 && (slices.ContainsFunc(cands, func(c candidate) bool { return c.p >= corridorLow }) || backFromPause(issue))
 }
 
 // candidates gives the candidates of a skill of the module at place i in the pass, in the order of
@@ -231,6 +237,12 @@ func failed(r SkillResult) bool {
 // right tells whether an attempt is right on a skill: one that is not a failure and has a first
 // verdict on it. An attempt with none is neither (the amendment of 2026-11-08 to R03).
 func right(r SkillResult) bool { return r.Answered > 0 && !failed(r) }
+
+// failedLast tells whether the last closed attempt is a failure on the skill: branches 0 and 3
+// consolidate it.
+func (pr prepared) failedLast(skill string) bool {
+	return slices.ContainsFunc(pr.in.Last.Results, func(r SkillResult) bool { return r.Skill == skill && failed(r) })
+}
 
 // backFromPause tells whether the last closed attempt of a skill is a probe or a repetition, and
 // right: it puts the skill within reach until the next closed attempt (R06).
