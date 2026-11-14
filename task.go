@@ -22,7 +22,10 @@ type candidate struct {
 	traps  []int
 	seen   bool  // the solution went to the device: never for a template
 	seenAt int64 // when it last did
-	last   bool  // the task of the last closed attempt, back on the map in the second pass
+	// On pause before a seen solution — it went less than 24 hours ago, or the task is the last
+	// closed attempt's —: a candidate only in the second pass, after the rest.
+	onPause bool
+	last    bool // the task of the last closed attempt, back on the map in the second pass
 }
 
 // poolTask is a task of the pool with what the rule reads of it whatever the skill: its items and
@@ -164,11 +167,19 @@ func frequentTraps(traps []learnermodel.TrapCount) []string {
 	return ids
 }
 
-// bySolution puts the candidates whose solution never went to the device first, and of the rest
-// the one whose solution went longest ago (R82 of spec); the task of the last closed attempt, back
-// on the map, comes after them all.
+// bySolution puts the task of the last closed attempt, back on the map, after them all, and orders
+// the rest by bySeen.
 func bySolution(a, b candidate) int {
-	if c := cmp.Or(falseFirst(a.last, b.last), falseFirst(a.seen, b.seen)); c != 0 || !a.seen {
+	if c := falseFirst(a.last, b.last); c != 0 {
+		return c
+	}
+	return bySeen(a, b)
+}
+
+// bySeen puts the candidates whose solution never went to the device first, and of the rest the
+// one whose solution went longest ago (R82 of spec).
+func bySeen(a, b candidate) int {
+	if c := falseFirst(a.seen, b.seen); c != 0 || !a.seen {
 		return c
 	}
 	return cmp.Compare(a.seenAt, b.seenAt)
@@ -188,21 +199,46 @@ func falseFirst(a, b bool) int {
 func inCorridor(p float64) bool { return p >= corridorLow && p <= corridorHigh }
 
 // byCorridor orders the candidates of a skill for the task on it, the first being the task:
-// after bySolution, those with a P in the corridor first, and among them the one that catches
-// more frequent traps, then the one that catches the higher; then the one nearest by P to the aim,
-// of two as near the easier, with the greater P; then by ID byte by byte.
+// after bySolution, those with a P in the corridor first, then byAim.
 func byCorridor(a, b candidate) int {
 	if c := bySolution(a, b); c != 0 {
 		return c
 	}
-	inA, inB := inCorridor(a.p), inCorridor(b.p)
-	if inA != inB {
-		if inA {
-			return -1
-		}
-		return 1
+	if c := corridorFirst(a, b); c != 0 {
+		return c
 	}
-	if inA {
+	return byAim(a, b)
+}
+
+// byCorridorFirst orders the candidates of a skill that has one whose solution never went to the
+// device, the first being the task (variant D of T58 — A with H6, docs/architecture.md,
+// subsection 2.13): the task of the last closed attempt, back on the map, after them all, and the
+// tasks on pause, back in the second pass, after the rest; then those with a P in the corridor
+// first, so that a task in the corridor whose solution was seen comes before one outside it whose
+// solution was not; within each, bySeen, then byAim.
+func byCorridorFirst(a, b candidate) int {
+	if c := cmp.Or(falseFirst(a.last, b.last), falseFirst(a.onPause, b.onPause)); c != 0 {
+		return c
+	}
+	if c := corridorFirst(a, b); c != 0 {
+		return c
+	}
+	if c := bySeen(a, b); c != 0 {
+		return c
+	}
+	return byAim(a, b)
+}
+
+// corridorFirst puts a candidate with a P in the corridor before one outside it.
+func corridorFirst(a, b candidate) int {
+	return falseFirst(!inCorridor(a.p), !inCorridor(b.p))
+}
+
+// byAim orders two candidates both in the corridor or both outside it: in the corridor, the one
+// that catches more frequent traps, then the one that catches the higher; then the one nearest by
+// P to the aim, of two as near the easier, with the greater P; then by ID byte by byte.
+func byAim(a, b candidate) int {
+	if inCorridor(a.p) {
 		if c := cmp.Or(cmp.Compare(len(b.traps), len(a.traps)), slices.Compare(a.traps, b.traps)); c != 0 {
 			return c
 		}
@@ -220,8 +256,8 @@ func byEase(a, b candidate) int {
 	return cmp.Or(bySolution(a, b), cmp.Compare(b.p, a.p), strings.Compare(a.id, b.id))
 }
 
-// task gives the task on a skill among its candidates in the pass: the first by byCorridor, or
-// by byEase for a probe.
+// task gives the task on a skill among its candidates in the pass: the first by taskOrder, or by
+// byEase for a probe.
 func (s skillView) task(easiest bool) (candidate, bool) {
 	if len(s.candidates) == 0 {
 		return candidate{}, false
@@ -229,5 +265,16 @@ func (s skillView) task(easiest bool) (candidate, bool) {
 	if easiest {
 		return slices.MinFunc(s.candidates, byEase), true
 	}
-	return slices.MinFunc(s.candidates, byCorridor), true
+	return slices.MinFunc(s.candidates, taskOrder(s.candidates)), true
+}
+
+// taskOrder gives the order of the task on a skill among its candidates (variant D of T58, H6):
+// byCorridorFirst while one of them has a solution that never went to the device, a template
+// too, and byCorridor when every solution was seen — among seen ones alone the model's corridor
+// does not overtake how long ago a solution went.
+func taskOrder(cands []candidate) func(a, b candidate) int {
+	if slices.ContainsFunc(cands, func(c candidate) bool { return !c.seen }) {
+		return byCorridorFirst
+	}
+	return byCorridor
 }

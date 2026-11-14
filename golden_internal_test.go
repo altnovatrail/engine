@@ -157,6 +157,32 @@ var olympiadScenarios = []scenario{
 		g.in.Last, g.in.HasLast = failedOn(tid(releaseOlympiad, "gaps-34-d3-1"), oGaps), true
 		return g
 	}},
+	// The one task of counting-gaps in the corridor had its solution seen two days ago: it comes
+	// before the unseen ones outside the corridor (variant D of T58 — A with H6).
+	{"consolidation-seen-in-the-corridor", "3", func(rel map[string]release) golden {
+		g := olympiadQueue(rel)
+		g.in.Last, g.in.HasLast = failedOn(tid(releaseOlympiad, "gaps-34-d3-1"), oGaps), true
+		g.in.Summary.Tasks = []TaskSolution{{Task: tid(releaseOlympiad, "gaps-34-d1-1"), SolutionSentAt: goldenTime - 2*day}}
+		return g
+	}},
+	// Every task of counting-gaps had its solution seen, three days ago, and the one in the corridor
+	// two days ago: of those seen longest ago the task is by the corridor and the aim, as in the base,
+	// not the one in the corridor (variant D of T58, H6).
+	{"consolidation-all-seen", "3", func(rel map[string]release) golden {
+		g := olympiadQueue(rel)
+		g.in.Last, g.in.HasLast = failedOn(tid(releaseOlympiad, "gaps-34-d3-1"), oGaps), true
+		for _, cd := range g.modules[0].Pool {
+			if strings.HasPrefix(cd.Task.ID, tid(releaseOlympiad, "gaps-")) {
+				g.in.Summary.Tasks = append(g.in.Summary.Tasks, TaskSolution{Task: cd.Task.ID, SolutionSentAt: goldenTime - 3*day})
+			}
+		}
+		for k, s := range g.in.Summary.Tasks {
+			if s.Task == tid(releaseOlympiad, "gaps-34-d1-1") {
+				g.in.Summary.Tasks[k].SolutionSentAt = goldenTime - 2*day
+			}
+		}
+		return g
+	}},
 	{"probe", "4", func(rel map[string]release) golden {
 		g := olympiadQueue(rel)
 		g.state.Modules[0].Skills[1] = practised(oGaps, -3, 6, goldenTime-2*day)

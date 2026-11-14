@@ -178,11 +178,11 @@ func ids(vs []skillView) []string {
 }
 
 // candidateIDs gives the local IDs of the candidates in the order of the task on the skill: the
-// rule takes the first by byCorridor and never sorts them, so the test does.
+// rule takes the first by taskOrder and never sorts them, so the test does.
 func candidateIDs(cs []candidate) []string {
 	var out []string
 	cs = slices.Clone(cs)
-	slices.SortFunc(cs, byCorridor)
+	slices.SortFunc(cs, taskOrder(cs))
 	for _, c := range cs {
 		out = append(out, c.id[strings.LastIndex(c.id, "/")+1:])
 	}
@@ -333,7 +333,9 @@ func TestGrade3Start(t *testing.T) {
 }
 
 // School maths for grade 3, step 2: the solution of times-tables-d3 was shown, and for 24 hours
-// it is no candidate; then it comes after times-tables-d1 and times-tables-d5.
+// it is no candidate; then it comes first again, in the corridor, before times-tables-d1 and
+// times-tables-d5 outside it, whose solutions were not seen (variant D of T58); in the second pass it
+// comes back on pause, after them.
 func TestGrade3Solution(t *testing.T) {
 	w := newWorld(t, grade3(t))
 	tt := sid(grade3Math, "times-tables")
@@ -346,7 +348,7 @@ func TestGrade3Solution(t *testing.T) {
 	}{
 		{"an hour ago", exampleTime - 3600, false, []string{"times-tables-d1", "times-tables-d5"}},
 		{"a second short of 24 hours", exampleTime - solutionPause + 1, false, []string{"times-tables-d1", "times-tables-d5"}},
-		{"24 hours ago", exampleTime - solutionPause, false, []string{"times-tables-d1", "times-tables-d5", "times-tables-d3"}},
+		{"24 hours ago", exampleTime - solutionPause, false, []string{"times-tables-d3", "times-tables-d1", "times-tables-d5"}},
 		{"an hour ago, second pass", exampleTime - 3600, true, []string{"times-tables-d1", "times-tables-d5", "times-tables-d3"}},
 		{"in the future", exampleTime + 10, false, []string{"times-tables-d1", "times-tables-d5"}},
 	} {
@@ -637,6 +639,28 @@ func TestPausedSince(t *testing.T) {
 	}
 }
 
+// When every candidate of a skill had its solution seen, the one seen longest ago comes first, as
+// in the base, not the one in the corridor: among seen ones alone the model's corridor does not
+// overtake how long ago a solution went (variant D of T58, H6).
+func TestSeenAloneByAge(t *testing.T) {
+	w := newWorld(t, grade3(t))
+	tt := sid(grade3Math, "times-tables")
+	w.probabilities([]px{{"times-tables-d1", 0.9}, {"times-tables-d3", 0.78}, {"times-tables-d5", 0.6}})
+	w.in.Summary.Tasks = []TaskSolution{
+		{Task: grade3Math + "/task/times-tables-d1", SolutionSentAt: exampleTime - 4*solutionPause},
+		{Task: grade3Math + "/task/times-tables-d3", SolutionSentAt: exampleTime - 2*solutionPause},
+		{Task: grade3Math + "/task/times-tables-d5", SolutionSentAt: exampleTime - 3*solutionPause},
+	}
+	v := w.view(tt, false)
+	if got := candidateIDs(v.candidates); !slices.Equal(got, []string{"times-tables-d1", "times-tables-d5", "times-tables-d3"}) {
+		t.Errorf("all seen: candidates %v, want [times-tables-d1 times-tables-d5 times-tables-d3], by age", got)
+	}
+	w.in.Summary.Tasks = w.in.Summary.Tasks[1:] // times-tables-d1 never seen
+	if got := candidateIDs(w.view(tt, false).candidates); !slices.Equal(got, []string{"times-tables-d3", "times-tables-d1", "times-tables-d5"}) {
+		t.Errorf("one unseen: candidates %v, want [times-tables-d3 times-tables-d1 times-tables-d5], the corridor first", got)
+	}
+}
+
 // The task of the last closed attempt whose solution went to the device is no candidate for the
 // next choice, however long ago the solution went (R82 spec): past the pause of 24 hours it would
 // otherwise come back as the next task when the skill has no other one. Found by invariant I4 of
@@ -653,7 +677,7 @@ func TestLastSeenNotNext(t *testing.T) {
 		}
 	}
 	w.in.HasLast = false
-	if got := candidateIDs(w.view(tt, false).candidates); !slices.Equal(got, []string{"times-tables-d1", "times-tables-d5", "times-tables-d3"}) {
-		t.Errorf("another last attempt: candidates %v, want times-tables-d3 back, after the unseen", got)
+	if got := candidateIDs(w.view(tt, false).candidates); !slices.Equal(got, []string{"times-tables-d3", "times-tables-d1", "times-tables-d5"}) {
+		t.Errorf("another last attempt: candidates %v, want times-tables-d3 back, first in the corridor", got)
 	}
 }
