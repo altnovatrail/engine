@@ -53,9 +53,9 @@ func TestByCorridor(t *testing.T) {
 	}
 }
 
-// The order of the task on a skill that has a candidate with an unseen solution, case by case:
-// each list is in the order byCorridorFirst gives, and so, from any order, is sorting it
-// (variant D of T58).
+// The order of the task of consolidation on a skill that has a candidate with an unseen solution,
+// case by case: each list is in the order byCorridorFirst gives, and so, from any order, is sorting
+// it (variant E of T58).
 func TestByCorridorFirst(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -80,9 +80,9 @@ func TestByCorridorFirst(t *testing.T) {
 	}
 }
 
-// The task on a skill goes by byCorridorFirst while a candidate has an unseen solution, and by
-// byCorridor when every solution was seen (variant D of T58, H6).
-func TestTaskOrder(t *testing.T) {
+// The task of consolidation goes by byCorridorFirst while a candidate has an unseen solution, and by
+// byCorridor when every solution was seen (variant E of T58, H6).
+func TestConsolidationOrder(t *testing.T) {
 	inSeen := candidate{id: "a", p: 0.775, seen: true, seenAt: 2}
 	for _, tc := range []struct {
 		name  string
@@ -93,7 +93,7 @@ func TestTaskOrder(t *testing.T) {
 		{"all seen: the longest ago", []candidate{inSeen, {id: "b", p: 0.1, seen: true, seenAt: 1}}, "b"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			if c, _ := (skillView{candidates: tc.cands}).task(false); c.id != tc.want {
+			if c, _ := (skillView{candidates: tc.cands}).consolidationTask(); c.id != tc.want {
 				t.Errorf("the task is %s, want %s", c.id, tc.want)
 			}
 		})

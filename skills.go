@@ -29,7 +29,8 @@ type skillView struct {
 	read     learnermodel.SkillReadout // zero when the skill has no state
 	evidence bool                      // the skill has evidence of its own, where it is primary
 	open     bool
-	// The candidates of the skill in the pass, by ID; the task on the skill is the first by taskOrder.
+	// The candidates of the skill in the pass, by ID; the task on the skill is the first by byCorridor,
+	// and the task of consolidation by consolidationOrder.
 	candidates []candidate
 	reachable  bool
 	// The recommended task: the task on the skill without the pause before a task with a seen
@@ -117,7 +118,7 @@ func (pr prepared) candidates(i int, skill string, frequent []string, second, on
 		if !ok || !onMap && !othersOpen(t.primaries, skill, pr.isOpen) {
 			continue
 		}
-		// No solution is read yet, so byCorridor here is every order of the task on a skill.
+		// No solution is read yet, and with none seen byCorridor and byCorridorFirst give one order.
 		if !hasRec || byCorridor(cd, rec) < 0 {
 			rec, hasRec = cd, true
 		}

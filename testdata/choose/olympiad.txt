@@ -3,6 +3,7 @@ queue branch=7 task novatrail/olympiad-math/task/enum-34-d1-1 REASON_CODE_QUEUE 
 consolidation branch=3 task novatrail/olympiad-math/task/gaps-34-d1-1 REASON_CODE_CONSOLIDATION p:counting-gaps=3fe9f5cefe8ca9a4
 consolidation-seen-in-the-corridor branch=3 task novatrail/olympiad-math/task/gaps-34-d1-1 REASON_CODE_CONSOLIDATION p:counting-gaps=3fe9f5cefe8ca9a4
 consolidation-all-seen branch=3 task novatrail/olympiad-math/task/gaps-12-d3-1 REASON_CODE_CONSOLIDATION p:counting-gaps=3febf7b9b5fc49cd
+queue-seen-in-the-corridor branch=7 task novatrail/olympiad-math/task/enum-12-d3-1 REASON_CODE_QUEUE p:combinatorics-enumeration=3febdc52e63621c7
 probe branch=4 task novatrail/olympiad-math/task/gaps-12-d2-1 REASON_CODE_PROBE p:counting-gaps=3fdfc0b05bea556f
 lesson-of-a-new-band branch=7 lesson novatrail/olympiad-math/lesson/combinatorics-enumeration-grades-5-6 REASON_CODE_QUEUE
 rotation-above-mastery-band branch=7-mastered lesson novatrail/olympiad-math/lesson/combinatorics-enumeration-grades-5-6 REASON_CODE_ROTATION

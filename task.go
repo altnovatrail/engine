@@ -211,11 +211,11 @@ func byCorridor(a, b candidate) int {
 }
 
 // byCorridorFirst orders the candidates of a skill that has one whose solution never went to the
-// device, the first being the task (variant D of T58 — A with H6, docs/architecture.md,
-// subsection 2.13): the task of the last closed attempt, back on the map, after them all, and the
-// tasks on pause, back in the second pass, after the rest; then those with a P in the corridor
-// first, so that a task in the corridor whose solution was seen comes before one outside it whose
-// solution was not; within each, bySeen, then byAim.
+// device, the first being the task of consolidation (variant E of T58 — A with H6 and H7 (a),
+// docs/architecture.md, subsection 2.13): the task of the last closed attempt, back on the map,
+// after them all, and the tasks on pause, back in the second pass, after the rest; then those with
+// a P in the corridor first, so that a task in the corridor whose solution was seen comes before
+// one outside it whose solution was not; within each, bySeen, then byAim.
 func byCorridorFirst(a, b candidate) int {
 	if c := cmp.Or(falseFirst(a.last, b.last), falseFirst(a.onPause, b.onPause)); c != 0 {
 		return c
@@ -256,7 +256,7 @@ func byEase(a, b candidate) int {
 	return cmp.Or(bySolution(a, b), cmp.Compare(b.p, a.p), strings.Compare(a.id, b.id))
 }
 
-// task gives the task on a skill among its candidates in the pass: the first by taskOrder, or by
+// task gives the task on a skill among its candidates in the pass: the first by byCorridor, or by
 // byEase for a probe.
 func (s skillView) task(easiest bool) (candidate, bool) {
 	if len(s.candidates) == 0 {
@@ -265,14 +265,25 @@ func (s skillView) task(easiest bool) (candidate, bool) {
 	if easiest {
 		return slices.MinFunc(s.candidates, byEase), true
 	}
-	return slices.MinFunc(s.candidates, taskOrder(s.candidates)), true
+	return slices.MinFunc(s.candidates, byCorridor), true
 }
 
-// taskOrder gives the order of the task on a skill among its candidates (variant D of T58, H6):
-// byCorridorFirst while one of them has a solution that never went to the device, a template
-// too, and byCorridor when every solution was seen — among seen ones alone the model's corridor
-// does not overtake how long ago a solution went.
-func taskOrder(cands []candidate) func(a, b candidate) int {
+// consolidationTask gives the task of consolidation on a skill, branch 3: the first among its
+// candidates in the pass by consolidationOrder (variant E of T58 — A with H6 and H7 (a),
+// docs/architecture.md, subsection 2.13). The other branches keep byCorridor, and a task in the
+// corridor whose solution was seen overtakes an unseen one only to work on a mistake.
+func (s skillView) consolidationTask() (candidate, bool) {
+	if len(s.candidates) == 0 {
+		return candidate{}, false
+	}
+	return slices.MinFunc(s.candidates, consolidationOrder(s.candidates)), true
+}
+
+// consolidationOrder gives the order of the task of consolidation on a skill among its candidates
+// (variant E of T58, H6): byCorridorFirst while one of them has a solution that never went to the
+// device, a template too, and byCorridor when every solution was seen — among seen ones alone the
+// model's corridor does not overtake how long ago a solution went.
+func consolidationOrder(cands []candidate) func(a, b candidate) int {
 	if slices.ContainsFunc(cands, func(c candidate) bool { return !c.seen }) {
 		return byCorridorFirst
 	}
