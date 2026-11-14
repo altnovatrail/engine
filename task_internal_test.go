@@ -53,70 +53,6 @@ func TestByCorridor(t *testing.T) {
 	}
 }
 
-// The order of the task on a skill that has a candidate with an unseen solution, case by case:
-// each list is in the order byCorridorFirst gives, and so, from any order, is sorting it
-// (variant F of T58).
-func TestByCorridorFirst(t *testing.T) {
-	below := math.Float64frombits(math.Float64bits(unseenHard) - 1)
-	for _, tc := range []struct {
-		name string
-		want []candidate
-	}{
-		{"in the corridor before an unseen solution below unseenHard", []candidate{{id: "z", p: 0.775, seen: true, seenAt: 1}, {id: "a", p: 0.1}}},
-		{"an unseen solution at unseenHard before one seen in the corridor", []candidate{{id: "z", p: unseenHard}, {id: "a", p: 0.775, seen: true, seenAt: 1}}},
-		{"an unseen solution above the corridor before one seen in it", []candidate{{id: "z", p: 0.99}, {id: "a", p: 0.775, seen: true, seenAt: 1}}},
-		{"just below unseenHard, after one seen in the corridor", []candidate{{id: "z", p: 0.775, seen: true, seenAt: 1}, {id: "a", p: below}}},
-		{"the tiers", []candidate{{id: "e", p: 0.8}, {id: "d", p: 0.6}, {id: "c", p: 0.8, seen: true, seenAt: 1}, {id: "b", p: 0.3}, {id: "a", p: 0.95, seen: true, seenAt: 1}}},
-		{"in the corridor, no seen solution first", []candidate{{id: "z", p: 0.8}, {id: "a", p: 0.775, seen: true, seenAt: 1}}},
-		{"outside the corridor, no seen solution first", []candidate{{id: "z", p: 0.1}, {id: "a", p: 0.6, seen: true, seenAt: 1}}},
-		{"of seen solutions, the longest ago", []candidate{{id: "z", p: 0.8, seen: true, seenAt: 1}, {id: "a", p: 0.775, seen: true, seenAt: 2}}},
-		{"then as byCorridor", []candidate{{id: "z", p: 0.84, traps: []int{0}}, {id: "b", p: 0.775}, {id: "a", p: 0.9}, {id: "c", p: 0.6}}},
-		{"on pause after the rest", []candidate{{id: "z", p: 0.1}, {id: "a", p: 0.775, seen: true, seenAt: 9, onPause: true}}},
-		{"the last after them all", []candidate{{id: "z", p: 0.1, seen: true, seenAt: 9, onPause: true}, {id: "a", p: 0.775, seen: true, seenAt: 1, onPause: true, last: true}}},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			got := slices.Clone(tc.want)
-			slices.Reverse(got)
-			slices.SortFunc(got, byCorridorFirst)
-			if !slices.EqualFunc(got, tc.want, func(a, b candidate) bool { return a.id == b.id }) {
-				t.Errorf("order %v, want %v", got, tc.want)
-			}
-		})
-	}
-}
-
-// The task on a skill goes by byCorridorFirst while a candidate has an unseen solution, and by
-// byCorridor when every solution was seen (variant F of T58, H6).
-func TestTaskOrder(t *testing.T) {
-	inSeen := candidate{id: "a", p: 0.775, seen: true, seenAt: 2}
-	for _, tc := range []struct {
-		name  string
-		cands []candidate
-		want  string
-	}{
-		{"one unseen: the corridor first", []candidate{inSeen, {id: "b", p: 0.1}}, "a"},
-		{"all seen: the longest ago", []candidate{inSeen, {id: "b", p: 0.1, seen: true, seenAt: 1}}, "b"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			if c, _ := (skillView{candidates: tc.cands}).task(false); c.id != tc.want {
-				t.Errorf("the task is %s, want %s", c.id, tc.want)
-			}
-		})
-	}
-}
-
-// The probe and the tasks with a rubric keep the order of a seen solution: those never seen first,
-// then the one seen longest ago, and the task of the last closed attempt after them all.
-func TestBySolution(t *testing.T) {
-	want := []candidate{{id: "z"}, {id: "y", seen: true, seenAt: 1}, {id: "x", seen: true, seenAt: 2}, {id: "a", seen: true, last: true}}
-	got := slices.Clone(want)
-	slices.Reverse(got)
-	slices.SortStableFunc(got, bySolution)
-	if !slices.EqualFunc(got, want, func(a, b candidate) bool { return a.id == b.id }) {
-		t.Errorf("order %v, want %v", got, want)
-	}
-}
-
 // The task of a probe is the easiest, after those with a seen solution.
 func TestByEase(t *testing.T) {
 	want := []candidate{{id: "z", p: 0.9}, {id: "a", p: 0.8}, {id: "b", p: 0.8}, {id: "c", p: 0.99, seen: true, seenAt: 5}}
@@ -160,14 +96,5 @@ func TestCorridorAim(t *testing.T) {
 	a, b := candidate{id: "a", p: 0.772}, candidate{id: "b", p: 0.781}
 	if byCorridor(a, b) >= 0 || byCorridor(b, a) <= 0 {
 		t.Errorf("0.781 comes before 0.772 for the aim %v", corridorAim)
-	}
-}
-
-// unseenHard splits the unseen candidates outside the corridor without breaking byAim's order:
-// a P below it is farther from the aim than 1, the farthest P above the corridor, while it is at
-// most 2 × corridorAim − 1 (variant F of T58).
-func TestUnseenHard(t *testing.T) {
-	if limit := 2*corridorAim - 1; unseenHard > limit {
-		t.Errorf("unseenHard %v is above %v: corridorTier would put a P below it after one farther from the aim", unseenHard, limit)
 	}
 }

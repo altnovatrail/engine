@@ -2,7 +2,7 @@
 
 > The results of the engine's measurements: what was measured, how, on what, and what numbers came out. The document that describes how it is built — [architecture.md](architecture.md) — refers here, and itself holds only what was decided from the measurements (RULES.md, How we work; R143 spec). A measurement is cited by section, like any document: `measurements 2.1`, and from another repository `measurements 2.1 engine`.
 >
-> An external fact a measurement rests on is a record of [sources.md](sources.md). Sections 1 and 2 were moved here word for word on 2026-11-12 from [architecture.md](architecture.md), subsections 2.9 and 2.10, by task T55 (R24); the analysis and the decisions stayed there. The measurement of the tokens spent by an epic's sessions, by the rules of epics of [RUN.md](../RUN.md), is section 4, from the archive of E7 (T54). Section 5 is the analysis of the corridor on the new base, at the start of E5 (T57).
+> An external fact a measurement rests on is a record of [sources.md](sources.md). Sections 1 and 2 were moved here word for word on 2026-11-12 from [architecture.md](architecture.md), subsections 2.9 and 2.10, by task T55 (R24); the analysis and the decisions stayed there. The measurement of the tokens spent by an epic's sessions, by the rules of epics of [RUN.md](../RUN.md), is section 4, from the archive of E7 (T54). Section 5 is the analysis of the corridor on the new base, at the start of E5 (T57), and section 6 the rough look of its variants (T58).
 
 ## 1. The corridor of the base
 
@@ -221,3 +221,31 @@ Left out are the probe, repetition and the lessons of the queue and of rotation:
 | olympiad `G2-half` | 15,786 | 78 / 107 | 100 / 126 | 0 / 0 |
 | olympiad `G2-fading` | 15,541 | 62 / 113 | 75 / 129 | 0 / 0 |
 | olympiad `G3` | 15,766 | 86 / 95 | 107 / 132 | 0 / 0 |
+
+## 6. The rough look of the variants of E5
+
+The variants D, E and F of T58 (the 2026-11-14 amendment to R03) against the base on the pin of `sim` after `model-2`, as T57 looked at A and C: a rough look, which decides nothing (section 3.6 sim). The rules of the variants and what came of the look are architecture 2.13; the facts of `sim` are sources 6.12.
+
+**How it was counted.** 2026-11-14, in the container of `engine`: AMD Ryzen AI 9 365, 20 processors, go1.27.4. A clone of `sim` `v0.1.17` (6f5151f; `gh release verify` accepts it) in a temporary folder, and its recipe of a rough look (R49 sim), 300 working learners a cell, the whole matrix: `just rough engine runs/base-300.jsonl` for the base, and `CANDIDATE_ENGINE=<folder> just rough engine runs/<x>-300.jsonl` for each variant, where the folder is a clean clone of `engine` at the variant's commit — D 29e205a, E e9832fc, F 389798b —, which the recipe takes in place of a SHA on GitHub (sources 6.9). The base built by `go.mod` of `sim` — `engine` `v0.1.6` and `learner-model` `v0.1.8` —, as in section 5; each variant in the workspace of the gate, with `learner-model` at ab688b2, and held to `gate.json`. By the clock 9 min 44 s, 6 min 49 s, 12 min 53 s and 7 min 18 s, the base and E beside other work. SHA-256: the base `bcacb08e…125d` — to the byte the base of T57 (section 5) —, D `04a19d34…23da`, E `fa487a7b…4a92`, F `40408d8d…69f7`. Then `sim compare` of the base with each, and `sim judge` with one judgement file of the three: `{"name": "E", "group": "corridor", "constants": 0, "new_field": false, "distance": 1, "equal_on": ["novatrail/grade-3-math", "novatrail/english-essays"]}`, D the same with `"distance": 2`, F with `"constants": 1, "distance": 3`. The clones and the runs do not go into the repository.
+
+**The rough look.** The cells of olympiad maths of section 5 and those where this look failed "no worse", by `sim compare`, 300 learners a cell. On the graphs of school maths alone and of the essays every number of every variant is the base's, to the bit; the pair of olympiad and school maths, `A-linked`, moves with olympiad maths, and the synthetic sheet of `S-predicate`, which no graph of the choice has, moves too. `E1.corridor` is the share of items in the corridor (more is better), `M3.lag` the signed lag, `E4.given` the share of the skills within reach given at least once. Each cell: the base → D / E / F.
+
+| Cell | `E1.corridor` | `M3.lag` | `E4.given` |
+|---|---|---|---|
+| olympiad `G0` | 0.259 → 0.379 / 0.322 / 0.347 | −0.028 → −0.020 / −0.012 / −0.023 | 0.868 → 0.868 / 0.869 / 0.871 |
+| olympiad `G2` | 0.254 → 0.280 / 0.276 / 0.293 | −1.026 → −1.032 / −1.013 / −1.024 | 0.798 → 0.795 / 0.799 / 0.799 |
+| olympiad `G2-half` | 0.265 → 0.338 / 0.302 / 0.323 | −0.529 → −0.516 / −0.512 / −0.518 | 0.827 → 0.826 / 0.829 / 0.828 |
+| olympiad `G2-fading` | 0.267 → 0.353 / 0.310 / 0.332 | −0.431 → −0.417 / −0.406 / −0.413 | 0.833 → 0.834 / 0.837 / 0.836 |
+| olympiad `G3` | 0.256 → 0.324 / 0.293 / 0.315 | −0.616 → −0.618 / −0.611 / −0.608 | 0.831 → 0.832 / 0.834 / 0.834 |
+| olympiad `G3-drop` | 0.220 → 0.324 / 0.282 / 0.302 | 0.502 → 0.463 / 0.475 / 0.467 | 0.863 → 0.865 / 0.864 / 0.864 |
+| olympiad `S-scale1.5` | 0.267 → 0.363 / 0.309 / 0.341 | 0.929 → 0.844 / 0.878 / 0.854 | 0.889 → 0.882 / 0.889 / 0.890 |
+| olympiad `F-none` | 0.137 → 0.351 / 0.221 / 0.282 | 0.053 → 0.024 / 0.059 / 0.040 | 0.897 → 0.891 / 0.899 / 0.893 |
+| olympiad `F-growth5` | 0.167 → 0.402 / 0.258 / 0.341 | −0.165 → −0.195 / −0.159 / −0.188 | 0.879 → 0.871 / 0.877 / 0.874 |
+| olympiad `F-C1` | 0.150 → 0.381 / 0.242 / 0.321 | −0.103 → −0.101 / −0.111 / −0.090 | 0.900 → 0.895 / 0.898 / 0.895 |
+
+`M3.settle` on olympiad `G3-drop` — 43.8 → 53.4 / 55.8 / 56.3, and on `G3` 51.0 → 54.0 / 56.1 / 54.6, with intervals across zero; on olympiad `W-repeat` `M4.false.all` — 0.032 → 0.047 / 0.041 / 0.037 — and `M3.lag` — 0.023 → 0.165 / 0.092 / 0.088, wider for all three with the interval clear of zero.
+
+`sim judge`: "A rough look, which decides nothing: no candidate holds every constraint and is better than the base". `neutral` holds for all three. The group `corridor` is 0.054 [0.050; 0.059] for D, 0.029 [0.026; 0.031] for E and 0.043 [0.040; 0.047] for F; the score is not read on a rough look. The checks "no worse" whose worst end is past the tolerance:
+- all three: olympiad `M3.settle` on `G3-drop` — D 17.00 at 16.70, E 19.28 at 16.50, F 20.25 at 17.77;
+- D also: olympiad `E4.given` on `S-scale1.5` (0.0123 at 0.0100), `F-none` (0.0105) and `F-growth5` (0.0119), and `M4.false.all` on `W-repeat` (0.0212 at 0.0200);
+- F also: olympiad `E4.given` on `F-C1` (0.0102 at 0.0100).

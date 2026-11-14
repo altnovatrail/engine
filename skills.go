@@ -18,9 +18,6 @@ const (
 	corridorLow  = 0.70  // the corridor of success, from; and the least P of a skill within reach
 	corridorHigh = 0.85  // the corridor of success, to
 	corridorAim  = 0.775 // the aim inside the corridor
-	// Below it, by the model's P, an unseen candidate is overtaken by a seen one in the corridor
-	// (variant F of T58, H7 (b)): not as in standalone, and a judgement of sim decides it.
-	unseenHard = 0.50
 
 	solutionPause int64 = 86_400 // a task whose solution went to the device is no candidate for 24 hours
 	frequentTrap  int64 = 2      // a trap that this many pieces of evidence of a skill found is frequent
@@ -32,7 +29,7 @@ type skillView struct {
 	read     learnermodel.SkillReadout // zero when the skill has no state
 	evidence bool                      // the skill has evidence of its own, where it is primary
 	open     bool
-	// The candidates of the skill in the pass, by ID; the task on the skill is the first by taskOrder.
+	// The candidates of the skill in the pass, by ID; the task on the skill is the first by byCorridor.
 	candidates []candidate
 	reachable  bool
 	// The recommended task: the task on the skill without the pause before a task with a seen
@@ -110,7 +107,7 @@ func (pr prepared) skills(i int, second bool) []skillView {
 // a task on pause is a candidate again, after the others, but the task of the last closed attempt
 // is not (the amendment of 2026-11-07 to R03) — on the map it is, after all the others (the
 // amendment of 2026-11-07 to R04). The rule reads of the candidates only the first by an order —
-// byCorridor, byCorridorFirst and byEase are total, by ID last —, so it does not sort them.
+// byCorridor and byEase are total, by ID last —, so it does not sort them.
 func (pr prepared) candidates(i int, skill string, frequent []string, second, onMap bool) (cands []candidate, rec candidate, hasRec bool) {
 	on := pr.tasksOn(i, skill)
 	cands = make([]candidate, 0, len(on))
@@ -120,8 +117,6 @@ func (pr prepared) candidates(i int, skill string, frequent []string, second, on
 		if !ok || !onMap && !othersOpen(t.primaries, skill, pr.isOpen) {
 			continue
 		}
-		// No solution is read yet, and with none seen byCorridor and byCorridorFirst give one order
-		// (TestUnseenHard).
 		if !hasRec || byCorridor(cd, rec) < 0 {
 			rec, hasRec = cd, true
 		}
@@ -129,7 +124,7 @@ func (pr prepared) candidates(i int, skill string, frequent []string, second, on
 		if !ok {
 			continue
 		}
-		cd.seen, cd.seenAt, cd.onPause, cd.last = sp.seen, sp.seenAt, sp.onPause, sp.last
+		cd.seen, cd.seenAt, cd.last = sp.seen, sp.seenAt, sp.last
 		cands = append(cands, cd)
 	}
 	return cands, rec, hasRec
@@ -146,10 +141,9 @@ func (pr prepared) tasksOn(i int, skill string) []int {
 }
 
 // pause reads the pause before a task with a seen solution in the pass: whether the task is a
-// candidate in it, and, as a candidate with its ID alone, what the orders of the task read of it —
-// seen, seenAt, onPause and last. A task whose solution went to the device less than 24
-// hours ago is none in the first pass; in the second it is, after the rest, but the task of the
-// last closed attempt is not — on the map it is, after all the others. The
+// candidate in it, and, as a candidate with its ID alone, how bySolution orders it. A task whose
+// solution went to the device less than 24 hours ago is none in the first pass; in the second it
+// is, but the task of the last closed attempt is not — on the map it is, after all the others. The
 // task of the last closed attempt whose solution went to the device is on pause however long ago
 // that was: R82 of spec keeps it from being the next task.
 func (pr prepared) pause(t *learnermodel.Task, second, onMap bool) (candidate, bool) {
@@ -165,7 +159,7 @@ func (pr prepared) pause(t *learnermodel.Task, second, onMap bool) (candidate, b
 		if !second || last && !onMap {
 			return cd, false
 		}
-		cd.onPause, cd.last = true, last
+		cd.last = last
 	}
 	return cd, true
 }
