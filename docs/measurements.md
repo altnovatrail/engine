@@ -2,7 +2,7 @@
 
 > The results of the engine's measurements: what was measured, how, on what, and what numbers came out. The document that describes how it is built — [architecture.md](architecture.md) — refers here, and itself holds only what was decided from the measurements (RULES.md, How we work; R143 spec). A measurement is cited by section, like any document: `measurements 2.1`, and from another repository `measurements 2.1 engine`.
 >
-> An external fact a measurement rests on is a record of [sources.md](sources.md). Sections 1 and 2 were moved here word for word on 2026-11-12 from [architecture.md](architecture.md), subsections 2.9 and 2.10, by task T55 (R24); the analysis and the decisions stayed there. The measurement of the tokens spent by an epic's sessions, by the rules of epics of [RUN.md](../RUN.md), will go here as a section of its own when it is first made.
+> An external fact a measurement rests on is a record of [sources.md](sources.md). Sections 1 and 2 were moved here word for word on 2026-11-12 from [architecture.md](architecture.md), subsections 2.9 and 2.10, by task T55 (R24); the analysis and the decisions stayed there. The measurement of the tokens spent by an epic's sessions, by the rules of epics of [RUN.md](../RUN.md), is section 4, from the archive of E7 (T54).
 
 ## 1. The corridor of the base
 
@@ -132,3 +132,12 @@ The variant of T52, consolidation in a lesson (the 2026-11-14 amendment to R05),
 A consolidation's items are in the corridor about twice as often as a segment's, and below 0.50 three to five times less often, yet the corridor of the cell does not move: a consolidation is about one task a pass, and on the segments of the lessons the share in the corridor falls and that below 0.50 grows. The interval of `E6.lesson.hard` is above zero on all 34 cells, that of `E6.lesson.corridor` below zero on 31, and that of `E6.next` below zero on 28: the next segment after a failure is given harder than in the base.
 
 **"Gate" on the variant.** `just gate` on the working tree with the variant, on `sim` `v0.1.15`, 250 learners a cell: red by two bands of zero width alone — `E2.stuck` on `G2-half` of olympiad maths, 0.016, and on `A-linked`, 0.008, with the band 0 ± 0, — the other 67 numbers within their bands, of them the numbers of `grade-3-math` alone and of `english-essays` to the bit; nobody broke an invariant, and no run ended with an error. The same gate on the code of `main` e0fdb3f was green, all 69 numbers to the bit (the 2026-11-14 amendment to R17).
+
+## 4. The tokens of an epic's sessions
+
+`just -f spec/justfile tokens-report --since … --row` prints one row of the table below, for the window of an epic: from the merge of the previous epic's branch, on the epic's first day, to the end of the session of its outcome. The row "before" is a baseline, not a part of a sum: the window of E7 overlaps it. It runs at the archive of each epic (RUN.md, «Как устроен план: эпики»), and once a month from `spec` (measurements 1.9 spec); the transcripts are the folder `-workspaces-engine` of this machine, and the cost is at the API's prices.
+
+| Project | Window, UTC | Sessions | Calls, main / subagents | Context of a call, k, main / subagents | Compactions | Cost at API prices |
+|---|---|---|---|---|---|---|
+| `-workspaces-engine` — before, the row of measurements 1.9 spec | 2026-10-13T00:00 … 2026-11-12T14:27 | 16 | 3,016 / 1,232 | 328.6 / 79.3 | 3 | $400.70 |
+| `-workspaces-engine` — epic E7: T49–T54, and T48, T55 and T56 outside it | 2026-11-11T22:51 … 2026-11-14T18:39 | 13 | 1,072 / 681 | 169.2 / 103.1 | 1 | $109.14 |

@@ -257,6 +257,15 @@ For architecture 2.12, 3.3 and 3.7; the second 2026-11-14 amendments to R05 and 
 - [`judgements/engine-lesson-1/report.md`](https://github.com/altnovatrail/sim/blob/b171f6f617cfd3b6c8e6342d1b0e98cc78bc104e/judgements/engine-lesson-1/report.md) — "holds every constraint: false; better than the base: false"; "fails no worse G2-half/novatrail/olympiad-math M3.lag: worse by at most 0.01812, the tolerance 0.01785"; `E6.next` on `G2-half/novatrail/olympiad-math` — "0.3033 | 0.281 | -0.02229 [-0.02672, -0.01789]";
 - the tag `v0.1.17` — commit 6f5151f5eb241b5b44b11b71296a0e3cd2c201a1, an immutable release of 2026-11-14T05:36:14Z: `gh release verify v0.1.17 -R altnovatrail/sim` — "✓ Release v0.1.17 verified!". Its `gate.json` differs from that of `v0.1.15` only by `"github.com/altnovatrail/spec": "v0.17.3"` in place of `"v0.16.3"`, and is the same on b171f6f; `.devcontainer/Dockerfile` is the same as at `v0.1.15`; `internal/gate/gate.go` — `const Learners = 250`.
 
+### 6.11. The order of the judgements at `sim` after E7
+
+For RUN.md, E5, T59 and row В45; the outcome of E7, T54.
+
+[RUN.md of `sim`](https://github.com/altnovatrail/sim/blob/40092d7f1d09580c92a46f21ea42a1dbcf2d3d61/RUN.md), `main` at commit 40092d7 of 2026-11-14T16:34:35Z, read 2026-11-14 through `gh api`:
+
+- table 1 — «Таблица 1. Текущий эпик — E9. Справедливость модели по классу»;
+- table 2, «Эпики на потом», whose order of rows is the order of the queue («Таблица 2 — эпики на потом, в порядке очереди»): first E8 — «Третий круг модели | Суд `model-3` по кандидатам E7 `learner-model` … на базе после суда E7: он кончился выходом, и база та же, `learner-model` v0.1.8 и `engine` v0.1.6» with R53 sim cited, — then E6 — «Второй круг движка | Суд `engine-2` по кандидатам E5 `engine` («Второй круг коридора» в его таблице 2) на базе после судов `model-2`, E7 и E8 — с выбранными кандидатами или без них — и на размерах T46, с подтверждением на нетронутом `held-out-engine-1`» with R35 sim cited, «Выбранный вышел релизом, и база стоит на нём, — или выход записан».
+
 ## 7. `.github`
 
 ### 7.1. The shared workflows of `.github` v0.1.15
