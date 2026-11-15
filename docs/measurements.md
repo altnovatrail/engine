@@ -141,6 +141,7 @@ A consolidation's items are in the corridor about twice as often as a segment's,
 |---|---|---|---|---|---|---|
 | `-workspaces-engine` — before, the row of measurements 1.9 spec | 2026-10-13T00:00 … 2026-11-12T14:27 | 16 | 3,016 / 1,232 | 328.6 / 79.3 | 3 | $400.70 |
 | `-workspaces-engine` — epic E7: T49–T54, and T48, T55 and T56 outside it | 2026-11-11T22:51 … 2026-11-14T18:39 | 13 | 1,072 / 681 | 169.2 / 103.1 | 1 | $109.14 |
+| `-workspaces-engine` — epic E5: T57, T58, T61 and T60, T59 dropped | 2026-11-14T18:48 … 2026-11-15T02:03 | 6 | 514 / 140 | 195.7 / 71.6 | 1 | $42.86 |
 
 ## 5. The corridor on the new base
 
