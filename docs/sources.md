@@ -306,6 +306,17 @@ Read 2026-11-15 in T61, from a clone of `sim` `v0.1.20` in a temporary folder, a
 - `gate.json`: `.bands.numbers` holds 69 numbers, and `.libraries` names `engine` `v0.1.6` at 57e0ab8 and `learner-model` `v0.1.8` at ab688b2;
 - `sim evaluate` on a rough look of 300 learners refuses it: "cell D-grade1/novatrail/olympiad-math has 300 learners, and an evaluation reads a decisive run of 2000"; the report of `sim judge` prints only the checks that fail (`internal/criterion/report.go`).
 
+### 6.14. The rounds by plan stop at `sim`, after E9
+
+For the epic E5, T59 and T60 — [plan/E5.md](plan/E5.md) —, and rows В47 and В49 of RUN.md; architecture 2.13; the 2026-11-15 amendments to R03 and R17.
+
+Read 2026-11-15 through `gh api`, `main` of `sim` at 59885beb618ac89ffd22a4d659b04045bfa669eb of 2026-11-15T01:00:57Z, the merge of T65:
+
+- `docs/decisions.md` of `sim`, R59 sim — "`sim` holds no rounds by plan. It stays the gate in the CI of `learner-model` and `engine`, and a judgement is laid out as an epic only when a library brings a candidate with a reason of its own — a fault that the gate or a measurement found, a need of the product, a row of `spec` — and names it. The epics E8, `model-3`, and E6, `engine-2`, leave table 2 of RUN.md"; among its findings — "the candidates of a round seek small gains on virtual learners whose speeds and laws of forgetting are assumptions, not checked against live learners (Д3)"; among its reasons — "A round by plan tunes the libraries to the simulator's assumptions; a candidate with a reason of its own answers something that matters, and its judgement is worth its runs. D, E and F may come this way, with the reason named by `engine`"; among the rejected — "E6 next, the proposal of T65 — a round by plan, on candidates whose rough look already fails a constraint";
+- RUN.md of `sim`, table 1 — «Текущего эпика нет: E9 сделан 2026-11-15», and «Решено автором (2026-11-15), после T65 […] Кругов по плану нет: `sim` остаётся гейтом в CI `learner-model` и `engine`, а суд разворачивается, только когда библиотека приносит кандидата со своей причиной. E8 и E6 ушли из таблицы 2»; table 2 holds one row, E10 «Суд круга справедливости модели»;
+- RUN.md of `sim`, row В24, «в реестр spec» — «Так могут прийти и кандидаты D, E и F E5 `engine` […]: T59 RUN.md `engine` и T52–T54 RUN.md `learner-model` ждут теперь не очереди `sim`, а такой причины», with the recommendation «(а) записать в пункт 4 COORDINATION.md `spec`: суды по плану сняты, `engine` и `learner-model` решают у себя, нести ли кандидатов с причиной или закрыть круги»;
+- the latest release of `sim` is still `v0.1.20` (`gh api repos/altnovatrail/sim/tags`), and `gh api repos/altnovatrail/sim/compare/v0.1.20...main` changes only `DEBT.md`, `README.md`, `RUN.md`, `docs/architecture.md`, `docs/decisions.md`, `docs/measurements.md`, `docs/plan/E9.md` and `docs/sources.md`: `gate.json`, the code and the container are those of the tag.
+
 ## 7. `.github`
 
 ### 7.1. The shared workflows of `.github` v0.1.15
