@@ -76,16 +76,16 @@ jobs:
   # checkout, not a uses, so Dependabot does not move them: a task of this repository raises them,
   # by the order of releases of repositories 4 spec. The run goes in the toolchain stage of sim's
   # devcontainer at that tag, built from its checkout, with no context. The limit is a guard against
-  # a hung run, not sim's budget: on sim v0.1.17, as on v0.1.15, the gate of 250 learners a cell is
-  # reckoned at about 12 to 13 minutes on a slow runner without the Go cache (amendments of
-  # 2026-11-14 to R17).
+  # a hung run, not sim's budget: sim v0.1.20 keeps the gate of v0.1.15 and v0.1.17, whose 250
+  # learners a cell are reckoned at about 12 to 13 minutes on a slow runner without the Go cache
+  # (amendments of 2026-11-14 to R17; the 2026-11-15 one keeps the limit).
   gate:
     name: Gate
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
-      SIM_TAG: v0.1.17
-      SIM_COMMIT: 6f5151f5eb241b5b44b11b71296a0e3cd2c201a1
+      SIM_TAG: v0.1.20
+      SIM_COMMIT: 63288d7631a6341333d1aa63975e67765de1b637
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

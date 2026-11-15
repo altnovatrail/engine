@@ -2,7 +2,7 @@
 
 > The results of the engine's measurements: what was measured, how, on what, and what numbers came out. The document that describes how it is built — [architecture.md](architecture.md) — refers here, and itself holds only what was decided from the measurements (RULES.md, How we work; R143 spec). A measurement is cited by section, like any document: `measurements 2.1`, and from another repository `measurements 2.1 engine`.
 >
-> An external fact a measurement rests on is a record of [sources.md](sources.md). Sections 1 and 2 were moved here word for word on 2026-11-12 from [architecture.md](architecture.md), subsections 2.9 and 2.10, by task T55 (R24); the analysis and the decisions stayed there. The measurement of the tokens spent by an epic's sessions, by the rules of epics of [RUN.md](../RUN.md), is section 4, from the archive of E7 (T54). Section 5 is the analysis of the corridor on the new base, at the start of E5 (T57), and section 6 the rough look of its variants (T58).
+> An external fact a measurement rests on is a record of [sources.md](sources.md). Sections 1 and 2 were moved here word for word on 2026-11-12 from [architecture.md](architecture.md), subsections 2.9 and 2.10, by task T55 (R24); the analysis and the decisions stayed there. The measurement of the tokens spent by an epic's sessions, by the rules of epics of [RUN.md](../RUN.md), is section 4, from the archive of E7 (T54). Section 5 is the analysis of the corridor on the new base, at the start of E5 (T57), section 6 the rough look of its variants (T58), and section 7 the constraint `fair` on the same look, on the tag of the judgement (T61).
 
 ## 1. The corridor of the base
 
@@ -249,3 +249,31 @@ The variants D, E and F of T58 (the 2026-11-14 amendment to R03) against the bas
 - all three: olympiad `M3.settle` on `G3-drop` — D 17.00 at 16.70, E 19.28 at 16.50, F 20.25 at 17.77;
 - D also: olympiad `E4.given` on `S-scale1.5` (0.0123 at 0.0100), `F-none` (0.0105) and `F-growth5` (0.0119), and `M4.false.all` on `W-repeat` (0.0212 at 0.0200);
 - F also: olympiad `E4.given` on `F-C1` (0.0102 at 0.0100).
+
+## 7. The constraint `fair` on the rough look of the variants of E5
+
+The variants D, E and F of T58 against the base on `sim` `v0.1.20`, the tag that the judgement `engine-2` pins, with the constraint of fairness `fair` (R55–R57 sim): a rough look, which decides nothing (section 3.6 sim). What came of it is architecture 2.13; the facts of `sim` are sources 6.13.
+
+**How it was counted.** 2026-11-15, in the container of `engine`: AMD Ryzen AI 9 365, 20 processors, go1.27.4. A clone of `sim` `v0.1.20` (63288d7; `gh release verify` accepts it) in a temporary folder, and its recipe of a rough look, 300 working learners a cell, the whole matrix: `just rough engine runs/base-300.jsonl` for the base, and `CANDIDATE_ENGINE=<SHA> just rough engine runs/<x>-300.jsonl` for each variant by its full SHA — D 29e205a, E e9832fc, F 389798b —, each held to `gate.json`, with `learner-model` at ab688b2. By the clock 7 min 38 s, 8 min 22 s, 7 min 58 s and 8 min 5 s. SHA-256: the base `0aeb0e02…a9bb`, D `154250f4…4c8a`, E `47d99b0e…a84b`, F `92a925e9…629b`. Each file has 20,401 lines: the header, 19,500 lines of the 65 cells of section 6 and 900 of the cells `D-grade1`, `D-grade3` and `D-grade5`. Without the header and the lines of `D-`, each file is to the byte the file of the same rule in section 6, so every number of section 6 stands. Then `sim judge` with the judgement file of section 6, and, for the numbers of the checks that pass, which its report does not print, a program in a scratch copy of `sim` that calls `criterion.Judge` and `measure.ReadPair` of the same tag and prints every check of `fair` and the numbers of `M11` of both sides. `sim evaluate` reads only a decisive run of 2,000 and refuses these files. The clones, the program and the runs do not go into the repository.
+
+**The report** of `sim judge` is the report of section 6 line for line, with one line more, under D: "fails fair D-grade1/novatrail/olympiad-math M11.band: worse by at most 0.02523, the tolerance 0.0219". The outcome is the same — "A rough look, which decides nothing: no candidate holds every constraint and is better than the base" —, and so are the groups `corridor`, 0.054 for D, 0.029 for E and 0.043 for F.
+
+**`M11`.** On olympiad maths, each grade against the reference, grade 3, 300 learners; `M11.answers` is the answers until the estimate holds within 0.5 of the reference's (fewer is better), `M11.same` the share for whom that takes at most 50 (more is better), `M11.band` the largest difference of the shares of the tasks at a band after the 50th answer (less is better). Each cell: the base → D / E / F, with the 95 % interval of the base.
+
+| Cell | `M11.answers` | `M11.same` | `M11.band` |
+|---|---|---|---|
+| `D-grade1` | 30.42 [25.3; 35.41] → 29.12 / 30.00 / 29.89 | 0.850 [0.81; 0.89] → 0.853 / 0.850 / 0.847 | 0.0055 [0.0018; 0.0151] → 0.0229 / 0.0154 / 0.0196 |
+| `D-grade5` | 74.04 [64.56; 83.65] → 72.97 / 73.94 / 73.04 | 0.610 [0.553; 0.663] → 0.607 / 0.610 / 0.613 | 0.0165 [0.0063; 0.0297] → 0.0110 / 0.0118 / 0.0151 |
+
+**The checks of `fair`** — the worse end of the paired interval, the candidate against the base, and the tolerance, the larger of the author's — 1 answer, 0.01, 0.01 — and 4.3 standard errors of the difference (R57 sim):
+
+| Check | D | E | F |
+|---|---|---|---|
+| `D-grade1` `M11.answers` | 0.127 at 3.198 | 0.797 at 2.667 | 0.827 at 3.084 |
+| `D-grade1` `M11.same` | 0 at 0.0141 | 0.0100 at 0.0200 | 0.0100 at 0.0138 |
+| `D-grade1` `M11.band` | **0.0252 at 0.0219** | 0.0165 at 0.0205 | 0.0208 at 0.0212 |
+| `D-grade5` `M11.answers` | 0.563 at 3.698 | 1.363 at 3.213 | 0.477 at 3.272 |
+| `D-grade5` `M11.same` | 0.0133 at 0.0238 | 0.0100 at 0.0194 | 0 at 0.0139 |
+| `D-grade5` `M11.band` | 0.0070 at 0.0256 | 0.0073 at 0.0258 | 0.0108 at 0.0274 |
+
+E and F hold `fair`, F on `D-grade1` `M11.band` by 0.0004 within the tolerance; D fails it there by 0.0033. On `D-grade1` all three widen `M11.band`, the base's 0.0055 to 0.015–0.023, the paired interval clear of zero for D, [0.0052; 0.0252] worse, and for F, [0.0018; 0.0208], and across it for E, [−0.0025; 0.0165]; on `D-grade5` all three narrow it. `M11.answers` and `M11.same` move within their intervals.
