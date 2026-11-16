@@ -225,7 +225,7 @@ sim recipe *args:
 # The whole gate in one run, sim's recipe gate.
 # Run the gate of sim on this working tree, as "Gate" does with its parts.
 gate:
-    {{ just_executable() }} sim gate
+    {{ just_executable() }} -f {{ quote(justfile()) }} sim gate
 
 # Part k of n of the gate's learners into the folder dir, sim's recipe gate-part, as the job
 # "Gate / part k" runs it; dir is of the caller's folder when relative. The parts of one gate run on
@@ -237,7 +237,7 @@ gate-part k n dir:
     set -euo pipefail
     dir="$3"
     case "$dir" in /*) ;; *) dir={{ quote(invocation_directory()) }}/"$dir" ;; esac
-    {{ just_executable() }} sim gate-part "$1" "$2" "$dir"
+    {{ just_executable() }} -f {{ quote(justfile()) }} sim gate-part "$1" "$2" "$dir"
 
 # The check after the parts in dir, sim's recipe gate-check in its bands mode: the build held to
 # gate.json and the parts merged and held to their bands, refused when a part is missing, repeated
@@ -250,7 +250,7 @@ gate-check dir:
     set -euo pipefail
     dir="$1"
     case "$dir" in /*) ;; *) dir={{ quote(invocation_directory()) }}/"$dir" ;; esac
-    {{ just_executable() }} sim gate-check bands "$dir"
+    {{ just_executable() }} -f {{ quote(justfile()) }} sim gate-check bands "$dir"
 
 # The release's one file (R15): engine-<version>.tar.gz, a folder of that name with LICENSE,
 # go.mod, go.sum and the Go code of the module but its tests and testdata/ — what a consumer builds,

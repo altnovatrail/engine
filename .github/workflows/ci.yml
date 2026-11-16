@@ -125,16 +125,16 @@ jobs:
   # alone, and sim's merge refuses a part missing, repeated or of another run. Every job runs in
   # the toolchain stage of sim's devcontainer at that tag, from the cache or built from its
   # checkout, with no context, and all on one kind of runner, since a part splits its share by the
-  # runner's processors. The limit is a guard against a hung run, not sim's budget. The runner is
-  # arm64, standard and free for public repositories (sources 8.3): sim's gate runs about a minute
-  # faster there than on amd64 (measurements 3.1 spec), and the gate's numbers are the same to the
-  # bit on both: the engine's choice by R10, sim's own as sim holds them at home on both (the second
-  # 2026-11-16 amendment to R17). The cache's entry of the image is that of arm64: its key holds
-  # runner.arch.
+  # runner's processors. The limit, 15 minutes a job as in sim's gate.yml, is a guard against a
+  # hung run, not sim's budget. The runner is arm64, standard and free for public repositories
+  # (sources 8.3): sim's gate runs about a minute faster there than on amd64 (measurements 3.1
+  # spec), and the gate's numbers are the same to the bit on both: the engine's choice by R10, sim's
+  # own as sim holds them at home on both (the second 2026-11-16 amendment to R17). The cache's
+  # entry of the image is that of arm64: its key holds runner.arch.
   gate-part:
     name: Gate / part ${{ matrix.part }}
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 25
+    timeout-minutes: 15
     strategy:
       fail-fast: true
       matrix:
@@ -220,7 +220,7 @@ jobs:
     needs: gate-part
     if: ${{ !cancelled() }}
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 25
+    timeout-minutes: 15
     steps:
       - name: Parts
         env:
