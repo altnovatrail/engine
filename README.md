@@ -19,7 +19,7 @@ A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.18.3), a
 
 ## Status
 
-Detailing is done: the first epic, archived in [docs/plan/E1.md](docs/plan/E1.md), decided everything the component's card left open, and spec has recorded it. The second epic, E2, archived in [docs/plan/E2.md](docs/plan/E2.md), built the first version of the rule, which starts from the one by which MathTrail's standalone chose the next task: lessons and tasks with their reason codes over several modules, with golden vectors of the choice on the graphs of the first slice, and the same bits on every build. It came out as `v0.1.0`, the baseline before sim's first tag, and its gate now holds every change after it. The third, E3, put the first candidates of the rule before sim's court, which kept the base; a fix the gate found on them came out as `v0.1.5`. E4 made the choice about 1.8 times faster with the same choice to the bit, `v0.1.6`, and E6 found that an anchor skill no module of the learner teaches needs no change of the rule: the module that teaches it is offered by `api`. Their archives are [docs/plan/E3.md](docs/plan/E3.md), [docs/plan/E4.md](docs/plan/E4.md) and [docs/plan/E6.md](docs/plan/E6.md). E7 put consolidation inside a lesson before sim's court, which kept the base again; its archive is [docs/plan/E7.md](docs/plan/E7.md). E5, the second round of the corridor, made three new candidates of the rule, but sim's court no longer runs rounds by plan, so they were not judged and the base stays; its archive is [docs/plan/E5.md](docs/plan/E5.md). No epic is current: the next task of [RUN.md](RUN.md) moves engine to the latest tag of spec.
+Detailing is done: the first epic, archived in [docs/plan/E1.md](docs/plan/E1.md), decided everything the component's card left open, and spec has recorded it. The second epic, E2, archived in [docs/plan/E2.md](docs/plan/E2.md), built the first version of the rule, which starts from the one by which MathTrail's standalone chose the next task: lessons and tasks with their reason codes over several modules, with golden vectors of the choice on the graphs of the first slice, and the same bits on every build. It came out as `v0.1.0`, the baseline before sim's first tag, and its gate now holds every change after it. The third, E3, put the first candidates of the rule before sim's court, which kept the base; a fix the gate found on them came out as `v0.1.5`. E4 made the choice about 1.8 times faster with the same choice to the bit, `v0.1.6`, and E6 found that an anchor skill no module of the learner teaches needs no change of the rule: the module that teaches it is offered by `api`. Their archives are [docs/plan/E3.md](docs/plan/E3.md), [docs/plan/E4.md](docs/plan/E4.md) and [docs/plan/E6.md](docs/plan/E6.md). E7 put consolidation inside a lesson before sim's court, which kept the base again; its archive is [docs/plan/E7.md](docs/plan/E7.md). E5, the second round of the corridor, made three new candidates of the rule, but sim's court no longer runs rounds by plan, so they were not judged and the base stays; its archive is [docs/plan/E5.md](docs/plan/E5.md). No epic is current: engine has moved to the latest tag of spec, and the tasks outside an epic of [RUN.md](RUN.md) bring its work plan and its CI after it.
 
 ## The gate
 
@@ -34,14 +34,14 @@ Releases come out by themselves: each commit of `main` whose CI has passed and w
 
 ## Documents
 
-The documents are in English; the work plan, its technical debt and the archives of its epics are in Russian.
+The documents and the work plan are in English; the bodies of the plan's tasks and the archives of its epics are in Russian.
 
 - [docs/architecture.md](docs/architecture.md) — the component: what it does and does not do, its data and links, what the card left to decide — all of it decided — and how it is built.
 - [docs/decisions.md](docs/decisions.md) — the decision log: what was decided, why, and what was rejected.
 - [docs/sources.md](docs/sources.md) — the records of the external facts the documents rest on, each with its source, its date and its quote.
 - [docs/measurements.md](docs/measurements.md) — the results of measurements: what was measured, how, on what, and the numbers.
 - [RUN.md](RUN.md) — the work plan, in epics.
-- [DEBT.md](DEBT.md) — the technical debt, in Russian: table 4 of the work plan.
+- `run/` — the plan's other tables: [the epics for later](run/EPICS.md), [the open questions](run/QUESTIONS.md), [the technical debt](run/DEBT.md) and [the tasks outside an epic](run/TASKS.md).
 
 The working rules, for people and coding agents alike, are in [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md). The platform's shared vocabulary, formats, contracts and decisions are in [spec](https://github.com/altnovatrail/spec/tree/v0.18.3), checked out here as a git submodule at `v0.18.3`: clone this repository with `git clone --recurse-submodules`.
 
