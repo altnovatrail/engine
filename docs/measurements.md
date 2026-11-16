@@ -336,15 +336,23 @@ The second run, 43858005943, after the fixes of the review, again with no entry 
 
 The time of the jobs of CI and of the release that the stage `toolchain-core` and the move to `.github` v0.1.31 could change, before it and on its pull request, by T68 (R29).
 
-**How it was measured.** 2026-11-16, from the GitHub API, read only: `actions/runs/<id>/jobs`, the start and the end of the jobs and of their steps. Before — the run 43884931449 of CI of pull request #85, b2c32be, on `.github` v0.1.30 and `spec` v0.18.3, with the image and the caches of Go from `main`'s entries; the release — the runs 43861429097, which released `v0.1.12`, and 43886299085, which released nothing, of `main`.
+**How it was measured.** 2026-11-16, from the GitHub API, read only: `actions/runs/<id>/jobs`, the start and the end of the jobs and of their steps. Before — the run 43884931449 of CI of pull request #85, b2c32be, on `.github` v0.1.30 and `spec` v0.18.3, with the image and the caches of Go from `main`'s entries; the release — the runs 43861429097, which released `v0.1.12`, and 43886299085, which released nothing, of `main`. After — the first run of pull request #86, 43910838447 of CI and its run of CodeQL: the Dockerfile's hash is new, so the image of `engine` and the caches of Go had no entry, and every job built the stages `toolchain-core` and `toolchain` and its Go from nothing; the gate's image of `sim` came from its entry. The step "Toolchain stages" of `documents.yml` and of the job `toolchain` of `go.yml` named `toolchain`: "The checks without a browser run in the stage toolchain."
 
 | Job | Before, s | After, s | Of it |
 |---|---|---|---|
-| "Go / lint", "test", "vuln", "licenses" | 43, 33, 31, 48 | | before: the image 12–14 s, the recipes 1–3 s |
-| "Go / arm64", "Go / fma-diff", "Go / rules" | 40, 44, 31 | | |
-| "Go / target (…)" | 30–43 | | the image 13–21 s |
-| "Documents / docs-check-repo" | 45 | | the image 21 s, the check 13 s |
-| "Contracts" | 43 | | the image 22 s, `ci-contracts` under 1 s |
-| "Gate / part k" | 117–124 | | the image 22–24 s, `gate-part` 82–86 s |
-| "Gate" | 42 | | the image 24 s, `gate-check` 5 s |
+| "Go / lint", "test", "vuln", "licenses" | 43, 33, 31, 48 | 46, 68, 63, 70 | the image 12–14 s → 14–34 s, from the artifact of "Go / toolchain"; the recipes 1–3 s → 10–20 s, with empty caches of Go |
+| "Go / arm64", "Go / fma-diff", "Go / rules" | 40, 44, 31 | 64, 99, 51 | `ci-test` of "Go / arm64" 4 → 15 s, with empty caches of Go |
+| "Go / target (…)" | 30–43 | 43–68 | the image 13–21 s → 13–30 s |
+| "Documents / docs-check-repo" | 45 | 46 | the image 21 → 25 s, built; the check 13 s, the same |
+| "Contracts" | 43 | 39 | the image 22 → 21 s, built; `ci-contracts` under 1 → 11 s, with empty caches of Go |
+| "Gate / part k" | 117–124 | 121–125 | the image 24–27 s, `gate-part` 83–86 s: `sim`'s, from its entry |
+| "Gate" | 42 | 47 | the image 23 s, `gate-check` 5 s |
+| "Go / toolchain" | 6 | 53 | the image built on a miss, 26 s; the core named no entry of its own |
+| "CodeQL / analyze (go)" | 63 | 49 | the step of Go 3 → 2 s, by the `ARG`s of `toolchain-core` |
 | "Release / release" | 50, 59 | — | "Work out the version", which builds the stage, 21 s and 50 s |
+
+The run of CI, from the start of its first job to the end of its last: 173 s before, 573 s after. Its 24 jobs waited for a runner 18 s on average and 54 s at most before, 154 s and 315 s after, at an hour when other repositories of the organization moved to the same tags.
+
+**What it shows.** The stage `toolchain-core` changes no job of CI in `engine`: its `toolchain` holds the same files, the checks take it, as R47 .github has it for a caller of the kind `go`, and the jobs that grew grew by the miss of the new Dockerfile — the image built, the caches of Go empty — and by the queue.
+
+**Not measured.** The release after the move — "Work out the version" and "Build the files" in `toolchain-core` — runs only on `main`, after the merge: the stage holds the same layers as `toolchain`, so its build should take what it took. A run of the pull request with the entries of the new Dockerfile filled: the first push to `main` saves them.
