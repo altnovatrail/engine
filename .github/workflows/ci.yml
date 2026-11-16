@@ -10,6 +10,12 @@ on:
 permissions:
   contents: read
 
+# The tag of sim and the SHA of its commit, for the jobs of the gate below, named once here: the
+# recipes of the gate read them from this file.
+env:
+  SIM_TAG: v0.1.24
+  SIM_COMMIT: 33d70f288682d95e12f6072c4e9ff09253417497
+
 # A new push to a pull request cancels its older run; every commit to main is checked.
 concurrency:
   group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
@@ -108,26 +114,31 @@ jobs:
 
   # The gate of sim (R17; R103 spec; repositories 4 spec): the choice of this commit on the bench,
   # its numbers held to the bands of sim's gate.json, on every pull request and every commit of
-  # main. sim comes by the tag and the SHA of its commit below, which the recipe gate reads and
-  # checks against each other; learner-model, by the commit gate.json names. They are inputs of a
-  # checkout, not a uses, so Dependabot does not move them: a task of this repository raises them,
-  # by the order of releases of repositories 4 spec. The run goes in the toolchain stage of sim's
-  # devcontainer at that tag, from the cache or built from its checkout, with no context. The limit
-  # is a guard against a hung run, not sim's budget: sim v0.1.20 keeps the gate of v0.1.15 and
-  # v0.1.17, whose 250 learners a cell are reckoned at about 12 to 13 minutes on a slow runner
-  # without the Go cache (amendments of 2026-11-14 to R17; the 2026-11-15 one keeps the limit).
-  # The runner is arm64, standard and free for public repositories (sources 8.3): sim's gate runs
-  # about a minute faster there than on amd64 (measurements 3.1 spec), and the gate's numbers are
-  # the same to the bit on both: the engine's choice by R10, sim's own as sim holds them at home on
-  # both (the second 2026-11-16 amendment to R17). The cache's entry of the image is that of arm64:
-  # its key holds runner.arch.
-  gate:
-    name: Gate
+  # main. sim comes by the tag and the SHA of its commit in the env of the workflow, which the
+  # recipes gate, gate-part and gate-check read and check against each other; learner-model, by the
+  # commit gate.json names. They are inputs of a checkout, not a uses, so Dependabot does not move
+  # them: a task of this repository raises them, by the order of releases of repositories 4 spec.
+  # The gate runs as jobs, by sim's recipes of R67 sim (the third 2026-11-16 amendment to R17):
+  # four parts, each its share of the learners into a file of parts, and after them the check
+  # "Gate", the required one of the ruleset of main, which merges the parts and holds the numbers to
+  # their bands. Those are the numbers of just gate to the bit: a learner comes from its seeds
+  # alone, and sim's merge refuses a part missing, repeated or of another run. Every job runs in
+  # the toolchain stage of sim's devcontainer at that tag, from the cache or built from its
+  # checkout, with no context, and all on one kind of runner, since a part splits its share by the
+  # runner's processors. The limit, 15 minutes a job as in sim's gate.yml, is a guard against a
+  # hung run, not sim's budget. The runner is arm64, standard and free for public repositories
+  # (sources 8.3): sim's gate runs about a minute faster there than on amd64 (measurements 3.1
+  # spec), and the gate's numbers are the same to the bit on both: the engine's choice by R10, sim's
+  # own as sim holds them at home on both (the second 2026-11-16 amendment to R17). The cache's
+  # entry of the image is that of arm64: its key holds runner.arch.
+  gate-part:
+    name: Gate / part ${{ matrix.part }}
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 25
-    env:
-      SIM_TAG: v0.1.20
-      SIM_COMMIT: 63288d7631a6341333d1aa63975e67765de1b637
+    timeout-minutes: 15
+    strategy:
+      fail-fast: true
+      matrix:
+        part: [0, 1, 2, 3]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -144,7 +155,8 @@ jobs:
       # sim's toolchain stage from the cache, by the steps of the job Contracts, keyed by the hash
       # of sim's Dockerfile at SIM_COMMIT: a tag of sim with another Dockerfile takes an entry of
       # its own, and one whose Dockerfile is engine's byte for byte shares the entry of "Go / arm64",
-      # the job of go.yml on the same arm64 runner, which holds the same image (R28).
+      # the job of go.yml on the same arm64 runner, which holds the same image (R28). On a miss only
+      # the first part saves it, as sim's gate.yml does, so that the parts do not save one key.
       - name: Toolchain image from the cache
         id: toolchain
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -153,6 +165,8 @@ jobs:
           key: toolchain-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('sim/.devcontainer/Dockerfile') }}
 
       - name: Toolchain image
+        env:
+          PART: ${{ matrix.part }}
         run: |
           tar=$RUNNER_TEMP/toolchain.tar
           restored=false
@@ -167,23 +181,100 @@ jobs:
               rm -f -- "$tar"
           fi
           docker build --target toolchain --tag toolchain - < sim/.devcontainer/Dockerfile
-          # A file the cache gave has its entry already, which no save replaces.
-          if [ "$restored" = false ] && ! docker save --output "$tar" toolchain; then
+          # A file the cache gave has its entry already, which no save replaces; only the first part
+          # saves one.
+          if [ "$restored" = false ] && [ "$PART" = 0 ] && ! docker save --output "$tar" toolchain; then
               echo "::warning::The image of the toolchain stage could not be saved for the cache: the next run builds it again."
               rm -f -- "$tar"
           fi
 
       - name: Toolchain image into the cache
-        if: steps.toolchain.outputs.cache-hit != 'true'
+        if: steps.toolchain.outputs.cache-hit != 'true' && matrix.part == 0
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ runner.temp }}/toolchain.tar
           key: ${{ steps.toolchain.outputs.cache-primary-key }}
 
-      - name: gate
+      - name: gate-part
+        env:
+          PART: ${{ matrix.part }}
+          PARTS: ${{ strategy.job-total }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/parts"
+          docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp \
+              --env SIM_DIR=/work/sim \
+              --volume "$PWD:/work" --volume "$RUNNER_TEMP/parts:/parts" --workdir /work/engine \
+              toolchain just gate-part "$PART" "$PARTS" /parts
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: gate-part-${{ matrix.part }}
+          path: ${{ runner.temp }}/parts
+          retention-days: 7
+          if-no-files-found: error
+
+  # The check after the parts, named as the gate was. It runs when a part failed too, and then
+  # fails: a required check skipped would pass as green.
+  gate:
+    name: Gate
+    needs: gate-part
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 15
+    steps:
+      - name: Parts
+        env:
+          PARTS_RESULT: ${{ needs.gate-part.result }}
+        run: |
+          if [ "$PARTS_RESULT" != success ]; then
+              echo "::error::The parts of the gate did not all pass: $PARTS_RESULT. Their jobs say why."
+              exit 1
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          path: engine
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          repository: altnovatrail/sim
+          ref: ${{ env.SIM_COMMIT }}
+          path: sim
+
+      # The image the parts took, from the same entry; on a miss it is built and not saved, since
+      # the first part saves it.
+      - name: Toolchain image from the cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/toolchain.tar
+          key: toolchain-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('sim/.devcontainer/Dockerfile') }}
+
+      - name: Toolchain image
+        run: |
+          tar=$RUNNER_TEMP/toolchain.tar
+          if [ -f "$tar" ]; then
+              if docker load --quiet --input "$tar" && docker image inspect toolchain > /dev/null; then
+                  rm -f -- "$tar"
+                  echo "Toolchain image: loaded from the cache."
+                  exit 0
+              fi
+              echo "::warning::The cache's file of the toolchain stage does not load as the image toolchain: the image is built from the Dockerfile."
+              rm -f -- "$tar"
+          fi
+          docker build --target toolchain --tag toolchain - < sim/.devcontainer/Dockerfile
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: gate-part-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/parts
+
+      - name: gate-check
         run: |
           set -o pipefail
           docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp \
               --env SIM_DIR=/work/sim \
-              --volume "$PWD:/work" --workdir /work/engine \
-              toolchain just gate | tee -a "$GITHUB_STEP_SUMMARY"
+              --volume "$PWD:/work" --volume "$RUNNER_TEMP/parts:/parts" --workdir /work/engine \
+              toolchain just gate-check /parts | tee -a "$GITHUB_STEP_SUMMARY"

@@ -7,19 +7,6 @@ Open tasks outside an epic, each as its body, in Russian; each also stands as a 
 
 ## Tasks outside an epic
 
-#### T66. Гейт частями на теге `sim` строки 7.19 — вне эпика
-
-- **Цель:** job «Gate» — частями: матрица из нескольких job, каждый гонит свою часть гейта `sim`, и проверка после них; что гейт доказывает, не меняется (строка 7.20 COORDINATION.md spec).
-- **Почему:** гейт — самый долгий job CI `engine`, около 7 минут, и почти всё — прогон учеников `sim` (measurements 3.1 spec). Строка 7.19 даёт `sim` рецепты `gate-part k N` и `gate-check`; без её тега делить нечего. Записана T65 по пункту 2 её «Сделать»: эта часть ждёт тега `sim` строки 7.19 (R103 spec; R17).
-- **Сделать:**
-  1. Тег `sim` строки 7.19: `gh release list -R altnovatrail/sim`, `gh release verify <тег> -R altnovatrail/sim`; что тег меняет в гейте — рецепты частей, `gate.json`, полосы, контейнер — запись [docs/sources.md](../docs/sources.md), раздел 6.
-  2. `.github/workflows/ci.yml` — `SIM_TAG` и `SIM_COMMIT` на этот тег; «Gate» — матрица `just gate-part k N` (или как назовёт `sim`) и job проверки `gate-check` после неё, на `ubuntu-24.04-arm` (вторая поправка 2026-11-16 к R17), образ `toolchain` `sim` — как сейчас, из кеша. Обязательная проверка ruleset `main` — «Gate»: имя job после частей остаётся «Gate», чтобы ruleset не менять; если так нельзя — вопрос автору в [run/QUESTIONS.md](QUESTIONS.md), ruleset — настройка GitHub (правило 4).
-  3. `justfile` — свой `gate` и, если нужно, `gate-part`: тег и SHA по-прежнему из `ci.yml`, локально — тот же гейт, что в CI.
-  4. Поправка к R17; [docs/architecture.md](../docs/architecture.md), подраздел 3.7; [.claude/rules/ci.md](../.claude/rules/ci.md); README — если меняется вызов.
-- **Не делать:** `.devcontainer/` — его меняет переход на тег `spec`, T68.
-- **Как проверить:** правило [.claude/rules/ci.md](../.claude/rules/ci.md) и `just gate` в контейнере — зелёный, числа до бита те же, что у прежнего гейта, где тег их не меняет; CI pull request зелёный; время «Gate» до и после — по прогонам `main` и pull request, в отчёте и в [docs/measurements.md](../docs/measurements.md); `just -f spec/justfile docs-check-repo`; `/code-review high`, один круг.
-- **Разделы:** строки 7.19 и 7.20 COORDINATION.md spec; measurements 3.1 spec; R76 spec, R103 spec, R156 spec; R17, R28.
-
 #### T67. Переход CI на релиз `.github` строки 7.13 — вне эпика
 
 - **Цель:** общие проверки `.github` — на его релизе строки 7.13: кеш Go в `go.yml`, один файл образа `toolchain` без сохранения из pull request, «Go / targets» и «Go / fma-diff» — параллельно, сверка релиза — одним вызовом или параллельно (строка 7.20 COORDINATION.md spec).

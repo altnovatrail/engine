@@ -57,6 +57,6 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T63 | План по R153–R155 spec: таблицы в `run/`, план на английском — вне эпика | Claude | — | T62 |
 | [x] | T64 | Переход CI на релиз `.github` `v0.1.24` — вне эпика | Claude | — | T63 |
 | [x] | T65 | Скорость CI: строка 7.20 — вне эпика | Claude | — | — |
-| [ ] | T66 | Гейт частями на теге `sim` строки 7.19 — вне эпика | Claude | — | тег `sim` строки 7.19 COORDINATION.md spec |
+| [x] | T66 | Гейт частями на теге `sim` строки 7.19 — вне эпика | Claude | — | тег `sim` строки 7.19 COORDINATION.md spec |
 | [ ] | T67 | Переход CI на релиз `.github` строки 7.13 — вне эпика | Claude | — | релиз `.github` строки 7.13 COORDINATION.md spec |
 | [ ] | T68 | Переход на тег `spec` строки 7.14 со стадией `toolchain-core` — вне эпика | Claude | — | T66, T67; тег `spec` строки 7.14 COORDINATION.md spec |

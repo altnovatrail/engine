@@ -317,6 +317,18 @@ Read 2026-11-15 through `gh api`, `main` of `sim` at 59885beb618ac89ffd22a4d659b
 - RUN.md of `sim`, row В24, «в реестр spec» — «Так могут прийти и кандидаты D, E и F E5 `engine` […]: T59 RUN.md `engine` и T52–T54 RUN.md `learner-model` ждут теперь не очереди `sim`, а такой причины», with the recommendation «(а) записать в пункт 4 COORDINATION.md `spec`: суды по плану сняты, `engine` и `learner-model` решают у себя, нести ли кандидатов с причиной или закрыть круги»;
 - the latest release of `sim` is still `v0.1.20` (`gh api repos/altnovatrail/sim/tags`), and `gh api repos/altnovatrail/sim/compare/v0.1.20...main` changes only `DEBT.md`, `README.md`, `RUN.md`, `docs/architecture.md`, `docs/decisions.md`, `docs/measurements.md`, `docs/plan/E9.md` and `docs/sources.md`: `gate.json`, the code and the container are those of the tag.
 
+### 6.15. The gate as jobs at `sim` `v0.1.24`
+
+For T66 — [plan/E5.md](plan/E5.md) —, the third 2026-11-16 amendment to R17 and architecture 3.7.
+
+Read 2026-11-16, from a clone of `sim` in a temporary folder at the tag `v0.1.24`, 33d70f288682d95e12f6072c4e9ff09253417497 of 2026-11-16T00:24:27-06:00:
+
+- the release [sim `v0.1.24`](https://github.com/altnovatrail/sim/releases/tag/v0.1.24), published 2026-11-16T06:33:22Z, immutable, the latest (`gh release list -R altnovatrail/sim`), its one change "T74: the gate of CI as jobs, TestEngineOnRuns by processes (`R67`)"; `gh release verify v0.1.24 -R altnovatrail/sim` — "✓ Release v0.1.24 verified!", the file `sim-v0.1.24.tar.gz` sha256 `31e41aa7ae999b2c32d96a089c1f15d2bfd75f3dd2b6f6f8ad935d4a850cc9bf`;
+- `docs/decisions.md` of `sim`, R67 sim — "CI runs the gate as jobs: the workflow `.github/workflows/gate.yml`, which `ci.yml` calls once an architecture and a caller can call by a tag of `sim`, runs four jobs of `just gate-part <k> 4` and after them one of `just gate-check`"; "Job k of n runs, as processes, the parts k + n·j of n·p, j below p, with p its processors, so the parts of all the jobs are each part of n·p once; `gate-check` builds the workspace again, holds the build to `gate.json` and merges the parts by `bench.Merge`, which refuses a part missing, repeated or of another run"; "on 2026-11-16 `just gate-check exact` over four `just gate-part` in the container gave the table of `just gate exact` to the byte"; "a fixed number of processes a job — the runners of a gate are of one kind, and a job with other processors fails the check loudly, by the number of parts" (among the rejected);
+- `justfile` of `sim`: `gate-part k n dir` — "Run part k of n of the gate into a folder, as one job of n", "It holds the numbers to nothing; gate-check does"; `gate-check mode dir` — "Check the parts of the gate in a folder: mode bands or exact"; both resolve a relative folder against the caller's folder, and `gate` is the same run in one job, `gate-bench … "$mode" 0 1 -`;
+- README of `sim`, "Gate" — "A caller calls it by the SHA of a tag of sim", with `name: Gate`, `uses: altnovatrail/sim/.github/workflows/gate.yml@<SHA of the tag>`, `name: amd64`, and "the check is "Gate / amd64""; `gate.yml` names its check `${{ inputs.name }}` and its parts `${{ inputs.name }} / part ${{ matrix.part }}`, each `timeout-minutes: 15`, on `inputs.runner`;
+- `git diff v0.1.20 v0.1.24 -- gate.json` changes only `"github.com/altnovatrail/spec": "v0.17.3"` → `"v0.18.3"`, so the 69 bands and the commits of the libraries are those of `v0.1.20`; `.devcontainer/Dockerfile` changes the comments of the stages and the base image of `toolchain`, `mcr.microsoft.com/devcontainers/base:3.0.12-noble` → `3.0.13-noble@sha256:48be4ade…`, so its hash, and the key of the cache's entry, are new.
+
 ## 7. `.github`
 
 ### 7.1. The shared workflows of `.github` v0.1.15

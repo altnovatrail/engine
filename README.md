@@ -23,7 +23,7 @@ Detailing is done: the first epic, archived in [docs/plan/E1.md](docs/plan/E1.md
 
 ## The gate
 
-Every change after the baseline passes the gate of [sim](https://github.com/altnovatrail/sim), the learner simulator: the job "Gate" of CI runs sim, by the tag and the SHA of its commit that `.github/workflows/ci.yml` names, on the commit's code in place of engine, and a pull request whose numbers leave their bands, or whose choices break an invariant, does not merge ([R17](docs/decisions.md)). `just gate` runs the same gate on the working tree, with sim fetched once into the user's cache.
+Every change after the baseline passes the gate of [sim](https://github.com/altnovatrail/sim), the learner simulator: CI runs sim, by the tag and the SHA of its commit that `.github/workflows/ci.yml` names, on the commit's code in place of engine, in four jobs "Gate / part k" and the check "Gate" after them, and a pull request whose numbers leave their bands, or whose choices break an invariant, does not merge ([R17](docs/decisions.md)). `just gate` runs the same gate on the working tree in one run, with sim fetched once into the user's cache, and `just gate-part <k> <n> <folder>` and `just gate-check <folder>` run it as the jobs do.
 
 ## Releases
 

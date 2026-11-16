@@ -141,21 +141,23 @@ rules:
 # Run test-targets, fma-diff and rules.
 same-bits: test-targets fma-diff rules
 
-# The gate of sim (R17; R103 spec): sim's own recipe gate, in its bands mode, on this working tree
-# in place of engine — GATE_ENGINE —, and on learner-model at the commit sim's gate.json names. sim
-# is taken by the tag and the SHA of its commit that the job gate of ci.yml names, SIM_TAG and
-# SIM_COMMIT, once each, so that here and in CI it is the same sim with the same bands: from
-# SIM_DIR when it is set, as the job sets it to its checkout of sim, or else fetched once into the
-# user's cache, by the SHA. Either way the folder must be at that commit with nothing changed in it,
-# and the tag must still be on it. Its status is sim's: 0 green, 1 red or refused, 2 a call it does
-# not know. CI runs it in the toolchain stage of sim's devcontainer at that tag; here it runs in
-# this repository's, which has the same Go today but is not held to it. sim names engine by its
-# HEAD, so a working tree with changes is run but named so on the way.
-# Run the gate of sim on this working tree, as "Gate" does.
-gate:
+# The gate of sim (R17; R103 spec): sim's own recipes of the gate, in their bands mode, on this
+# working tree in place of engine — GATE_ENGINE —, and on learner-model at the commit sim's
+# gate.json names. sim is taken by the tag and the SHA of its commit that the env of ci.yml names,
+# SIM_TAG and SIM_COMMIT, once each, so that here and in CI it is the same sim with the same bands:
+# from SIM_DIR when it is set, as the jobs of the gate set it to their checkout of sim, or else
+# fetched once into the user's cache, by the SHA. Either way the folder must be at that commit with
+# nothing changed in it, and the tag must still be on it. The status is sim's: 0 green, 1 red or
+# refused, 2 a call it does not know. CI runs them in the toolchain stage of sim's devcontainer at
+# that tag; here they run in this repository's, which has the same Go today but is not held to it.
+# sim names engine by its HEAD, so a working tree with changes is run but named so on the way.
+# Run a recipe of sim's justfile, with its arguments, on this working tree.
+[private]
+[positional-arguments]
+sim recipe *args:
     #!/usr/bin/env bash
     set -euo pipefail
-    # A value of the job's env, bare or in quotes, as YAML takes either.
+    # A value of the workflow's env, bare or in quotes, as YAML takes either.
     pinned() {
         local values
         values="$(sed -n "s/^[[:space:]]*$1:[[:space:]]*[\"']\{0,1\}\([^[:space:]#\"']\{1,\}\)[\"']\{0,1\}[[:space:]]*\(#.*\)\{0,1\}$/\1/p" .github/workflows/ci.yml)"
@@ -218,7 +220,37 @@ gate:
         echo "gate: engine has changes not committed; sim runs them but names them $(git rev-parse --short HEAD)" >&2
     fi
     echo "gate: sim $tag at $commit, engine from $PWD" >&2
-    GATE_ENGINE="$PWD" {{ just_executable() }} -f "$dir/justfile" gate
+    GATE_ENGINE="$PWD" {{ just_executable() }} -f "$dir/justfile" "$@"
+
+# The whole gate in one run, sim's recipe gate.
+# Run the gate of sim on this working tree, as "Gate" does with its parts.
+gate:
+    {{ just_executable() }} -f {{ quote(justfile()) }} sim gate
+
+# Part k of n of the gate's learners into the folder dir, sim's recipe gate-part, as the job
+# "Gate / part k" runs it; dir is of the caller's folder when relative. The parts of one gate run on
+# one kind of machine, since each splits its share by its processors (R67 sim).
+# Run part k of n of the gate into a folder, as "Gate / part k" does.
+[positional-arguments]
+gate-part k n dir:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    dir="$3"
+    case "$dir" in /*) ;; *) dir={{ quote(invocation_directory()) }}/"$dir" ;; esac
+    {{ just_executable() }} -f {{ quote(justfile()) }} sim gate-part "$1" "$2" "$dir"
+
+# The check after the parts in dir, sim's recipe gate-check in its bands mode: the build held to
+# gate.json and the parts merged and held to their bands, refused when a part is missing, repeated
+# or of another run, with the table and the status of just gate; dir is of the caller's folder when
+# relative.
+# Check the parts of the gate in a folder, as "Gate" does.
+[positional-arguments]
+gate-check dir:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    dir="$1"
+    case "$dir" in /*) ;; *) dir={{ quote(invocation_directory()) }}/"$dir" ;; esac
+    {{ just_executable() }} -f {{ quote(justfile()) }} sim gate-check bands "$dir"
 
 # The release's one file (R15): engine-<version>.tar.gz, a folder of that name with LICENSE,
 # go.mod, go.sum and the Go code of the module but its tests and testdata/ — what a consumer builds,
