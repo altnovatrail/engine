@@ -9,7 +9,7 @@ Language (R154 spec): rules and tables in English, terse, for the session; the e
 A task starts with «Выполни задачу T01 из RUN.md» in a new session in the devcontainer. One task — one session (R143 spec): the hook `UserPromptSubmit` of [.claude/settings.json](.claude/settings.json) — `spec/tools/session/` — stops «Выполни задачу T…» or «планируй T…» of another task in the same session and names `/clear`; the same task passes.
 
 1. Do only the named task; touch other tasks' files only where it requires.
-2. Read first: [CLAUDE.md](CLAUDE.md) with the rules it imports (RULES.md of `spec/`), the task — in this file, or only its own body of `run/TASKS.md` (its opening says how) —, the sections it cites — its own and spec's —, [docs/decisions.md](docs/decisions.md).
+2. Read first: [CLAUDE.md](CLAUDE.md) with the rules it imports (RULES.md of `spec/`), the task — in table 1, or only its own body of `run/TASKS.md` (its opening says how) —, the sections it cites — its own and spec's —, [docs/decisions.md](docs/decisions.md).
    - Conflict with the documents or something missing — stop and ask; never guess.
    - A gap in the component itself — a subsection of [docs/architecture.md](docs/architecture.md), section 2. A gap across repositories — a row of [run/QUESTIONS.md](run/QUESTIONS.md) whose question opens with the mark «В реестр spec»: spec's session finds it on `main`, and it gets its О-, П- or Т- number once the author decides it there (R81 spec; RULES.md, Across repositories).
    - From `run/DEBT.md` and `run/QUESTIONS.md` take only the rows the task and its sections name and those `grep -n` finds by the paths and parts it changes (R143 spec).
@@ -18,8 +18,8 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 4. Outside this repository — editing `spec` or other repositories, their settings, anything that costs money — only after a warning (what, where, cost) and the author's confirmation. `spec/` is read only here; a task of its own moves it to a new tag.
    - Exception, no confirmation: the task's checks by R146 spec — browser: Playwright in the devcontainer, custom-token sign-in of a stand-in user on the dev project; AI: the `tutor` stub in `api` dev mode. A real AI call only where the task checks the model's words: dev key under the author's spend limit at the provider, within the task's ceiling, or with confirmation where it has none; «Сделано» names the provider, the calls and the cost.
    - Nothing on devices: engines are Chromium, WebKit and Firefox in CI; what only a device shows — pen, device voices, VoiceOver and TalkBack, the home screen — stays a row of [run/DEBT.md](run/DEBT.md) until the author decides otherwise.
-5. Facts on AI providers, laws, prices and other platforms — from the primary source, with quote and date read, as a record of `docs/sources.md` (RULES.md). What is not confirmed is not stated: it becomes an open question.
-6. End with the checks of what the task changed. Documents: `just -f spec/justfile docs-check-repo` (R32 spec; what it checks — CLAUDE.md, Environment). If the tag of `spec` is older than this check, check the same by hand.
+5. Facts on AI providers, laws, prices and other platforms — from the primary source, with quote and date read (RULES.md). What is not confirmed is not stated: it becomes an open question.
+6. End with the checks of what the task changed. Documents: `just -f spec/justfile docs-check-repo` (R32 spec) — relative links lead to existing files and headings; each spec section and number — «architecture 3.5 spec», «R18 spec», О-, П-, Т- — exists in `spec/` at its tag; own sections exist, R numbers have no gaps or repeats and the log's opening names the next free one; numbers В in [run/QUESTIONS.md](run/QUESTIONS.md) and Д in [run/DEBT.md](run/DEBT.md) do not repeat and the next free one is above each. If the tag of `spec` is older than this check, check the same by hand.
 
    Then `/code-review high`, one round: fix the findings, do not rerun. A small change may skip the review even if «Как проверить» names it.
 7. Do not commit: the author commits after review. The exceptions are the author's word «доведи до мержа» and a run of spec's orchestrator, «Сделай эпик E…»: its executor works by the contract `spec/tools/orchestrator/executor.md` — commits, pushes and opens the pull request, never merges; the orchestrator merges on green checks (RULES.md, How we work; R156 spec; R26).
@@ -27,12 +27,9 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 9. When done: table 1 `[ ]` → `[x]`; append to the body «Сделано (дата)» — what was done, how checked — and «Открыто». A question for the author from «Открыто» is also a row of [run/QUESTIONS.md](run/QUESTIONS.md); what is put off, a row of [run/DEBT.md](run/DEBT.md).
    - Then move the body verbatim, relative links fixed, to the epic archive `docs/plan/<epic>.md`, with a gist sentence — an unheaded list item at the start of the receiving section: «T01 — сделана <дата>: <итог одной фразой>». Neither stays here, and a search by heading finds one body, in the archive (R153 spec).
    - A task outside an epic is a row of table 1 marked «— вне эпика», as T48 was, with or without a current epic, and its body is in `run/TASKS.md` (R27). Done, its body leaves `run/TASKS.md` for the current epic's archive, section «Задачи вне эпика, сделанные за его время»; with no current epic, for the last done epic's archive, section «Задачи вне эпика, сделанные после него» (R19 spec and its 2026-11-13 amendment). Its row stays in table 1: it goes to the archive with the epic's table, or, with no epic, leaves when the next one is laid out.
-10. Language — RULES.md, Hard rules; above, «Language».
+10. Language (R14 spec, R42 spec, R143 spec, R154 spec): this plan and `run/` in English, the bodies of tasks, the epic archives `docs/plan/` and the reports in Russian; `docs/` in English; README, CLAUDE.md, AGENTS.md, code, comments, schema descriptions, prompts and normative texts for authors in English.
 11. A task larger than one review (≈ 30–60 minutes of reading): propose a split before starting.
-12. Before a new task, close the findings on the previous one (R30 spec); an allowed departure from rule 1.
-    - SonarCloud sees merged code: its verdict on the previous task is in [New Code](https://sonarcloud.io/summary/new_code?id=altnovatrail_engine); CodeQL and Scorecard — the Security tab, `gh api 'repos/altnovatrail/engine/code-scanning/alerts?state=open'`.
-    - Fix in code first; "false positive" is the last resort, with the reason in words; what a change cannot close stays open — shared reasons in R33 spec, own ones in the log, like R51 canvas-api. Never skip silently.
-    - Report these fixes in a separate paragraph: the author commits them apart from the task.
+12. Before a new task, close the findings on the previous one, once SonarCloud, CodeQL and Scorecard run here (R30 spec); an allowed departure from rule 1. SonarCloud sees merged code: its verdict on the previous task is in [New Code](https://sonarcloud.io/summary/new_code?id=altnovatrail_engine); CodeQL and Scorecard — the Security tab, `gh api 'repos/altnovatrail/engine/code-scanning/alerts?state=open'`. Fix in code first; "false positive" is the last resort, with the reason in words; what a change cannot close stays open — shared reasons in R33 spec, own ones in the log, like R51 canvas-api. Never skip silently. Report these fixes in a separate paragraph: the author commits them apart from the task.
 
 **Statuses:** `[ ]` not started; `[x]` done, the executor marks it; `[-]` not done — the author's decision, reason in the task; `[?]` deferred — the author's decision, reason and when to return in the task. A task that fails the author's review returns to `[ ]` with what to fix.
 
@@ -52,10 +49,10 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 
 ## Table 1. Current epic — none
 
-The last done epic is E5, archive [docs/plan/E5.md](docs/plan/E5.md). The author picks the next one when a reason for it comes and lays it out here with Claude in plan mode ([run/EPICS.md](run/EPICS.md)); until then the table holds the tasks outside an epic (rule 9).
+Последний сделанный эпик — E5, архив [docs/plan/E5.md](docs/plan/E5.md). Следующий я выбираю, когда для него придёт причина, и разворачиваю здесь вместе с Claude в режиме планирования ([run/EPICS.md](run/EPICS.md)); до тех пор в таблице — задачи вне эпика (правило 9). T62 ушла на последний тег `spec`, v0.18.3, и разбита по правилу 11 на T62, T63 и T64 (R26).
 
 | Статус | ID | Задача | Кто | План | Зависит от |
 |---|---|---|---|---|---|
 | [x] | T62 | Переход на `spec` v0.17.12 — вне эпика | Claude | — | T60; мерж ветки `e5-corridor-round-2` |
-| [ ] | T63 | План по R153–R155 spec: таблицы в `run/`, план на английском — вне эпика | Claude | — | T62 |
+| [x] | T63 | План по R153–R155 spec: таблицы в `run/`, план на английском — вне эпика | Claude | — | T62 |
 | [ ] | T64 | Переход CI на релиз `.github` `v0.1.24` — вне эпика | Claude | — | T63 |
