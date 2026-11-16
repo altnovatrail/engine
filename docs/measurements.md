@@ -331,3 +331,20 @@ The run of CI, from its start to the end of its last job: 259 s before, 345 s af
 The second run, 43858005943, after the fixes of the review, again with no entry of the caches of Go: "Contracts" 51 s — the image 30 s, `ci-contracts` 7 s; "Gate / part k" 118–124 s, `gate-part` 89–92 s, the image built 21–24 s; "Gate" 38 s, `gate-check` 11 s. Its jobs waited for runners longer still, and the run ended 12 minutes after its start.
 
 **Not measured.** A run with the caches of Go filled: the first push to `main` after the merge saves them, and a pull request after it reads them. The share of the queue that the six new jobs cause, apart from the other repositories' runs.
+
+## 11. CI and the release on `spec` v0.18.4 and `.github` v0.1.31
+
+The time of the jobs of CI and of the release that the stage `toolchain-core` and the move to `.github` v0.1.31 could change, before it and on its pull request, by T68 (R29).
+
+**How it was measured.** 2026-11-16, from the GitHub API, read only: `actions/runs/<id>/jobs`, the start and the end of the jobs and of their steps. Before — the run 43884931449 of CI of pull request #85, b2c32be, on `.github` v0.1.30 and `spec` v0.18.3, with the image and the caches of Go from `main`'s entries; the release — the runs 43861429097, which released `v0.1.12`, and 43886299085, which released nothing, of `main`.
+
+| Job | Before, s | After, s | Of it |
+|---|---|---|---|
+| "Go / lint", "test", "vuln", "licenses" | 43, 33, 31, 48 | | before: the image 12–14 s, the recipes 1–3 s |
+| "Go / arm64", "Go / fma-diff", "Go / rules" | 40, 44, 31 | | |
+| "Go / target (…)" | 30–43 | | the image 13–21 s |
+| "Documents / docs-check-repo" | 45 | | the image 21 s, the check 13 s |
+| "Contracts" | 43 | | the image 22 s, `ci-contracts` under 1 s |
+| "Gate / part k" | 117–124 | | the image 22–24 s, `gate-part` 82–86 s |
+| "Gate" | 42 | | the image 24 s, `gate-check` 5 s |
+| "Release / release" | 50, 59 | — | "Work out the version", which builds the stage, 21 s and 50 s |

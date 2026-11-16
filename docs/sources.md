@@ -381,6 +381,18 @@ For architecture 3.7; the third amendment to R28.
 - `codeql.yml` — the Go of the analysis is go.dev's archive by `ARG GO_VERSION` and `ARG GO_SHA256_AMD64` of the stage `toolchain`, checked by its sum, with no `docker build` (R45 .github); a stage with `GO*` or `CGO_*` in `ENV` other than `GOTOOLCHAIN` stops the step. `engine`'s Dockerfile has `ARG GO_VERSION=1.27.4` and `ARG GO_SHA256_AMD64` in the stage `toolchain`, and its one `ENV` is `PATH` and `GOTOOLCHAIN=local` (the record `sources 13.7` of `.github` at the tag names `engine` among the nine callers of that form);
 - `documents.yml` — a pull request no longer saves the file of the image; `typescript.yml` — the input `engines`, which `engine` does not call; `secrets.yml`, `dco.yml` and `scorecard.yml` — the same files. No workflow `engine` calls has a new input, and none of them names the stage `toolchain-core`.
 
+### 7.6. The shared workflows of `.github` v0.1.31: the stage `toolchain-core`
+
+For R29 and architecture 3.7.
+
+2026-11-16: `gh release list -R altnovatrail/.github` — the latest release is [v0.1.31](https://github.com/altnovatrail/.github/releases/tag/v0.1.31), published 2026-11-16T16:11:02Z, `isImmutable: true`; `gh release verify v0.1.31 -R altnovatrail/.github` — "Resolved tag v0.1.31 to sha1:93c848fb51a10a245968cf730b99cc709a7748bf", "✓ Release v0.1.31 verified!". Its notes name T67 of `.github`, the move to `spec` v0.18.4, and T66, "The release and the checks without a browser in the stage toolchain-core". From `git diff v0.1.30 v0.1.31` in a clone in a temporary folder, and R47 .github, in `docs/decisions.md` of `.github` at the tag:
+
+- R47 .github — "The checks that start no browser and run no test — "Go / lint", "Go / vuln" and "Go / licenses", the same three of `typescript.yml`, and `documents.yml` — run in `toolchain-core` where the Dockerfile has the stage and its stage `toolchain` holds more than it, and in `toolchain` otherwise, as before"; "Where `toolchain` is `FROM toolchain-core` with its `SHELL` alone — `spec`'s and `.github`'s, and every copy of the kind `go`, to which the kind adds no lines (…) — (…) such a caller keeps the one entry and image of (…)", R42 .github; "A caller changes nothing but the SHAs, which Dependabot raises";
+- `release.yml` — the step "Work out the version" sets `TOOLCHAIN_STAGE: toolchain-core`, and "Build the files" runs `docker build --target "$stage"`, `stage=toolchain-core` where the tree's Dockerfile has a line `FROM … AS toolchain-core`, "and toolchain otherwise: what the recipe needs is in the core, and a release builds no browser (…)"; its inputs are those of v0.1.30;
+- `go.yml`, the job `arm64` — the step "Toolchain image" has `STAGES: toolchain` beside `SAVE`, and its script, "Each stage STAGES names, from its own file, novatrail-<stage>.tar, and as the one image novatrail-toolchain", builds `docker build --target "$stage"`; the steps before and after it, the caches of Go, `TARGETS: cpu-off js-wasm wasip1` and the scripts `SCRIPT` of `target` and `fma-diff` are those of v0.1.30;
+- `documents.yml` — a step "Toolchain stages" names `core=toolchain-core` only when the Dockerfile has a stage `toolchain-core` and its `toolchain` adds an instruction but `SHELL` or comes `FROM` another base, and hands the stage to `toolchain.sh` by `TOOLCHAIN_STAGE`; with `toolchain` the path and the key stay `novatrail-toolchain.tar` and `toolchain-<OS>-<architecture>-<hash of the Dockerfile>`;
+- `secrets.yml`, `dco.yml`, `scorecard.yml` and `codeql.yml` — the same files as at v0.1.30.
+
 ## 8. Go, GitHub and Codecov
 
 ### 8.1. The fusion of floating-point operations
@@ -418,3 +430,9 @@ Read 2026-11-08: the Codecov app is installed in the organization for all reposi
 For R26.
 
 Read 2026-11-16: `gh release view v0.18.3 -R altnovatrail/spec --json publishedAt,isImmutable` — `"publishedAt":"2026-11-16T00:42:28Z"`, `"isImmutable":true`; `gh api repos/altnovatrail/spec/releases` lists it first, and `main` of `spec` is on its commit, 922886aa; `gh release verify v0.18.3 -R altnovatrail/spec` — "Resolved tag v0.18.3 to sha1:922886aa7774ae5d31e914cef208436003f737d6", "✓ Release v0.18.3 verified!". The registry, `https://mcr.microsoft.com/v2/devcontainers/base/manifests/3.0.13-noble` with the media types of an image index, the same day: `docker-content-digest: sha256:48be4adec1c1ecbe030064700aef85382f5205786a8f82937fc44a7473717eae` — the digest that `.devcontainer/Dockerfile` of the template of `spec` v0.18.3 pins.
+
+### 8.7. The release `spec` v0.18.4 and the stage `toolchain-core` of its template
+
+For R29.
+
+Read 2026-11-16: `gh release view v0.18.4 -R altnovatrail/spec --json publishedAt,isImmutable` — `"publishedAt":"2026-11-16T07:08:28Z"`, `"isImmutable":true`; `main` of `spec` is on its commit, 5867a6c6; `gh release verify v0.18.4 -R altnovatrail/spec` — "Resolved tag v0.18.4 to sha1:5867a6c6233c8fb8823c56c39a9e4c52a19d8ee0", "✓ Release v0.18.4 verified!". The heading of `.devcontainer/Dockerfile` of its template: "Three stages. `toolchain-core` holds Node, just, Go and buf: what a release needs — its version and its files — and every check that runs no browser, and a release builds it alone (…)", the 2026-11-16 amendment to R31 spec; its stage `toolchain` — "spec's tests need nothing the core lacks, so here the stage adds nothing. A copy's kind adds its lines at the end of this stage (repo-template/kinds.json)", `FROM toolchain-core AS toolchain` and its `SHELL` alone. The base image, its digest and every `ARG` are those of v0.18.3.
