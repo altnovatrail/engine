@@ -42,7 +42,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: altnovatrail/.github/.github/workflows/go.yml@706f4067a66c91b0442033f82a7924eeb8b60497 # v0.1.21
+    uses: altnovatrail/.github/.github/workflows/go.yml@11e1b0f79f771aea8b0b57d0a706365a607a6929 # v0.1.23
     with:
       same-bits: true
 
