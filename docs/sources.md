@@ -345,6 +345,17 @@ For architecture 3.6 and 3.7; R15.
 
 Read 2026-11-08: `release.yml` of the same commit 706f4067 — "Nobody tags by hand: the version is the next patch of the line the caller's release workflow sets, RELEASE_LINE"; "A commit gets a release only when a path the caller names in paths has changed since the release before it; the first release comes out always"; the caller's recipe `release-files` "gets the version, has no git to ask, and writes the files into dist/"; the caller "keeps its releases immutable and its tags v* under a ruleset". The model is R16 learner-model and its `release.yml` and `justfile` (`main`, read 2026-11-08): the release file is the archive of the schema, the ruleset `v-tags` — id 26770474, `refs/tags/v*`, `update`, `deletion`, `non_fast_forward`, without bypass. At `engine` on 2026-11-08 — `immutable-releases` `enabled: false`, a ruleset only for `main`, no tags (`gh api`).
 
+### 7.4. The shared workflows of `.github` v0.1.24: the cached stage and wasip1
+
+For architecture 3.7; R28.
+
+2026-11-16: `gh release list -R altnovatrail/.github` — the latest release is [v0.1.24](https://github.com/altnovatrail/.github/releases/tag/v0.1.24), published 2026-11-13T05:34:16Z, `immutable: true`; `gh release verify v0.1.24 -R altnovatrail/.github` — "Resolved tag v0.1.24 to sha1:fab102d8bbb4659575e107ee488e072aaaa71821", "Release v0.1.24 verified!". From `git diff v0.1.21 v0.1.24` in a clone in a temporary folder:
+
+- `go.yml` — every job in the toolchain stage takes its image from the cache: "Each job that runs in the toolchain stage takes its image from the caller's cache of GitHub Actions and builds it from the Dockerfile only on a miss, so that an outage of what the Dockerfile downloads from does not fail the checks while the Dockerfile stays the same (…)" — R36 .github; the steps "Toolchain image from the cache", `actions/cache/restore` v6.1.0 at 55cc834, with the path `${{ runner.temp }}/toolchain.tar` and the key `toolchain-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.devcontainer/Dockerfile') }}`, then "Toolchain image" — `docker load` of the file or `docker build` and `docker save` — and "Toolchain image into the cache", `actions/cache/save`, "if: steps.toolchain.outputs.cache-hit != 'true'". "The caches are the caller's: one a pull request saves is "restored by re-runs of the pull request" alone, and the one of main, which every pull request reads, its CI on a push to main saves";
+- `go.yml`, "Go / targets" and "Go / arm64" — wasip1 is tested, no longer only built: "in wasip1, in node:wasi of the same Node, by an executor the script writes, since Go's go_wasip1_wasm_exec knows only runtimes the stage does not have"; the line is `run GOOS=wasip1 GOARCH=wasm go test -count=1 -exec="node --stack-size=8192 --disable-warning=ExperimentalWarning $wasi" ./...`, then `go vet` as before;
+- `documents.yml` — the image `novatrail-toolchain` from the cache by the same key, under a path of its own, `${{ runner.temp }}/novatrail-toolchain.tar`, through `TOOLCHAIN_IMAGE_FILE` of `spec/tools/toolchain/toolchain.sh`;
+- `release.yml` and `scorecard.yml` — only comments; `secrets.yml`, `dco.yml` and `codeql.yml` — the same files. No workflow has a new or changed input.
+
 ## 8. Go, GitHub and Codecov
 
 ### 8.1. The fusion of floating-point operations

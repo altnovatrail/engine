@@ -113,8 +113,8 @@ script job:
     ' "$file" || { echo "same-bits: the job {{ job }} of $file has no script SCRIPT" >&2; exit 1; }
 
 # The tests on the builds where the bits are most at risk — GOAMD64 v3, v1 with
-# GODEBUG=cpu.all=off, 386 and js/wasm in the container's Node, and wasip1 built and vetted —, by
-# the script of the job targets.
+# GODEBUG=cpu.all=off, 386, and js/wasm and wasip1 in the container's Node, wasip1 vetted too —,
+# by the script of the job targets.
 # Run the tests on the builds the same bits are held on, as "Go / targets" does.
 test-targets:
     #!/usr/bin/env bash

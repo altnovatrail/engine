@@ -8,6 +8,13 @@ updates:
       interval: weekly
     cooldown:
       default-days: 3
+    groups:
+      # Every reference to a shared workflow of .github in one pull request, to one release: they
+      # go to one release anyway, and a pull request per file would be a rebase and a round of CI
+      # each. Actions of other owners stay a pull request each (the 2026-11-08 amendment to R04
+      # .github; R28 in docs/decisions.md).
+      shared-workflows:
+        patterns: ["altnovatrail/.github/*"]
 
   - package-ecosystem: docker
     directory: /.devcontainer
