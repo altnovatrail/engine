@@ -116,25 +116,31 @@ script job:
 # GODEBUG=cpu.all=off, 386, and js/wasm and wasip1 in the container's Node, wasip1 vetted too —,
 # by the script of the job target, one after another. CI runs each target as a job of that job's
 # matrix, and the script runs the ones TARGETS names: here TARGETS is the matrix's list, read from
-# the same go.yml, and a host other than amd64 leaves out amd64-v3 and 386, as the job arm64 does.
+# the same go.yml, and on a host other than amd64 the TARGETS the job arm64 gives the script there.
 # Run the tests on the builds the same bits are held on, as "Go / targets" does.
 test-targets:
     #!/usr/bin/env bash
     set -euo pipefail
     script="$({{ just_executable() }} script target)"
     file="$({{ just_executable() }} github)/.github/workflows/go.yml"
-    targets="$(awk '
-        $0 == "  target:" { injob = 1; next }
-        injob && /^  [a-z0-9-]+:$/ { exit }
-        injob && /^        target: \[.*\]$/ { sub(/^[^[]*\[/, ""); sub(/\]$/, ""); gsub(/[",]/, " "); print; exit }
-    ' "$file" | xargs)"
-    if [ -z "$targets" ]; then
-        echo "same-bits: the job target of $file has no matrix of targets" >&2
-        exit 1
+    if [ "$(go env GOHOSTARCH)" = amd64 ]; then
+        job=target
+        targets="$(awk '
+            $0 == "  target:" { injob = 1; next }
+            injob && /^  [a-z0-9-]+:$/ { exit }
+            injob && /^        target: \[.*\]$/ { sub(/^[^[]*\[/, ""); sub(/\]$/, ""); gsub(/[",]/, " "); print; exit }
+        ' "$file" | xargs)"
+    else
+        job=arm64
+        targets="$(awk '
+            $0 == "  arm64:" { injob = 1; next }
+            injob && /^  [a-z0-9-]+:$/ { exit }
+            injob && /^          TARGETS: / { sub(/^          TARGETS: /, ""); print; exit }
+        ' "$file" | xargs)"
     fi
-    if [ "$(go env GOHOSTARCH)" != amd64 ]; then
-        targets="$(printf '%s\n' $targets | grep -vx -e amd64-v3 -e 386 | xargs)"
-        echo "same-bits: an $(go env GOHOSTARCH) host runs no amd64-v3 and no 386" >&2
+    if [ -z "$targets" ]; then
+        echo "same-bits: the job $job of $file names no targets" >&2
+        exit 1
     fi
     TARGETS="$targets" bash -c "$script"
 

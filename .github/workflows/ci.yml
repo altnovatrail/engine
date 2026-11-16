@@ -214,12 +214,26 @@ jobs:
           ref: ${{ env.SIM_COMMIT }}
           path: sim
 
+      # The caches of Go between runs, by the steps of sim's gate.yml at SIM_COMMIT word for word:
+      # GOCACHE and GOMODCACHE in one folder, by the module sums and the toolchain of sim, not by the
+      # commits gate.json names, so a new pin builds its libraries on the cache of the one before,
+      # restore-keys. A pull request only reads it, and the first part of a push saves it; this
+      # workflow runs on no other event (R28, its third 2026-11-16 amendment).
+      - name: Go cache
+        id: go
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/go
+          key: gate-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('sim/go.sum', 'sim/.devcontainer/Dockerfile') }}
+          restore-keys: gate-${{ runner.os }}-${{ runner.arch }}-
+
       # sim's toolchain stage from the cache, by the steps of the job Contracts, keyed by the hash
       # of sim's Dockerfile at SIM_COMMIT: a tag of sim with another Dockerfile takes an entry of
       # its own, and one whose Dockerfile is engine's byte for byte shares the entry of "Go / arm64",
-      # the job of go.yml on the same arm64 runner, which holds the same image (R28). On a miss of a
-      # push to main only the first part writes and saves the file, as sim's gate.yml does, so that
-      # the parts do not save one key; a pull request saves none and reads main's entry.
+      # the job of go.yml on the same arm64 runner, which holds the same image (R28). On a miss only
+      # the first part writes and saves the file, as in sim's gate.yml, so that the parts do not
+      # save one key, and only on a push to main, as in go.yml of v0.1.30: a pull request reads
+      # main's entry and saves none.
       - name: Toolchain image from the cache
         id: toolchain
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -263,10 +277,11 @@ jobs:
           PART: ${{ matrix.part }}
           PARTS: ${{ strategy.job-total }}
         run: |
-          mkdir -p "$RUNNER_TEMP/parts"
+          mkdir -p "$RUNNER_TEMP/go" "$RUNNER_TEMP/parts"
           docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp \
-              --env SIM_DIR=/work/sim \
-              --volume "$PWD:/work" --volume "$RUNNER_TEMP/parts:/parts" --workdir /work/engine \
+              --env GOCACHE=/go/build --env GOMODCACHE=/go/mod --env SIM_DIR=/work/sim \
+              --volume "$RUNNER_TEMP/go:/go" --volume "$RUNNER_TEMP/parts:/parts" \
+              --volume "$PWD:/work" --workdir /work/engine \
               novatrail-toolchain just gate-part "$PART" "$PARTS" /parts
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -275,6 +290,13 @@ jobs:
           path: ${{ runner.temp }}/parts
           retention-days: 7
           if-no-files-found: error
+
+      - name: Go cache into the cache
+        if: github.event_name != 'pull_request' && matrix.part == 0 && steps.go.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/go
+          key: ${{ steps.go.outputs.cache-primary-key }}
 
   # The check after the parts, named as the gate was. It runs when a part failed too, and then
   # fails: a required check skipped would pass as green.
@@ -305,6 +327,14 @@ jobs:
           repository: altnovatrail/sim
           ref: ${{ env.SIM_COMMIT }}
           path: sim
+
+      # The caches of Go the parts took, from the same entry, which this job does not save.
+      - name: Go cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/go
+          key: gate-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('sim/go.sum', 'sim/.devcontainer/Dockerfile') }}
+          restore-keys: gate-${{ runner.os }}-${{ runner.arch }}-
 
       # The image the parts took, from the same entry, by the same script; on a miss it is built and
       # not saved, since the first part saves it.
@@ -346,8 +376,10 @@ jobs:
 
       - name: gate-check
         run: |
+          mkdir -p "$RUNNER_TEMP/go"
           set -o pipefail
           docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp \
-              --env SIM_DIR=/work/sim \
-              --volume "$PWD:/work" --volume "$RUNNER_TEMP/parts:/parts" --workdir /work/engine \
+              --env GOCACHE=/go/build --env GOMODCACHE=/go/mod --env SIM_DIR=/work/sim \
+              --volume "$RUNNER_TEMP/go:/go" --volume "$RUNNER_TEMP/parts:/parts" \
+              --volume "$PWD:/work" --workdir /work/engine \
               novatrail-toolchain just gate-check /parts | tee -a "$GITHUB_STEP_SUMMARY"
