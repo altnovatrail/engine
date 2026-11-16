@@ -115,7 +115,9 @@ type ModuleChoices struct {
 	Choices int64
 }
 
-// TaskSolution is when the solution of a task last went to the learner's device.
+// TaskSolution is when the solution of a task with a key last went to the learner's device. A task
+// with a rubric is not here: its solution, open after "Done", does not count, and the engine reads
+// such a task by RubricDone.
 type TaskSolution struct {
 	Task           string
 	SolutionSentAt int64
