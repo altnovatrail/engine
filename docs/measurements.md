@@ -328,4 +328,6 @@ The time of the jobs of CI and CodeQL that the move to the shared workflows of `
 
 The run of CI, from its start to the end of its last job: 259 s before, 345 s after. Its jobs waited for a runner 33 s on average and 76 s at most before, 81 s and 151 s after, with 24 jobs against 17: the matrix of targets adds five jobs and `toolchain` one, and other repositories of the organization ran at the same hours. "Gate" was the last job of both runs, 268 s from the start of its first part after, 253 s before.
 
+The second run, 43858005943, after the fixes of the review, again with no entry of the caches of Go: "Contracts" 51 s — the image 30 s, `ci-contracts` 7 s; "Gate / part k" 118–124 s, `gate-part` 89–92 s, the image built 21–24 s; "Gate" 38 s, `gate-check` 11 s. Its jobs waited for runners longer still, and the run ended 12 minutes after its start.
+
 **Not measured.** A run with the caches of Go filled: the first push to `main` after the merge saves them, and a pull request after it reads them. The share of the queue that the six new jobs cause, apart from the other repositories' runs.
