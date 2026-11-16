@@ -18,17 +18,17 @@ concurrency:
 jobs:
   secrets:
     name: Secrets
-    uses: altnovatrail/.github/.github/workflows/secrets.yml@706f4067a66c91b0442033f82a7924eeb8b60497 # v0.1.21
+    uses: altnovatrail/.github/.github/workflows/secrets.yml@fab102d8bbb4659575e107ee488e072aaaa71821 # v0.1.24
 
   # A pull request's commits are what it checks; a push to main has been checked as one.
   dco:
     name: DCO
     if: github.event_name == 'pull_request'
-    uses: altnovatrail/.github/.github/workflows/dco.yml@706f4067a66c91b0442033f82a7924eeb8b60497 # v0.1.21
+    uses: altnovatrail/.github/.github/workflows/dco.yml@fab102d8bbb4659575e107ee488e072aaaa71821 # v0.1.24
 
   documents:
     name: Documents
-    uses: altnovatrail/.github/.github/workflows/documents.yml@706f4067a66c91b0442033f82a7924eeb8b60497 # v0.1.21
+    uses: altnovatrail/.github/.github/workflows/documents.yml@fab102d8bbb4659575e107ee488e072aaaa71821 # v0.1.24
 
   # The repository's Go code, by its own ci- recipes in its toolchain stage, and the coverage of
   # its tests, which the shared workflow sends to Codecov (R16 .github). id-token: write is for its
@@ -42,7 +42,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: altnovatrail/.github/.github/workflows/go.yml@706f4067a66c91b0442033f82a7924eeb8b60497 # v0.1.21
+    uses: altnovatrail/.github/.github/workflows/go.yml@fab102d8bbb4659575e107ee488e072aaaa71821 # v0.1.24
     with:
       same-bits: true
 
@@ -60,8 +60,45 @@ jobs:
           persist-credentials: false
           submodules: true
 
+      # The toolchain stage from the cache of GitHub Actions, by the steps of the shared go.yml of
+      # v0.1.24 (R36 .github; the 2026-11-09 amendment to R31 spec; R28): the same file, path and
+      # key, so the entry is the one go.yml's jobs fill and read on the same runner, and the image
+      # is built from the Dockerfile only on a miss. The entry of main is filled by CI on a push to
+      # main, and a pull request reads it.
+      - name: Toolchain image from the cache
+        id: toolchain
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/toolchain.tar
+          key: toolchain-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.devcontainer/Dockerfile') }}
+
       - name: Toolchain image
-        run: docker build --target toolchain --tag toolchain - < .devcontainer/Dockerfile
+        run: |
+          tar=$RUNNER_TEMP/toolchain.tar
+          restored=false
+          if [ -f "$tar" ]; then
+              restored=true
+              if docker load --quiet --input "$tar" && docker image inspect toolchain > /dev/null; then
+                  rm -f -- "$tar"
+                  echo "Toolchain image: loaded from the cache."
+                  exit 0
+              fi
+              echo "::warning::The cache's file of the toolchain stage does not load as the image toolchain: the image is built from the Dockerfile, on every run until the entry is deleted (gh cache delete) or the Dockerfile changes."
+              rm -f -- "$tar"
+          fi
+          docker build --target toolchain --tag toolchain - < .devcontainer/Dockerfile
+          # A file the cache gave has its entry already, which no save replaces.
+          if [ "$restored" = false ] && ! docker save --output "$tar" toolchain; then
+              echo "::warning::The image of the toolchain stage could not be saved for the cache: the next run builds it again."
+              rm -f -- "$tar"
+          fi
+
+      - name: Toolchain image into the cache
+        if: steps.toolchain.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/toolchain.tar
+          key: ${{ steps.toolchain.outputs.cache-primary-key }}
 
       - name: ci-contracts
         run: |
@@ -75,10 +112,10 @@ jobs:
   # checks against each other; learner-model, by the commit gate.json names. They are inputs of a
   # checkout, not a uses, so Dependabot does not move them: a task of this repository raises them,
   # by the order of releases of repositories 4 spec. The run goes in the toolchain stage of sim's
-  # devcontainer at that tag, built from its checkout, with no context. The limit is a guard against
-  # a hung run, not sim's budget: sim v0.1.20 keeps the gate of v0.1.15 and v0.1.17, whose 250
-  # learners a cell are reckoned at about 12 to 13 minutes on a slow runner without the Go cache
-  # (amendments of 2026-11-14 to R17; the 2026-11-15 one keeps the limit).
+  # devcontainer at that tag, from the cache or built from its checkout, with no context. The limit
+  # is a guard against a hung run, not sim's budget: sim v0.1.20 keeps the gate of v0.1.15 and
+  # v0.1.17, whose 250 learners a cell are reckoned at about 12 to 13 minutes on a slow runner
+  # without the Go cache (amendments of 2026-11-14 to R17; the 2026-11-15 one keeps the limit).
   gate:
     name: Gate
     runs-on: ubuntu-24.04
@@ -99,8 +136,44 @@ jobs:
           ref: ${{ env.SIM_COMMIT }}
           path: sim
 
+      # sim's toolchain stage from the cache, by the steps of the job Contracts, keyed by the hash
+      # of sim's Dockerfile at SIM_COMMIT: a tag of sim with another Dockerfile takes an entry of
+      # its own, and one whose Dockerfile is engine's byte for byte shares the entry of go.yml's
+      # jobs, which holds the same image (R28).
+      - name: Toolchain image from the cache
+        id: toolchain
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/toolchain.tar
+          key: toolchain-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('sim/.devcontainer/Dockerfile') }}
+
       - name: Toolchain image
-        run: docker build --target toolchain --tag toolchain - < sim/.devcontainer/Dockerfile
+        run: |
+          tar=$RUNNER_TEMP/toolchain.tar
+          restored=false
+          if [ -f "$tar" ]; then
+              restored=true
+              if docker load --quiet --input "$tar" && docker image inspect toolchain > /dev/null; then
+                  rm -f -- "$tar"
+                  echo "Toolchain image: loaded from the cache."
+                  exit 0
+              fi
+              echo "::warning::The cache's file of the toolchain stage does not load as the image toolchain: the image is built from the Dockerfile, on every run until the entry is deleted (gh cache delete) or the Dockerfile changes."
+              rm -f -- "$tar"
+          fi
+          docker build --target toolchain --tag toolchain - < sim/.devcontainer/Dockerfile
+          # A file the cache gave has its entry already, which no save replaces.
+          if [ "$restored" = false ] && ! docker save --output "$tar" toolchain; then
+              echo "::warning::The image of the toolchain stage could not be saved for the cache: the next run builds it again."
+              rm -f -- "$tar"
+          fi
+
+      - name: Toolchain image into the cache
+        if: steps.toolchain.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/toolchain.tar
+          key: ${{ steps.toolchain.outputs.cache-primary-key }}
 
       - name: gate
         run: |
