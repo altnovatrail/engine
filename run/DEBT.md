@@ -7,7 +7,7 @@ Table 4 of [RUN.md](../RUN.md): what was put off on purpose, its risk, when to r
 
 ## Table 4. Technical debt
 
-Numbers are not reused: next — Д11.
+Numbers are not reused: next — Д12.
 
 | ID | Debt | From | Risk while open | When to return |
 |---|---|---|---|---|
@@ -15,3 +15,4 @@ Numbers are not reused: next — Д11.
 | Д6 | Traps the AI suggested are not read by the task choice: they do not go to the model (concepts 9.4 spec), and frequent traps are the program's findings only | T01; R03 | A mistake only the AI sees in the learner's work is not worked on by the choice | E3's judgement did not touch traps. Once the stand or the adult's progress show the program's traps are too few |
 | Д7 | No tasks on paper, no glue with the device app, no offline | T09, T05; R04, R10 | None — stage 5; but glue added without an amendment to R10 fails the test of the rules | Stage 5, by О-11 and Т-10 |
 | Д10 | The comment of `TaskSolution` in `types.go` speaks of any task, not of a task with a key: the solution of a task with a rubric, open after "Done", does not go to the summary of issues (the second 2026-11-15 amendment to R82 spec; the 2026-11-16 amendment to R03). The code does not change, and a fix of one comment in `paths` would release the same bits (R15) | T62; R26 | Whoever builds the input themselves, as `sim` does, may by the comment put a task with a rubric into `Summary.Tasks`, and the engine holds it back for a day | With the next change of the Go code |
+| Д11 | The jobs of the gate, "Gate / part k" and "Gate", take no caches of Go: the step "Go caches" of the shared `go.yml` verifies the modules of one checkout at the root, and the gate has two, `engine/` and `sim/`, and builds by the `go.work` that `sim` writes on the fly (the third 2026-11-16 amendment to R28) | T67; R17, R28 | Each part and the check build `sim`, `engine` and `learner-model` with an empty `GOCACHE`, a small part of a part's run (measurements 10) | When `sim`'s `gate.yml` takes the caches of Go — its steps are then copied here, as the image's are —, or once the gate's build is a large part of its path |
