@@ -2,7 +2,7 @@
 
 > The results of the engine's measurements: what was measured, how, on what, and what numbers came out. The document that describes how it is built — [architecture.md](architecture.md) — refers here, and itself holds only what was decided from the measurements (RULES.md, How we work; R143 spec). A measurement is cited by section, like any document: `measurements 2.1`, and from another repository `measurements 2.1 engine`.
 >
-> An external fact a measurement rests on is a record of [sources.md](sources.md). Sections 1 and 2 were moved here word for word on 2026-11-12 from [architecture.md](architecture.md), subsections 2.9 and 2.10, by task T55 (R24); the analysis and the decisions stayed there. The measurement of the tokens spent by an epic's sessions, by the rules of epics of [RUN.md](../RUN.md), is section 4, from the archive of E7 (T54). Section 5 is the analysis of the corridor on the new base, at the start of E5 (T57), section 6 the rough look of its variants (T58), and section 7 the constraint `fair` on the same look, on the tag of the judgement (T61). Section 8 is the time of "Gate" on arm64 (T65).
+> An external fact a measurement rests on is a record of [sources.md](sources.md). Sections 1 and 2 were moved here word for word on 2026-11-12 from [architecture.md](architecture.md), subsections 2.9 and 2.10, by task T55 (R24); the analysis and the decisions stayed there. The measurement of the tokens spent by an epic's sessions, by the rules of epics of [RUN.md](../RUN.md), is section 4, from the archive of E7 (T54). Section 5 is the analysis of the corridor on the new base, at the start of E5 (T57), section 6 the rough look of its variants (T58), and section 7 the constraint `fair` on the same look, on the tag of the judgement (T61). Section 8 is the time of "Gate" on arm64 (T65), and section 9 the time of the gate as jobs (T66).
 
 ## 1. The corridor of the base
 
@@ -291,3 +291,19 @@ The time of the job "Gate" of `ci.yml` on `ubuntu-24.04` and on `ubuntu-24.04-ar
 | `ubuntu-24.04-arm`, 2 runs | 387 s, 360 s | 342 s, 327 s | 34 s built and 4 s saved; 23 s from the cache |
 
 **The bits.** The table of the gate on arm64, in both runs, is that of the run 43810269337 on amd64 line for line: 69 numbers, each "in band" and "to the bit" against `gate.json`. Not measured: the spread of arm64 over more runs.
+
+## 9. The gate as jobs
+
+The time of the gate of `ci.yml` run as four jobs "Gate / part k" and the check "Gate" after them, against the one job "Gate" before, by T66 (the third 2026-11-16 amendment to R17); `ubuntu-24.04-arm` on both, 250 learners a cell. Before: `sim` `v0.1.20` at 63288d7; after: `sim` `v0.1.24` at 33d70f2, whose gate is the same (sources 6.15).
+
+**How it was measured.** 2026-11-16, from the GitHub API, read only: `actions/runs/<id>/jobs`, the start and the end of the jobs and of their steps; the gate's path is from the start of its first job to the end of "Gate". Before — the run 43814890320 of CI on `main`, 5db1df5, the merge of T65, the image of `sim`'s stage from the cache, and the two runs of pull request #82 of measurements 8. After — the run 43818734321 of pull request #83, on a miss of the cache's new entry: `sim`'s Dockerfile at `v0.1.24` has a new base image, so each part built the image, part 0 saved it, and "Gate" loaded it from the cache.
+
+| The gate | Its path | The run of the learners | The image |
+|---|---|---|---|
+| one job, `main` | 375 s | 335 s, the step `gate` | from the cache |
+| one job, #82, 2 runs | 387 s, 360 s | 342 s, 327 s | built; from the cache |
+| four parts and the check, #83 | 196 s: the parts 115–144 s, a wait of 5 s, the check 47 s | 89–94 s a part, the step `gate-part`; 13 s the check, the step `gate-check` | 20–37 s a part, built; 23 s the check, from the cache |
+
+The run of CI, from its start to the end of its last check: 392 s on `main` before, 201 s on #83 after; "Gate" was the last check of both. On #83 every other check ended by 06:45:21, "Go / coverage" the last, 109 s after the start of the run, so the gate is still the longest path.
+
+**The bits.** The table of "Gate" on #83 is that of `just gate` on `sim` `v0.1.20` in the container of `engine` on the same code, 2026-11-16, line for line: 69 numbers, each "in band" and "to the bit" against `gate.json`. Not measured: the spread over more runs, and a part on a hit of the cache, which would save the 20–37 s of the build.
