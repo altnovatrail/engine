@@ -135,7 +135,7 @@ A consolidation's items are in the corridor about twice as often as a segment's,
 
 ## 4. The tokens of an epic's sessions
 
-`just -f spec/justfile tokens-report --since … --row` prints one row of the table below, for the window of an epic: from the merge of the previous epic's branch, on the epic's first day, to the end of the session of its outcome. The row "before" is a baseline, not a part of a sum: the window of E7 overlaps it. It runs at the archive of each epic (RUN.md, «Как устроен план: эпики»), and once a month from `spec` (measurements 1.9 spec); the transcripts are the folder `-workspaces-engine` of this machine, and the cost is at the API's prices.
+`just -f spec/justfile tokens-report --since … --row` prints one row of the table below, for the window of an epic: from the merge of the previous epic's branch, on the epic's first day, to the end of the session of its outcome. The row "before" is a baseline, not a part of a sum: the window of E7 overlaps it. It runs at the archive of each epic (RUN.md, Epics), and once a month from `spec` (measurements 1.9 spec); the transcripts are the folder `-workspaces-engine` of this machine, and the cost is at the API's prices.
 
 | Project | Window, UTC | Sessions | Calls, main / subagents | Context of a call, k, main / subagents | Compactions | Cost at API prices |
 |---|---|---|---|---|---|---|
