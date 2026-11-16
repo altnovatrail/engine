@@ -296,14 +296,15 @@ The time of the job "Gate" of `ci.yml` on `ubuntu-24.04` and on `ubuntu-24.04-ar
 
 The time of the gate of `ci.yml` run as four jobs "Gate / part k" and the check "Gate" after them, against the one job "Gate" before, by T66 (the third 2026-11-16 amendment to R17); `ubuntu-24.04-arm` on both, 250 learners a cell. Before: `sim` `v0.1.20` at 63288d7; after: `sim` `v0.1.24` at 33d70f2, whose gate is the same (sources 6.15).
 
-**How it was measured.** 2026-11-16, from the GitHub API, read only: `actions/runs/<id>/jobs`, the start and the end of the jobs and of their steps; the gate's path is from the start of its first job to the end of "Gate". Before — the run 43814890320 of CI on `main`, 5db1df5, the merge of T65, the image of `sim`'s stage from the cache, and the two runs of pull request #82 of measurements 8. After — the run 43818734321 of pull request #83, on a miss of the cache's new entry: `sim`'s Dockerfile at `v0.1.24` has a new base image, so each part built the image, part 0 saved it, and "Gate" loaded it from the cache.
+**How it was measured.** 2026-11-16, from the GitHub API, read only: `actions/runs/<id>/jobs`, the start and the end of the jobs and of their steps; the gate's path is from the start of its first job to the end of "Gate". Before — the run 43814890320 of CI on `main`, 5db1df5, the merge of T65, the image of `sim`'s stage from the cache, and the two runs of pull request #82 of measurements 8. After — two runs of pull request #83: 43818734321, on a miss of the cache's new entry — `sim`'s Dockerfile at `v0.1.24` has a new base image, so each part built the image, part 0 saved it, and "Gate" loaded it from the cache —, and 43820905022, after the fixes of the review, every job loading the image from the cache.
 
 | The gate | Its path | The run of the learners | The image |
 |---|---|---|---|
 | one job, `main` | 375 s | 335 s, the step `gate` | from the cache |
 | one job, #82, 2 runs | 387 s, 360 s | 342 s, 327 s | built; from the cache |
-| four parts and the check, #83 | 196 s: the parts 115–144 s, a wait of 5 s, the check 47 s | 89–94 s a part, the step `gate-part`; 13 s the check, the step `gate-check` | 20–37 s a part, built; 23 s the check, from the cache |
+| four parts and the check, #83, first run | 196 s: the parts 115–144 s, a wait of 5 s, the check 47 s | 89–94 s a part, the step `gate-part`; 13 s the check, the step `gate-check` | 20–37 s a part, built; 23 s the check, from the cache |
+| four parts and the check, #83, second run | 186 s: the parts 122–133 s, a wait of 4 s, the check 48 s | 88–94 s a part; 13 s the check | 22–26 s a part and 24 s the check, all from the cache |
 
-The run of CI, from its start to the end of its last check: 392 s on `main` before, 201 s on #83 after; "Gate" was the last check of both. On #83 every other check ended by 06:45:21, "Go / coverage" the last, 109 s after the start of the run, so the gate is still the longest path.
+The run of CI, from its start to the end of its last check: 392 s on `main` before, 201 s and 192 s on #83 after; "Gate" was the last check of both. On #83 every other check ended by 06:45:21, "Go / coverage" the last, 109 s after the start of the run, so the gate is still the longest path.
 
-**The bits.** The table of "Gate" on #83 is that of `just gate` on `sim` `v0.1.20` in the container of `engine` on the same code, 2026-11-16, line for line: 69 numbers, each "in band" and "to the bit" against `gate.json`. Not measured: the spread over more runs, and a part on a hit of the cache, which would save the 20–37 s of the build.
+**The bits.** The table of "Gate" in both runs of #83 is that of `just gate` on `sim` `v0.1.20` in the container of `engine` on the same code, 2026-11-16, line for line: 69 numbers, each "in band" and "to the bit" against `gate.json`. Loading the image from the cache takes about as long as building it on this runner, 22–26 s against 20–37 s. Not measured: the spread over more runs.
