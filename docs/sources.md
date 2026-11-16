@@ -376,3 +376,9 @@ The Go module proxy, `https://proxy.golang.org/<module>/@latest`, read 2026-11-0
 For architecture 3.7; R12.
 
 Read 2026-11-08: the Codecov app is installed in the organization for all repositories — `gh api orgs/altnovatrail/installations`, `"app_slug":"codecov","repository_selection":"all"`; `engine` is already in Codecov, but not activated — `https://api.codecov.io/api/v2/github/altnovatrail/repos/engine/`, `"active":false,"activated":false`.
+
+### 8.6. The release `spec` v0.18.3 and the base image of its template
+
+For R26.
+
+Read 2026-11-16: `gh release view v0.18.3 -R altnovatrail/spec --json publishedAt,isImmutable` — `"publishedAt":"2026-11-16T00:42:28Z"`, `"isImmutable":true`; `gh api repos/altnovatrail/spec/releases` lists it first, and `main` of `spec` is on its commit, 922886aa; `gh release verify v0.18.3 -R altnovatrail/spec` — "Resolved tag v0.18.3 to sha1:922886aa7774ae5d31e914cef208436003f737d6", "✓ Release v0.18.3 verified!". The registry, `https://mcr.microsoft.com/v2/devcontainers/base/manifests/3.0.13-noble` with the media types of an image index, the same day: `docker-content-digest: sha256:48be4adec1c1ecbe030064700aef85382f5205786a8f82937fc44a7473717eae` — the digest that `.devcontainer/Dockerfile` of the template of `spec` v0.18.3 pins.
