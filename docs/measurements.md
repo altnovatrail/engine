@@ -283,11 +283,11 @@ E and F hold `fair`, F on `D-grade1` `M11.band` by 0.0004 within the tolerance; 
 
 The time of the job "Gate" of `ci.yml` on `ubuntu-24.04` and on `ubuntu-24.04-arm`, by T65 (the second 2026-11-16 amendment to R17); `sim` `v0.1.20` at 63288d7 on both, 250 learners a cell.
 
-**How it was measured.** 2026-11-16, from the GitHub API, read only: `actions/runs/<id>/jobs`, the start and the end of the job and of its steps. amd64 — the last 6 successful runs of CI on `main`, 2026-11-14 to 2026-11-16 (43647847694, 43664203248, 43666671717, 43799483044, 43805279819, 43810269337), the image of `sim`'s stage from the cache. arm64 — the run 43812293508 of pull request #82, the image built on a miss of the new entry of arm64 and saved.
+**How it was measured.** 2026-11-16, from the GitHub API, read only: `actions/runs/<id>/jobs`, the start and the end of the job and of its steps. amd64 — the last 6 successful runs of CI on `main`, 2026-11-14 to 2026-11-16 (43647847694, 43664203248, 43666671717, 43799483044, 43805279819, 43810269337), the image of `sim`'s stage from the cache. arm64 — the runs 43812293508 and 43813275834 of pull request #82: in the first the image was built on a miss of the new entry of arm64 and saved, in the second it came from that entry.
 
 | Runner | The job | The step `gate` | The image |
 |---|---|---|---|
 | `ubuntu-24.04`, 6 runs | 379–654 s, median 441 s | 348–622 s, median 398 s | 20–35 s, from the cache |
-| `ubuntu-24.04-arm`, 1 run | 387 s | 342 s | 34 s built, 4 s saved |
+| `ubuntu-24.04-arm`, 2 runs | 387 s, 360 s | 342 s, 327 s | 34 s built and 4 s saved; 23 s from the cache |
 
-**The bits.** The table of the gate on arm64 is that of the run 43810269337 on amd64 line for line: 69 numbers, each "in band" and "to the bit" against `gate.json`. Not measured: arm64 with the image from the cache, and the spread of arm64 over more runs.
+**The bits.** The table of the gate on arm64, in both runs, is that of the run 43810269337 on amd64 line for line: 69 numbers, each "in band" and "to the bit" against `gate.json`. Not measured: the spread of arm64 over more runs.
