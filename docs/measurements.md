@@ -2,7 +2,7 @@
 
 > The results of the engine's measurements: what was measured, how, on what, and what numbers came out. The document that describes how it is built — [architecture.md](architecture.md) — refers here, and itself holds only what was decided from the measurements (RULES.md, How we work; R143 spec). A measurement is cited by section, like any document: `measurements 2.1`, and from another repository `measurements 2.1 engine`.
 >
-> An external fact a measurement rests on is a record of [sources.md](sources.md). Sections 1 and 2 were moved here word for word on 2026-11-12 from [architecture.md](architecture.md), subsections 2.9 and 2.10, by task T55 (R24); the analysis and the decisions stayed there. The measurement of the tokens spent by an epic's sessions, by the rules of epics of [RUN.md](../RUN.md), is section 4, from the archive of E7 (T54). Section 5 is the analysis of the corridor on the new base, at the start of E5 (T57), section 6 the rough look of its variants (T58), and section 7 the constraint `fair` on the same look, on the tag of the judgement (T61). Section 8 is the time of "Gate" on arm64 (T65), and section 9 the time of the gate as jobs (T66).
+> An external fact a measurement rests on is a record of [sources.md](sources.md). Sections 1 and 2 were moved here word for word on 2026-11-12 from [architecture.md](architecture.md), subsections 2.9 and 2.10, by task T55 (R24); the analysis and the decisions stayed there. The measurement of the tokens spent by an epic's sessions, by the rules of epics of [RUN.md](../RUN.md), is section 4, from the archive of E7 (T54). Section 5 is the analysis of the corridor on the new base, at the start of E5 (T57), section 6 the rough look of its variants (T58), and section 7 the constraint `fair` on the same look, on the tag of the judgement (T61). Section 8 is the time of "Gate" on arm64 (T65), section 9 the time of the gate as jobs (T66), and section 10 the time of CI on `.github` v0.1.30 (T67).
 
 ## 1. The corridor of the base
 
@@ -308,3 +308,26 @@ The time of the gate of `ci.yml` run as four jobs "Gate / part k" and the check 
 The run of CI, from its start to the end of its last check: 392 s on `main` before, 201 s and 192 s on #83 after; "Gate" was the last check of both. On #83 every other check ended by 06:45:21, "Go / coverage" the last, 109 s after the start of the run, so the gate is still the longest path.
 
 **The bits.** The table of "Gate" in both runs of #83 is that of `just gate` on `sim` `v0.1.20` in the container of `engine` on the same code, 2026-11-16, line for line: 69 numbers, each "in band" and "to the bit" against `gate.json`. Loading the image from the cache takes about as long as building it on this runner, 22–26 s against 20–37 s. Not measured: the spread over more runs.
+
+## 10. CI on `.github` v0.1.30
+
+The time of the jobs of CI and CodeQL that the move to the shared workflows of `.github` v0.1.30 changed, before it and on its pull request, by T67 (the third 2026-11-16 amendment to R28).
+
+**How it was measured.** 2026-11-16, from the GitHub API, read only: `actions/runs/<id>/jobs`, the start and the end of the jobs and of their steps, and the wait of a job, from its creation to its start. Before — the run 43822630871 of CI and 43822630818 of CodeQL on `main`, 4d4654d, the merge of T66, on `.github` v0.1.24. After — the first run of pull request #84, 43856171341 of CI and 43856171330 of CodeQL: the caches of Go had no entry yet, since only a push to `main` saves one, so every job ran with empty ones; the image of amd64 came from `main`'s entry of `novatrail-toolchain.tar`, which `documents.yml` had saved already, and the gate's arm64 image of `sim` had no entry under the new file and was built in each job. The jobs of the gate took no caches of Go in that run: they take those of `sim`'s `gate.yml` from the fixes of the review, the second run, which had no entry of them either.
+
+| Job | Before, s | After, s | Of it after |
+|---|---|---|---|
+| "Go / targets" | 85, the five targets one after another, 56 | 5, after the matrix | "Go / target (…)", 43–55 each, the tests 8–13 s each |
+| "Go / fma-diff" | 58, the step 32 | 51, the step 25 | |
+| "Go / lint", "test", "vuln", "licenses" | 36, 49, 47, 55 | 46, 53, 56, 54 | the image 27–34 s, from the cache; the recipes 12, 19, 17, 15 s with empty caches of Go |
+| "Go / toolchain" | — | 11 | the entry looked up, a hit |
+| "Contracts" | 55: the image 34, `ci-contracts` 10 | 38: the image 13, `ci-contracts` 10 | the image from the cache; the caches of Go empty |
+| "Gate / part k" | 119–137, `gate-part` 90–95 | 121–126, `gate-part` 91–93 | the image built, 22–24 s, as long as it loaded before |
+| "Gate" | 57, `gate-check` 14 | 43, `gate-check` 13 | the image built, 22 s |
+| "CodeQL / analyze (go)" | 75, the step of Go 20 | 52, the step of Go 2 | go.dev's archive, no image |
+
+The run of CI, from its start to the end of its last job: 259 s before, 345 s after. Its jobs waited for a runner 33 s on average and 76 s at most before, 81 s and 151 s after, with 24 jobs against 17: the matrix of targets adds five jobs and `toolchain` one, and other repositories of the organization ran at the same hours. "Gate" was the last job of both runs, 268 s from the start of its first part after, 253 s before.
+
+The second run, 43858005943, after the fixes of the review, again with no entry of the caches of Go: "Contracts" 51 s — the image 30 s, `ci-contracts` 7 s; "Gate / part k" 118–124 s, `gate-part` 89–92 s, the image built 21–24 s; "Gate" 38 s, `gate-check` 11 s. Its jobs waited for runners longer still, and the run ended 12 minutes after its start.
+
+**Not measured.** A run with the caches of Go filled: the first push to `main` after the merge saves them, and a pull request after it reads them. The share of the queue that the six new jobs cause, apart from the other repositories' runs.

@@ -114,13 +114,35 @@ script job:
 
 # The tests on the builds where the bits are most at risk — GOAMD64 v3, v1 with
 # GODEBUG=cpu.all=off, 386, and js/wasm and wasip1 in the container's Node, wasip1 vetted too —,
-# by the script of the job targets.
+# by the script of the job target, one after another. CI runs each target as a job of that job's
+# matrix, and the script runs the ones TARGETS names: here TARGETS is the matrix's list, read from
+# the same go.yml, and on a host other than amd64 the TARGETS the job arm64 gives the script there.
 # Run the tests on the builds the same bits are held on, as "Go / targets" does.
 test-targets:
     #!/usr/bin/env bash
     set -euo pipefail
-    script="$({{ just_executable() }} script targets)"
-    bash -c "$script"
+    script="$({{ just_executable() }} script target)"
+    file="$({{ just_executable() }} github)/.github/workflows/go.yml"
+    if [ "$(go env GOHOSTARCH)" = amd64 ]; then
+        job=target
+        targets="$(awk '
+            $0 == "  target:" { injob = 1; next }
+            injob && /^  [a-z0-9-]+:$/ { exit }
+            injob && /^        target: \[.*\]$/ { sub(/^[^[]*\[/, ""); sub(/\]$/, ""); gsub(/[",]/, " "); print; exit }
+        ' "$file" | xargs)"
+    else
+        job=arm64
+        targets="$(awk '
+            $0 == "  arm64:" { injob = 1; next }
+            injob && /^  [a-z0-9-]+:$/ { exit }
+            injob && /^          TARGETS: / { sub(/^          TARGETS: /, ""); print; exit }
+        ' "$file" | xargs)"
+    fi
+    if [ -z "$targets" ]; then
+        echo "same-bits: the job $job of $file names no targets" >&2
+        exit 1
+    fi
+    TARGETS="$targets" bash -c "$script"
 
 # The assembler of each package with fusion and without it on six targets, with the job's own
 # control, by the script of the job fma-diff.
