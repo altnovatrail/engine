@@ -7,7 +7,6 @@ Open tasks outside an epic, each as its body, in Russian; each also stands as a 
 
 ## Tasks outside an epic
 
-
 #### T66. Гейт частями на теге `sim` строки 7.19 — вне эпика
 
 - **Цель:** job «Gate» — частями: матрица из нескольких job, каждый гонит свою часть гейта `sim`, и проверка после них; что гейт доказывает, не меняется (строка 7.20 COORDINATION.md spec).

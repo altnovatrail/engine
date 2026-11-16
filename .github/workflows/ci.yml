@@ -117,9 +117,10 @@ jobs:
   # v0.1.17, whose 250 learners a cell are reckoned at about 12 to 13 minutes on a slow runner
   # without the Go cache (amendments of 2026-11-14 to R17; the 2026-11-15 one keeps the limit).
   # The runner is arm64, standard and free for public repositories (sources 8.3): sim's gate runs
-  # about a minute faster there than on amd64, and the choice and every number of the gate are the
-  # same to the bit on both (R10; the second 2026-11-16 amendment to R17). The cache's entry of the
-  # image is that of arm64: its key holds runner.arch.
+  # about a minute faster there than on amd64 (measurements 3.1 spec), and the gate's numbers are
+  # the same to the bit on both: the engine's choice by R10, sim's own as sim holds them at home on
+  # both (the second 2026-11-16 amendment to R17). The cache's entry of the image is that of arm64:
+  # its key holds runner.arch.
   gate:
     name: Gate
     runs-on: ubuntu-24.04-arm
@@ -142,8 +143,8 @@ jobs:
 
       # sim's toolchain stage from the cache, by the steps of the job Contracts, keyed by the hash
       # of sim's Dockerfile at SIM_COMMIT: a tag of sim with another Dockerfile takes an entry of
-      # its own, and one whose Dockerfile is engine's byte for byte shares the entry of go.yml's
-      # jobs, which holds the same image (R28).
+      # its own, and one whose Dockerfile is engine's byte for byte shares the entry of "Go / arm64",
+      # the job of go.yml on the same arm64 runner, which holds the same image (R28).
       - name: Toolchain image from the cache
         id: toolchain
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

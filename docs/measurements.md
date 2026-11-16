@@ -2,7 +2,7 @@
 
 > The results of the engine's measurements: what was measured, how, on what, and what numbers came out. The document that describes how it is built — [architecture.md](architecture.md) — refers here, and itself holds only what was decided from the measurements (RULES.md, How we work; R143 spec). A measurement is cited by section, like any document: `measurements 2.1`, and from another repository `measurements 2.1 engine`.
 >
-> An external fact a measurement rests on is a record of [sources.md](sources.md). Sections 1 and 2 were moved here word for word on 2026-11-12 from [architecture.md](architecture.md), subsections 2.9 and 2.10, by task T55 (R24); the analysis and the decisions stayed there. The measurement of the tokens spent by an epic's sessions, by the rules of epics of [RUN.md](../RUN.md), is section 4, from the archive of E7 (T54). Section 5 is the analysis of the corridor on the new base, at the start of E5 (T57), section 6 the rough look of its variants (T58), and section 7 the constraint `fair` on the same look, on the tag of the judgement (T61).
+> An external fact a measurement rests on is a record of [sources.md](sources.md). Sections 1 and 2 were moved here word for word on 2026-11-12 from [architecture.md](architecture.md), subsections 2.9 and 2.10, by task T55 (R24); the analysis and the decisions stayed there. The measurement of the tokens spent by an epic's sessions, by the rules of epics of [RUN.md](../RUN.md), is section 4, from the archive of E7 (T54). Section 5 is the analysis of the corridor on the new base, at the start of E5 (T57), section 6 the rough look of its variants (T58), and section 7 the constraint `fair` on the same look, on the tag of the judgement (T61). Section 8 is the time of "Gate" on arm64 (T65).
 
 ## 1. The corridor of the base
 
@@ -278,3 +278,16 @@ The variants D, E and F of T58 against the base on `sim` `v0.1.20`, the tag that
 | `D-grade5` `M11.band` | 0.0070 at 0.0256 | 0.0073 at 0.0258 | 0.0108 at 0.0274 |
 
 E and F hold `fair`, F on `D-grade1` `M11.band` by 0.0004 within the tolerance; D fails it there by 0.0033. On `D-grade1` all three widen `M11.band`, the base's 0.0055 to 0.015–0.023, the paired interval clear of zero for D, [0.0052; 0.0252] worse, and for F, [0.0018; 0.0208], and across it for E, [−0.0025; 0.0165]; on `D-grade5` all three narrow it. `M11.answers` and `M11.same` move within their intervals.
+
+## 8. "Gate" on arm64
+
+The time of the job "Gate" of `ci.yml` on `ubuntu-24.04` and on `ubuntu-24.04-arm`, by T65 (the second 2026-11-16 amendment to R17); `sim` `v0.1.20` at 63288d7 on both, 250 learners a cell.
+
+**How it was measured.** 2026-11-16, from the GitHub API, read only: `actions/runs/<id>/jobs`, the start and the end of the job and of its steps. amd64 — the last 6 successful runs of CI on `main`, 2026-11-14 to 2026-11-16 (43647847694, 43664203248, 43666671717, 43799483044, 43805279819, 43810269337), the image of `sim`'s stage from the cache. arm64 — the run 43812293508 of pull request #82, the image built on a miss of the new entry of arm64 and saved.
+
+| Runner | The job | The step `gate` | The image |
+|---|---|---|---|
+| `ubuntu-24.04`, 6 runs | 379–654 s, median 441 s | 348–622 s, median 398 s | 20–35 s, from the cache |
+| `ubuntu-24.04-arm`, 1 run | 387 s | 342 s | 34 s built, 4 s saved |
+
+**The bits.** The table of the gate on arm64 is that of the run 43810269337 on amd64 line for line: 69 numbers, each "in band" and "to the bit" against `gate.json`. Not measured: arm64 with the image from the cache, and the spread of arm64 over more runs.
