@@ -653,6 +653,8 @@ The review of T22, one round: fixed — the archive took only the root's code, w
 
 — *Amendment 2026-11-16, third* (T68): **the release is put out by the shared `release.yml` of `.github` v0.1.31, with the same inputs and `paths`: it works out the version and builds the file in the stage `toolchain-core` of `.devcontainer/Dockerfile` — Node, just, Go and buf —, which `release-files` needs and no more (R29; R47 .github; sources 7.6).** `.devcontainer/Dockerfile` and `.github/workflows/release.yml` are among the `paths`, so the merge of T68 gives the next patch, `v0.1.13`, with the comment of `TaskSolution` in `types.go` and no change of compiled code (Д10; the author's answer of 2026-11-16 to В50).
 
+— *Amendment 2026-11-17* (T71): **README.md's section on releases is two sentences and the commands — `go get`, `gh release download` and `release-verify` —, and what it said in detail — what gives a release, the line, the release's one file and `release-files` — is in [README.md](README.md) of `docs/`, section "Releases"; the release itself does not change.** The author's word of 2026-11-17 for every repository's README; README.md is not among the `paths`, so there is no release.
+
 ## The tag `spec` v0.9.16
 
 **R16. `engine` stands on `spec` v0.9.16 — the latest release. The tag answers the row «в реестр spec» В20 — row 4.7 of `COORDINATION.md` of `spec` is closed, and 4.5 and 6.5 no longer wait for the first version of `engine` (Д120 in table 4 of RUN.md of `spec`), — and gives the kind `go` of the template gopls: `.devcontainer/` is again what the recipe of `spec` builds, without differences of its own, R13 is replaced, and Д8 is closed. Tables 3 and 4 are without В20 and Д8.** The author's decision 2026-11-09: move to the latest tag. Task T27 of RUN.md, outside an epic.
@@ -722,6 +724,8 @@ The review of T23, one round: fixed — the cache was filled through one folder 
 — *Amendment 2026-11-16, fourth* (T67): **the jobs of the gate take the image of `sim`'s stage by the script of the shared `go.yml` of `.github` v0.1.30, as the file `novatrail-toolchain.tar` and the image `novatrail-toolchain`, by the same key, and part 0 saves it only on a push to `main`; a pull request saves none** (the third 2026-11-16 amendment to R28). They take the caches of Go, `GOCACHE` and `GOMODCACHE`, by the steps of `sim`'s `gate.yml` at `SIM_COMMIT` word for word: by the key of `sim/go.sum` and `sim/.devcontainer/Dockerfile` with `restore-keys`, saved by part 0 on a push to `main`. `sim`, its bands and the limit do not change.
 
 — *Amendment 2026-11-16, fifth* (T68): **the jobs of the gate take the image of `sim`'s stage by the script of the shared `go.yml` of `.github` v0.1.31, with `STAGES: toolchain`: the stage `toolchain` of `sim/.devcontainer/Dockerfile`, by the same file, image and key (R29).** `sim`, its bands and the limit do not change.
+
+— *Amendment 2026-11-17* (T71): **README.md's section on the gate is one sentence with a link, and what it said in detail — the jobs "Gate / part k" and "Gate" and the recipes `gate`, `gate-part` and `gate-check` — is in [README.md](README.md) of `docs/`, section "The gate"; the gate itself does not change.** The author's word of 2026-11-17 for every repository's README.
 
 ## The tag `spec` v0.12.0
 
@@ -939,6 +943,8 @@ The review of T23, one round: fixed — the cache was filled through one folder 
 — *Consequence:* the next task, T64, is read from `run/TASKS.md`. There is no release: no file of `paths` changes (R15). — RUN.md; `run/`; CLAUDE.md; README.md; [architecture.md](architecture.md), the links to `run/DEBT.md`; [measurements.md](measurements.md), section 4 — the name of the section of RUN.md; [plan/E5.md](plan/E5.md), [plan/E7.md](plan/E7.md); the 2026-11-16 amendments to R24 and R25.
 
 — *Amendment 2026-11-17* (T70): **rule 10 of RUN.md takes the template's clause of `spec` v0.18.14 word for word: commit messages and a pull request's title and description are in English and terse, for the session, never a copy of the report (the 2026-11-17 amendment to R14 spec).** The differences of the bullet "What differs from it, by this log" stay; the rest of the template's RUN.md and `run/` is the same at v0.18.14 as at v0.18.3 for this repository (R30). — RUN.md, rule 10.
+
+— *Amendment 2026-11-17, second* (T71): **README.md's section Documents differs from the template's: it is two links, to [README.md](README.md) of `docs/` — the index of `docs/`, with the releases, the gate and how to contribute in detail — and to RUN.md, and the sentence on the working rules and the submodule went to that index, section "Contributing".** The author's word of 2026-11-17 for every repository's README; spec's task of the same run records the rule for the template (the amendment to R21 spec). — README.md; [README.md](README.md) of `docs/`; CLAUDE.md, Documents.
 
 ## The shared workflows of `.github` v0.1.24
 
