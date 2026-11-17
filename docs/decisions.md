@@ -653,7 +653,7 @@ The review of T22, one round: fixed — the archive took only the root's code, w
 
 — *Amendment 2026-11-16, third* (T68): **the release is put out by the shared `release.yml` of `.github` v0.1.31, with the same inputs and `paths`: it works out the version and builds the file in the stage `toolchain-core` of `.devcontainer/Dockerfile` — Node, just, Go and buf —, which `release-files` needs and no more (R29; R47 .github; sources 7.6).** `.devcontainer/Dockerfile` and `.github/workflows/release.yml` are among the `paths`, so the merge of T68 gives the next patch, `v0.1.13`, with the comment of `TaskSolution` in `types.go` and no change of compiled code (Д10; the author's answer of 2026-11-16 to В50).
 
-— *Amendment 2026-11-17* (T71): **README.md's section on releases is two sentences and the commands — `go get`, `gh release download` and `release-verify` —, and what it said in detail — what gives a release, the line, the release's one file and `release-files` — is in [README.md](README.md) of `docs/`, section "Releases"; the release itself does not change.** The author's word of 2026-11-17 for every repository's README; README.md is not among the `paths`, so there is no release.
+— *Amendment 2026-11-17* (T71): **README.md has no section on releases and no commands: what it said — what gives a release, the line, the release's one file, `release-verify` and `release-files`, with the commands — is in [README.md](README.md) of `docs/`, section "Releases"; the release itself does not change.** The author's word of 2026-11-17: README holds only what the component is and its place in NovaTrail's architecture. README.md is not among the `paths`, so there is no release.
 
 ## The tag `spec` v0.9.16
 
@@ -725,7 +725,7 @@ The review of T23, one round: fixed — the cache was filled through one folder 
 
 — *Amendment 2026-11-16, fifth* (T68): **the jobs of the gate take the image of `sim`'s stage by the script of the shared `go.yml` of `.github` v0.1.31, with `STAGES: toolchain`: the stage `toolchain` of `sim/.devcontainer/Dockerfile`, by the same file, image and key (R29).** `sim`, its bands and the limit do not change.
 
-— *Amendment 2026-11-17* (T71): **README.md's section on the gate is one sentence with a link, and what it said in detail — the jobs "Gate / part k" and "Gate" and the recipes `gate`, `gate-part` and `gate-check` — is in [README.md](README.md) of `docs/`, section "The gate"; the gate itself does not change.** The author's word of 2026-11-17 for every repository's README.
+— *Amendment 2026-11-17* (T71): **README.md has no section on the gate and no commands: what it said — the jobs "Gate / part k" and "Gate" and the recipes `gate`, `gate-part` and `gate-check` — is in [README.md](README.md) of `docs/`, section "The gate"; the gate itself does not change.** The author's word of 2026-11-17: README holds only what the component is and its place in NovaTrail's architecture.
 
 ## The tag `spec` v0.12.0
 
@@ -944,7 +944,7 @@ The review of T23, one round: fixed — the cache was filled through one folder 
 
 — *Amendment 2026-11-17* (T70): **rule 10 of RUN.md takes the template's clause of `spec` v0.18.14 word for word: commit messages and a pull request's title and description are in English and terse, for the session, never a copy of the report (the 2026-11-17 amendment to R14 spec).** The differences of the bullet "What differs from it, by this log" stay; the rest of the template's RUN.md and `run/` is the same at v0.18.14 as at v0.18.3 for this repository (R30). — RUN.md, rule 10.
 
-— *Amendment 2026-11-17, second* (T71): **README.md's section Documents differs from the template's: it is two links, to [README.md](README.md) of `docs/` — the index of `docs/`, with the releases, the gate and how to contribute in detail — and to RUN.md, and the sentence on the working rules and the submodule went to that index, section "Contributing".** The author's word of 2026-11-17 for every repository's README; spec's task of the same run records the rule for the template (the amendment to R21 spec). — README.md; [README.md](README.md) of `docs/`; CLAUDE.md, Documents.
+— *Amendment 2026-11-17, second* (T71): **README.md differs from the template's: it holds only what the component is and its place in NovaTrail's architecture — its links to `learner-model`, `api` and `sim`, its card architecture 3.8 spec and a link to `docs/` —, with no section Documents and no commands; the list of documents, the releases, the gate and the sentence on the working rules and the submodule went to [README.md](README.md) of `docs/`, the index of `docs/`, its section "Contributing" holding the last.** The author's word of 2026-11-17 for every repository's README; spec's task of the same run records the rule for the template (the amendment to R21 spec). — README.md; [README.md](README.md) of `docs/`; CLAUDE.md, Documents.
 
 ## The shared workflows of `.github` v0.1.24
 

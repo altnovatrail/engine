@@ -12,25 +12,14 @@
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=altnovatrail_engine&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=altnovatrail_engine)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=altnovatrail_engine&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=altnovatrail_engine)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=altnovatrail_engine&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=altnovatrail_engine)
-The NovaTrail engine: it picks what a learner does next — a lesson or a task, on a new skill or on one due for practice again — and gives each choice a reason code that the adult sees. It is a Go library of pure computation that works by a rule, with no AI model: it is handed the skill graphs, the lessons and the task pool and the learner model's estimates, time comes from outside, it takes no seed because the rule needs no randomness, and the same input always gives the same choice, on any build. From stage 2 it runs inside the platform's service, `api`; at stage 1 the learner simulator, `sim`, runs it.
+The NovaTrail engine: it picks what a learner does next — a lesson or a task, on a new skill or on one due for practice again — and gives each choice a reason code that the adult sees. It is a Go library of pure computation that works by a rule, with no AI model: it is handed the skill graphs, the lessons and the task pool and the learner model's estimates, time comes from outside, it takes no seed because the rule needs no randomness, and the same input always gives the same choice, on any build.
 
-A component of [NovaTrail](https://github.com/altnovatrail/spec), a universal open platform for adaptive learning, interactive lessons and AI tutoring.
+## Its place in NovaTrail
 
-## The gate
+A component of [NovaTrail](https://github.com/altnovatrail/spec), a universal open platform for adaptive learning, interactive lessons and AI tutoring. Its card is [architecture 3.8 spec](https://github.com/altnovatrail/spec/blob/main/docs/architecture.md#38-learner-model-and-engine).
 
-Every change after the first version passes the gate of [sim](https://github.com/altnovatrail/sim), the learner simulator, in CI and locally with `just gate`; how it runs — [docs/README.md](docs/README.md#the-gate).
+- [learner-model](https://github.com/altnovatrail/learner-model) estimates what the learner has mastered; the engine reads its estimates and takes its graph types, and never estimates mastery itself.
+- [api](https://github.com/altnovatrail/api), the platform's service, runs the engine in its process: it hands it the graphs, the pool and its summary of what it has handed out before, and stores each choice. The engine keeps nothing between calls.
+- [sim](https://github.com/altnovatrail/sim), the learner simulator, runs the engine on simulated learners, and every change of the rule passes its gate.
 
-## Releases
-
-Each commit of `main` that changes the code and passes CI comes out as the next patch: a Go module by its tag and a signed archive of its code. Details — [docs/README.md](docs/README.md#releases).
-
-```sh
-go get github.com/altnovatrail/engine@<tag>
-gh release download <tag> -R altnovatrail/engine
-just -f spec/justfile release-verify engine <tag> engine-<tag>.tar.gz
-```
-
-## Documents
-
-- [docs/](docs/README.md) — the component, its decisions, sources and measurements, and how to contribute.
-- [RUN.md](RUN.md) — the work plan; its other tables are in `run/`.
+How the engine is built and why is in [docs/](docs/README.md).
