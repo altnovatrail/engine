@@ -60,3 +60,4 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T66 | Гейт частями на теге `sim` строки 7.19 — вне эпика | Claude | — | тег `sim` строки 7.19 COORDINATION.md spec |
 | [x] | T67 | Переход CI на релиз `.github` строки 7.13 — вне эпика | Claude | — | релиз `.github` строки 7.13 COORDINATION.md spec |
 | [x] | T68 | Переход на тег `spec` строки 7.14 со стадией `toolchain-core` — вне эпика | Claude | — | T66, T67; тег `spec` строки 7.14 COORDINATION.md spec |
+| [x] | T69 | README без «Status», «License», фразы о языках и версии spec — вне эпика | Claude | — | — |
