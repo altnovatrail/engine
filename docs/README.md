@@ -1,6 +1,6 @@
 # engine — the documents
 
-What the [README](../README.md) of the repository leaves out, which says only what the component is and where it stands in NovaTrail (the second 2026-11-17 amendment to R21 spec): the index of the documents, for people and for the session of Claude Code that changes `engine`, the releases, the gate and how to contribute (T71).
+What the [README](../README.md) of the repository leaves out, which says only what the component is and where it stands in NovaTrail (the second 2026-11-17 amendment to R21 spec): the index of the documents, for people and for the session of Claude Code that changes `engine`, the releases, the gate and how to contribute.
 
 ## Documents
 
@@ -13,7 +13,7 @@ What the [README](../README.md) of the repository leaves out, which says only wh
 
 ## Releases
 
-Releases come out by themselves: each commit of `main` whose CI has passed and which changes the code, `go.mod`, `go.sum` or what builds the release's file gets the next patch of the line `0.1` — the first, `v0.1.0`, came out on 2026-11-08 — with its tag, by .github's shared release workflow ([R15](decisions.md)). Nobody tags by hand, and a release is immutable.
+Releases come out by themselves: each commit of `main` whose CI has passed and which changes the code, `go.mod`, `go.sum` or what builds the release's file gets the next patch of its line, `RELEASE_LINE` of [release.yml](../.github/workflows/release.yml), with its tag, by .github's shared release workflow ([R15](decisions.md)). Nobody tags by hand, and a release is immutable.
 
 - **Go code** takes the library as a Go module, by the tag: `go get github.com/altnovatrail/engine@<tag>`. `go.sum` and the Go checksum database hold the version from then on.
 - **The release's one file** is the code a consumer builds: `engine-<tag>.tar.gz`, with `LICENSE`, `go.mod`, `go.sum` and the Go files of the module but its tests and `testdata/`, signed without a key. Verify it where it enters NovaTrail with spec's recipe, `just -f spec/justfile release-verify engine <tag> engine-<tag>.tar.gz`, with its bundle `<file>.sigstore.json` beside it; `gh release download <tag> -R altnovatrail/engine` fetches both. `just release-files <tag>`, in the toolchain stage of the tag's `.devcontainer/Dockerfile`, builds the same bytes from the tag's tree.
