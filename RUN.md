@@ -1,6 +1,6 @@
 # RUN.md — work plan of engine
 
-What engine does, does not do and how it is built — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.18.27: the component's card — architecture 3.8 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, each reviewed by the author; only the current epic is in detail (R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). Open tasks outside an epic — their bodies in [run/TASKS.md](run/TASKS.md) (R155 spec), their rows in table 1 (rule 9; R27).
+What engine does, does not do and how it is built — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.18.34: the component's card — architecture 3.8 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, each reviewed by the author; only the current epic is in detail (R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). Open tasks outside an epic — their bodies in [run/TASKS.md](run/TASKS.md) (R155 spec), their rows in table 1 (rule 9; R27).
 
 Language (R154 spec): rules and tables in English, terse, for the session; the epic's description, table 1 and the bodies of tasks — in table 1's epic and in `run/TASKS.md` — in Russian: the author writes and reviews them.
 
@@ -24,7 +24,7 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
    Then `/code-review high`, one round: fix the findings, do not rerun. A small change may skip the review even if «Как проверить» names it.
 7. Do not commit: the author commits after review. The exceptions are the author's word «доведи до мержа» and a run of spec's orchestrator, «Сделай эпик E…»: its executor works by the contract `spec/tools/orchestrator/executor.md` — commits, pushes and opens the pull request, never merges; the orchestrator merges on green checks (RULES.md, How we work; R156 spec; R26).
 8. End with a short report in Russian: what was done, files, how to check, what the review found or why there was none, what is open and what goes «в реестр spec».
-9. When done: table 1 `[ ]` → `[x]`; append to the body «Сделано (дата)» — what was done, how checked — and «Открыто». A question for the author from «Открыто» is also a row of [run/QUESTIONS.md](run/QUESTIONS.md); what is put off, a row of [run/DEBT.md](run/DEBT.md).
+9. When done: table 1 `[ ]` → `[x]`; append to the body «Сделано (дата)» — one line, what was done and its pull request, which says how it was checked; where the author commits after review, the report says it. What stays open is rows, not text: a question for the author, of [run/QUESTIONS.md](run/QUESTIONS.md); what is put off, of [run/DEBT.md](run/DEBT.md) (R160 spec).
    - Then move the body verbatim, relative links fixed, to the epic archive `docs/plan/<epic>.md`, with a gist sentence — an unheaded list item at the start of the receiving section: «T01 — сделана <дата>: <итог одной фразой>». Neither stays here, and a search by heading finds one body, in the archive (R153 spec).
    - A task outside an epic is a row of table 1 marked «— вне эпика», as T48 was, with or without a current epic, and its body is in `run/TASKS.md` (R27). Done, its body leaves `run/TASKS.md` for the current epic's archive, section «Задачи вне эпика, сделанные за его время»; with no current epic, for the last done epic's archive, section «Задачи вне эпика, сделанные после него» (R19 spec and its 2026-11-13 amendment). Its row stays in table 1: it goes to the archive with the epic's table, or, with no epic, leaves when the next one is laid out.
 10. Language (R14 spec, R42 spec, R143 spec, R154 spec): this plan and `run/` in English, the bodies of tasks, the epic archives `docs/plan/` and the reports in Russian; `docs/` in English; README, CLAUDE.md, AGENTS.md, code, comments, schema descriptions, prompts and normative texts for authors in English; commit messages and a pull request's title and description in English and terse, for the session, never a copy of the report.
@@ -37,7 +37,7 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 
 **Plan:** «да» — plan mode first: decisions missing from the documents, or larger than one review (rule 11); «—» — run at once.
 
-**Task body** (Russian): «Цель», «Сделать», «Как проверить», «Разделы»; as needed «Не делать», «Решить при планировании», «Мой шаг», «Стоимость», «Риски»; from planning «Почему», «Решено автором (дата)», «Выяснилось при планировании»; when done «Сделано (дата)», «Открыто» (rule 9).
+**Task body** (Russian): «Цель», «Сделать», «Как проверить», «Разделы»; as needed «Не делать», «Решить при планировании», «Мой шаг», «Стоимость», «Риски»; from planning «Почему», «Решено автором (дата)», «Выяснилось при планировании»; when done «Сделано (дата)» (rule 9).
 
 **Citations.** Own sections — `architecture 2`, own decisions — `R03`; spec's sections and decisions — «architecture 3.5 spec», «R18 spec», its open questions — «Т-22», «П-7», «О-2»: the repository keeps no registers; other NovaTrail repositories' decisions — «R03 api»; MathTrail's — «R44 canvas-api», «R163 standalone», in a list «canvas-api: R44, R59». Each log numbers its own: «R19 spec» and `R19` of this log differ. A task — «T03», from another repository «T03 engine»; one not here is in `run/TASKS.md` or an archive: `grep -n '^#### T03\.' RUN.md run/TASKS.md docs/plan/*.md`. Task numbers are global and never reused: take the one free when writing it down.
 
@@ -49,7 +49,7 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 
 ## Table 1. Current epic — none
 
-Последний сделанный эпик — E5, архив [docs/plan/E5.md](docs/plan/E5.md). Следующий я выбираю, когда для него придёт причина, и разворачиваю здесь вместе с Claude в режиме планирования ([run/EPICS.md](run/EPICS.md)); до тех пор в таблице — задачи вне эпика (правило 9). T62 ушла на последний тег `spec`, v0.18.3, и разбита по правилу 11 на T62, T63 и T64 (R26). T65 — скорость CI по строке 7.20 COORDINATION.md spec; её части, что ждут релизов `sim`, `.github` и `spec`, — T66–T68. T70 — переход на последний тег `spec`, v0.18.14, в прогоне оркестратора (слово автора 2026-11-17). T71 — README только с описанием компонента и его местом в архитектуре, в том же прогоне (слово автора 2026-11-17). T72 — переход на последний тег `spec`, v0.18.27, и `.github` v0.1.33, в прогоне оркестратора (слово автора 2026-11-18).
+Последний сделанный эпик — E5, архив [docs/plan/E5.md](docs/plan/E5.md). Следующий я выбираю, когда для него придёт причина, и разворачиваю здесь вместе с Claude в режиме планирования ([run/EPICS.md](run/EPICS.md)); до тех пор в таблице — задачи вне эпика (правило 9).
 
 | Статус | ID | Задача | Кто | План | Зависит от |
 |---|---|---|---|---|---|
@@ -64,3 +64,8 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T70 | Переход на тег `spec` v0.18.14 — вне эпика | Claude | — | T69 |
 | [x] | T71 | README — только описание компонента и его место в архитектуре — вне эпика | Claude | — | T70 |
 | [x] | T72 | Переход на тег `spec` v0.18.27 — вне эпика | Claude | — | T71 |
+| [x] | T73 | Тексты без истории (R160 spec) и тег `spec` v0.18.34 — вне эпика | Claude | — | T72 |
+| [ ] | T74 | Без истории: CLAUDE.md, README, `docs/README.md`, раздел 1 архитектуры — вне эпика | Claude | — | T73 |
+| [ ] | T75 | Без истории: раздел 2 архитектуры — вне эпика | Claude | — | T74 |
+| [ ] | T76 | Без истории: раздел 3 архитектуры — вне эпика | Claude | — | T75 |
+| [ ] | T77 | Комментарии кода по R160 spec — вне эпика | Claude | — | T73 |

@@ -165,7 +165,7 @@ func frequentTraps(traps []learnermodel.TrapCount) []string {
 }
 
 // bySolution puts the candidates whose solution never went to the device first, and of the rest
-// the one whose solution went longest ago (R82 of spec); the task of the last closed attempt, back
+// the one whose solution went longest ago (R82 spec); the task of the last closed attempt, back
 // on the map, comes after them all.
 func bySolution(a, b candidate) int {
 	if c := cmp.Or(falseFirst(a.last, b.last), falseFirst(a.seen, b.seen)); c != 0 || !a.seen {

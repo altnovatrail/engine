@@ -168,7 +168,7 @@ jobs:
           STAGES: toolchain
         run: |
           # Each stage STAGES names, from its own file, novatrail-<stage>.tar, and as the one image
-          # novatrail-toolchain, as spec's toolchain.sh names either stage (R47): the job toolchain
+          # novatrail-toolchain, as spec's toolchain.sh names either stage (R47 .github): the job toolchain
           # builds and saves one, then the other, and every other job takes one.
           for stage in $STAGES; do
               case $stage in
@@ -284,7 +284,7 @@ jobs:
           STAGES: toolchain
         run: |
           # Each stage STAGES names, from its own file, novatrail-<stage>.tar, and as the one image
-          # novatrail-toolchain, as spec's toolchain.sh names either stage (R47): the job toolchain
+          # novatrail-toolchain, as spec's toolchain.sh names either stage (R47 .github): the job toolchain
           # builds and saves one, then the other, and every other job takes one.
           for stage in $STAGES; do
               case $stage in

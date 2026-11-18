@@ -13,7 +13,7 @@ import (
 // section 3.1; R03): open, within reach, on pause, not reached yet and mastered for the queue,
 // and the candidates the task on the skill is chosen among.
 
-// The constants of the rule, as in standalone. Only a run of sim changes them (R23 of spec).
+// The constants of the rule, as in standalone. Only a run of sim changes them (R23 spec).
 const (
 	corridorLow  = 0.70  // the corridor of success, from; and the least P of a skill within reach
 	corridorHigh = 0.85  // the corridor of success, to
@@ -145,7 +145,7 @@ func (pr prepared) tasksOn(i int, skill string) []int {
 // solution went to the device less than 24 hours ago is none in the first pass; in the second it
 // is, but the task of the last closed attempt is not — on the map it is, after all the others. The
 // task of the last closed attempt whose solution went to the device is on pause however long ago
-// that was: R82 of spec keeps it from being the next task.
+// that was: R82 spec keeps it from being the next task.
 func (pr prepared) pause(t *learnermodel.Task, second, onMap bool) (candidate, bool) {
 	in := pr.in
 	cd := candidate{id: t.ID, band: t.Band.Place}
