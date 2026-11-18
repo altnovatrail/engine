@@ -11,9 +11,9 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The states of a skill and the task on it, on the examples of docs/architecture.md, section
-// 3.1, and at their edges. The reading of the learner model and the P of the candidates are set
-// by hand, as the examples set them: there they are for the example, and the model computes them.
+// The states of a skill and the task on it, on the examples of olympiad maths and school maths for
+// grade 3, and at their edges. The reading of the learner model and the P of the candidates are set
+// by hand, as the examples set them, not computed by the learner model.
 
 const (
 	olympiadMath = "novatrail/olympiad-math"
@@ -50,9 +50,9 @@ func exampleModule(t *testing.T, module string, bands []learnermodel.Band, skill
 	return m
 }
 
-// olympiad is the graph of the first batch of olympiad maths in section 3.1: two skills at tier
-// 1 and pigeonhole-basic after combinatorics-enumeration, three bands, and on each skill and band
-// tasks of difficulty 1, 3 and 5 — of counting-gaps at grades-1-2, 2, 3 and 5.
+// olympiad is the graph of the first batch of olympiad maths: two skills at tier 1 and
+// pigeonhole-basic after combinatorics-enumeration, three bands, and on each skill and band tasks
+// of difficulty 1, 3 and 5 — of counting-gaps at grades-1-2, 2, 3 and 5.
 func olympiad(t *testing.T) Module {
 	t.Helper()
 	bands := []learnermodel.Band{
@@ -83,9 +83,9 @@ func olympiad(t *testing.T) Module {
 	return exampleModule(t, olympiadMath, bands, skills, tasks)
 }
 
-// grade3 is the graph of school maths for grade 3 in section 3.1: times-tables, then
-// division-with-remainder and fractions-of-a-whole, then comparing-fractions; one band, and
-// tasks of difficulty 1, 3 and 5 on each skill.
+// grade3 is the graph of school maths for grade 3: times-tables, then division-with-remainder and
+// fractions-of-a-whole, then comparing-fractions; one band, and tasks of difficulty 1, 3 and 5 on
+// each skill.
 func grade3(t *testing.T) Module {
 	t.Helper()
 	bands := []learnermodel.Band{{Place: 1, ID: "grade-3", Grades: []int32{3}}}
@@ -198,9 +198,9 @@ func taskName(t *testing.T, s skillView, easiest bool) string {
 	return c.id[strings.LastIndex(c.id, "/")+1:]
 }
 
-// Olympiad maths, step 1: no evidence, the trial series is on. Both skills of tier 1 are open and
-// within reach, pigeonhole-basic is closed, and the task on combinatorics-enumeration is the one
-// nearest to 0.775.
+// Olympiad maths: no evidence, the trial series is on. Both skills of tier 1 are open and within
+// reach, pigeonhole-basic is closed, and the task on combinatorics-enumeration is the one nearest
+// to 0.775.
 func TestOlympiadStart(t *testing.T) {
 	w := newWorld(t, olympiad(t))
 	w.probabilities([]px{
@@ -223,8 +223,8 @@ func TestOlympiadStart(t *testing.T) {
 	}
 }
 
-// Olympiad maths, step 4: after the mistake in gaps-34-d3-1 the corridor has moved to easier
-// tasks, and the task on counting-gaps is gaps-34-d1-1.
+// Olympiad maths: after the mistake in gaps-34-d3-1 the corridor has moved to easier tasks, and the
+// task on counting-gaps is gaps-34-d1-1.
 func TestOlympiadMistake(t *testing.T) {
 	w := newWorld(t, olympiad(t))
 	gaps := sid(olympiadMath, "counting-gaps")
@@ -239,9 +239,9 @@ func TestOlympiadMistake(t *testing.T) {
 	}
 }
 
-// Olympiad maths, step 5: after two more mistakes even the easiest task of counting-gaps has a P
-// below 0.70, and the skill is on pause; the task of a probe is the easiest, gaps-12-d2-1, and a
-// right probe puts the skill within reach again.
+// Olympiad maths: after two more mistakes even the easiest task of counting-gaps has a P below
+// 0.70, and the skill is on pause; the task of a probe is the easiest, gaps-12-d2-1, and a right
+// probe puts the skill within reach again.
 func TestOlympiadPause(t *testing.T) {
 	w := newWorld(t, olympiad(t))
 	gaps := sid(olympiadMath, "counting-gaps")
@@ -281,8 +281,8 @@ func TestOlympiadPause(t *testing.T) {
 	}
 }
 
-// Olympiad maths, step 6: "mastered" of combinatorics-enumeration opens pigeonhole-basic, and the
-// skill is mastered for the queue while its recommended task is not above grades-3-4.
+// Olympiad maths: "mastered" of combinatorics-enumeration opens pigeonhole-basic, and the skill is
+// mastered for the queue while its recommended task is not above grades-3-4.
 func TestOlympiadMastered(t *testing.T) {
 	enum, pigeon := sid(olympiadMath, "combinatorics-enumeration"), sid(olympiadMath, "pigeonhole-basic")
 	for _, tc := range []struct {
@@ -309,8 +309,8 @@ func TestOlympiadMastered(t *testing.T) {
 	}
 }
 
-// School maths for grade 3, step 1: only times-tables is open; when even times-tables-d1 is too
-// hard, it is out of reach and, with no evidence, not reached yet.
+// School maths for grade 3: only times-tables is open; when even times-tables-d1 is too hard, it is
+// out of reach and, with no evidence, not reached yet.
 func TestGrade3Start(t *testing.T) {
 	w := newWorld(t, grade3(t))
 	w.probabilities([]px{{"times-tables-d1", 0.6}, {"times-tables-d3", 0.4}, {"times-tables-d5", 0.2}})
@@ -332,8 +332,8 @@ func TestGrade3Start(t *testing.T) {
 	}
 }
 
-// School maths for grade 3, step 2: the solution of times-tables-d3 was shown, and for 24 hours
-// it is no candidate; then it comes after times-tables-d1 and times-tables-d5.
+// School maths for grade 3: the solution of times-tables-d3 was shown, and for 24 hours it is no
+// candidate; then it comes after times-tables-d1 and times-tables-d5.
 func TestGrade3Solution(t *testing.T) {
 	w := newWorld(t, grade3(t))
 	tt := sid(grade3Math, "times-tables")
@@ -364,7 +364,7 @@ func TestGrade3Solution(t *testing.T) {
 	}
 }
 
-// School maths for grade 3, step 3: "mastered" of times-tables opens both skills of tier 2, and
+// School maths for grade 3: "mastered" of times-tables opens both skills of tier 2, and
 // comparing-fractions waits for fractions-of-a-whole.
 func TestGrade3Mastered(t *testing.T) {
 	w := newWorld(t, grade3(t))
@@ -638,9 +638,8 @@ func TestPausedSince(t *testing.T) {
 }
 
 // The task of the last closed attempt whose solution went to the device is no candidate for the
-// next choice, however long ago the solution went (R82 spec): past the pause of 24 hours it would
-// otherwise come back as the next task when the skill has no other one. Found by invariant I4 of
-// sim's gate on the candidates of T31.
+// next choice, however long ago the solution went: past the pause of 24 hours it would otherwise
+// come back as the next task when the skill has no other one (R82 spec).
 func TestLastSeenNotNext(t *testing.T) {
 	w := newWorld(t, grade3(t))
 	tt := sid(grade3Math, "times-tables")

@@ -7,15 +7,15 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// Which skills of the modules of the engine are open (docs/architecture.md, sections 3.1 and 3.2;
-// R03, R04): with evidence of their own, or with each prerequisite counted — a skill of the module
-// mastered by the model, or an anchor skill the learner has, does not know, or has not while it
-// cannot hold the skill. It does not depend on the pass, and the rule reads it once a call.
+// Which skills of the modules of the engine are open does not depend on the pass, and the rule
+// reads it once a call. A skill is open with evidence of its own, or with each prerequisite counted
+// — a skill of the module mastered by the model, or an anchor skill the learner has, does not know,
+// or has not while it cannot hold the skill (R03, R04).
 
 // anchorPrefix opens the ID of an anchor skill of the shared taxonomy, `core.<name>`.
 const anchorPrefix = "core."
 
-// node is a skill of a module of the engine in the graph G of section 3.2.
+// node is a skill of a module of the engine, a vertex of the graph G whose edges openSkills builds.
 type node struct {
 	skill  learnermodel.Skill
 	module int // its module's place in Input.Modules
@@ -28,15 +28,14 @@ type node struct {
 // that teaches it lies in one strongly connected component of G with the skill. The other is an
 // anchor with nothing to teach it: no skill with a verdict that teaches it has a task of the pool,
 // on pause or not, whose every other primary skill is open, nor a lesson. That last "open" is the
-// one without this case, so that the count is one step and ends (the amendment of 2026-11-08 to
-// R04).
+// one without this case, so that the count is one step and ends (R04).
 //
 // A prerequisite of the module is counted when the model has mastered it, and one with a rubric or
-// none when a lesson that teaches it is passed or a task where it is primary was closed by "Done"
-// (docs/architecture.md, section 3.3). One with nothing to teach it holds nothing either, by the
-// same one step: one with a verdict has no lesson and no task as the teacher of an anchor has none,
-// and one with a rubric or none has no lesson and no task with a rubric of the pool, where it is
-// primary, that the rule could give (the amendments of 2026-11-08 and 2026-11-09 to R05).
+// none when a lesson that teaches it is passed or a task where it is primary was closed by "Done".
+// One with nothing to teach it holds nothing either, by the same one step: one with a verdict has
+// no lesson and no task as the teacher of an anchor has none, and one with a rubric or none has no
+// lesson and no task with a rubric of the pool, where it is primary, that the rule could give
+// (R05).
 func (pr prepared) openSkills() []string {
 	in := pr.in
 	var nodes []node
@@ -169,8 +168,7 @@ func (pr prepared) openSkills() []string {
 				// when the rule could give it: outside the lessons of its module, by branch 6a, or in
 				// a lesson of it not passed, by that lesson — one passed is not given again —, and
 				// with every primary skill with a verdict open, or the prerequisite and a skill after
-				// it, primary in one task, would wait on each other (the amendment of 2026-11-09 to
-				// R05).
+				// it, primary in one task, would wait on each other (R05).
 				ms := pr.mods[n.module]
 				rubric := ms.rubricOf(t.c.Task)
 				teaches := slices.Contains(rubric, n.skill.ID) ||

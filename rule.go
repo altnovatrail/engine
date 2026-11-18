@@ -8,13 +8,12 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The rule (docs/architecture.md, sections 3.1–3.4; R03–R06): branch 1, the lesson of an
-// open run; then "My subjects" — consolidation in the module of the last closed attempt, then the
-// modules in turn, each running branches 4–9 with 6a, the author's order — or the skill chosen on
-// the map, branch 2. Branches 6–9 give the lesson on the skill when there is one. The first branch
-// that fits makes the choice, and its code is the choice's (R07). Branch 5, the repetition, comes
-// on the module's turn of the repetition and, when branches 6, 6a and 7 give nothing, before
-// branches 8 and 9 (R06).
+// The rule (R03–R06): branch 1, the lesson of an open run; then "My subjects" — consolidation in
+// the module of the last closed attempt, then the modules in turn, each running branches 4–9 with
+// 6a, the author's order — or the skill chosen on the map, branch 2. Branches 6–9 give the lesson
+// on the skill when there is one. The first branch that fits makes the choice, and its code is the
+// choice's (R07). Branch 5, the repetition, comes on the module's turn of the repetition and, when
+// branches 6, 6a and 7 give nothing, before branches 8 and 9 (R06).
 
 // The turn of the probe: the module's n-th choice, counted before this one, with n > 5 and
 // n mod 6 = 5, as in standalone. The turn of the repetition: n > 5 and n mod 3 = 1 — n = 7, 10,
@@ -76,8 +75,8 @@ func given(s skillView, easiest bool, code ReasonCode) (Choice, bool) {
 }
 
 // give is the choice of branches 6–9 on a skill of the module at place i: the lesson on the skill
-// when there is one, else the task on it, with the branch's code (docs/architecture.md, section
-// 3.3). Consolidation and the probe give only tasks.
+// when there is one, else the task on it, with the branch's code. Consolidation and the probe give
+// only tasks (R05).
 func (pr prepared) give(i int, s skillView, code ReasonCode) (Choice, bool) {
 	if id, ok := pr.lessonOnSkill(i, s.id, s.recommended, s.hasRecommended, false); ok {
 		return Choice{Kind: ChoiceLesson, ID: id, Reason: code}, true
@@ -268,11 +267,11 @@ func byIssue(a, b skillView) int {
 	return cmp.Compare(a.lastIssued, b.lastIssued)
 }
 
-// onMap is branch 2, the skill chosen on the map (R04), with the code REASON_CODE_SKILL_CHOSEN,
-// whatever its state — closed, on pause, in the trial series. A skill with a verdict gets the
-// lesson on it when there is one, else a task on it among all its tasks, and with neither, another
-// lesson that teaches it, by mapLessonAgain; one with a rubric or none goes by mapAuthor
-// (docs/architecture.md, section 3.3). A skill outside the modules of the engine gives nothing.
+// onMap is branch 2, the skill chosen on the map, with the code REASON_CODE_SKILL_CHOSEN, whatever
+// its state — closed, on pause, in the trial series. A skill with a verdict gets the lesson on it
+// when there is one, else a task on it among all its tasks, and with neither, another lesson that
+// teaches it, by mapLessonAgain; one with a rubric or none goes by mapAuthor. A skill outside the
+// modules of the engine gives nothing (R04).
 func (pr prepared) onMap(second bool) (Choice, bool) {
 	skill := pr.in.MapSkill
 	for i, m := range pr.in.Modules {
@@ -299,9 +298,8 @@ func (pr prepared) onMap(second bool) (Choice, bool) {
 }
 
 // dueFirst gives, of the skills due for review, the first: one whose date is marked already — of
-// those, the one practised longest ago (the amendment of 2026-11-08 to R06) —, then the one with
-// the earliest date, then the first in the order of the graph. The repetition is a task, not a
-// lesson (R05; R06).
+// those, the one practised longest ago —, then the one with the earliest date, then the first in
+// the order of the graph. The repetition is a task, not a lesson (R05; R06).
 func dueFirst(skills []skillView) (skillView, bool) {
 	return firstBy(skills, func(s skillView) bool { return s.due }, byReview)
 }

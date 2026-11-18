@@ -5,10 +5,10 @@ import (
 	"strconv"
 )
 
-// ErrInvalid is an input that breaks a rule the engine relies on (docs/architecture.md, section
-// 3.6): a choice is never made of it. It comes as a value and never by panicking; errors.Is tells
-// it apart, and the message says what and where. An error of learner-model the input brought, from
-// Readout.Task, is wrapped, so that errors.Is finds learner-model's kind too.
+// ErrInvalid is an input that breaks a rule the engine relies on: a choice is never made of it. It
+// comes as a value and never by panicking; errors.Is tells it apart, and the message says what and
+// where. An error of learner-model the input brought, from Readout.Task, is wrapped, so that
+// errors.Is finds learner-model's kind too.
 var ErrInvalid = errors.New("engine: invalid input")
 
 // detailError is ErrInvalid with what and where, and the error that caused it, if any.

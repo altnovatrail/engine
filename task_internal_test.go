@@ -91,7 +91,7 @@ func TestFrequentTraps(t *testing.T) {
 }
 
 // The aim of the corridor is 0.775 exactly: of 0.772 and 0.781, the first is nearer it, though an
-// aim of 0.78 would take the second. Found by a negative probe of T21: no vector told them apart.
+// aim of 0.78 would take the second.
 func TestCorridorAim(t *testing.T) {
 	a, b := candidate{id: "a", p: 0.772}, candidate{id: "b", p: 0.781}
 	if byCorridor(a, b) >= 0 || byCorridor(b, a) <= 0 {

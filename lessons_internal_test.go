@@ -10,10 +10,9 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// Lessons, the author's order and nothing to give, on the examples of docs/architecture.md,
-// section 3.3 — the three modules of the first slice and the AI closed — and at their edges. The
-// reading of the learner model and the P of the candidates are set by hand, as in
-// modules_internal_test.go.
+// Lessons, the author's order and nothing to give, on the examples of the three modules of the
+// first slice and the AI closed, and at their edges. The reading of the learner model and the P of
+// the candidates are set by hand, as in modules_internal_test.go.
 
 func lid(module, name string) string { return module + "/lesson/" + name }
 
@@ -64,8 +63,8 @@ func (w *many) solutions(sent ...TaskSolution) {
 	}
 }
 
-// gradeLessons builds school maths for grade 3 of section 3.1 with a lesson on each skill — an
-// explanation and its three pages, of difficulty 1, 3 and 5.
+// gradeLessons builds school maths for grade 3 with a lesson on each skill — an explanation and
+// its three pages, of difficulty 1, 3 and 5.
 func gradeLessons(t *testing.T) Module {
 	t.Helper()
 	band := learnermodel.BandRef{Place: 1, ID: "grade-3"}
@@ -100,10 +99,10 @@ func otherModule(t *testing.T) Module {
 	}, []learnermodel.Task{exampleTask(module, "x-1", band, 1, sid(module, "x"))})
 }
 
-// Step 1 of the example: school maths for grade 3. A new times-tables gets its lesson. After the
-// lesson its three pages are on pause, and consolidation of a mistake in the last finds no
-// candidate: with another module the turn goes there; with this module alone the second pass gives
-// consolidation by the page whose solution went longest ago, not the last.
+// School maths for grade 3. A new times-tables gets its lesson. After the lesson its three pages
+// are on pause, and consolidation of a mistake in the last finds no candidate: with another module
+// the turn goes there; with this module alone the second pass gives consolidation by the page whose
+// solution went longest ago, not the last.
 func TestLessonsGrade3(t *testing.T) {
 	m := gradeLessons(t)
 	times := sid(grade3Math, "times-tables")
@@ -137,8 +136,8 @@ func TestLessonsGrade3(t *testing.T) {
 	w2.wantChoice(taskChoice(tid("example/other", "x-1"), ReasonNewSkill))
 }
 
-// olympiadLessons builds olympiad maths of section 3.1 with a lesson on each skill and band, of the
-// three tasks of the skill at the band.
+// olympiadLessons builds olympiad maths with a lesson on each skill and band, of the three tasks
+// of the skill at the band.
 func olympiadLessons(t *testing.T) Module {
 	t.Helper()
 	m := olympiad(t)
@@ -150,10 +149,10 @@ func olympiadLessons(t *testing.T) Module {
 	return m
 }
 
-// Step 2: olympiad maths for a learner of grade 3. A new combinatorics-enumeration gets the lesson
-// of the band of its recommended task, grades-3-4; once that task goes up to grades-5-6, branch 7
-// gives the lesson of grades-5-6 — of the queue, or round again for a skill mastered at grades-3-4.
-// The lesson of grades-1-2 never suits such a learner.
+// Olympiad maths for a learner of grade 3. A new combinatorics-enumeration gets the lesson of the
+// band of its recommended task, grades-3-4; once that task goes up to grades-5-6, branch 7 gives
+// the lesson of grades-5-6 — of the queue, or round again for a skill mastered at grades-3-4. The
+// lesson of grades-1-2 never suits such a learner.
 func TestLessonsOlympiad(t *testing.T) {
 	m := olympiadLessons(t)
 	enum, gaps := sid(olympiadMath, "combinatorics-enumeration"), sid(olympiadMath, "counting-gaps")
@@ -177,11 +176,11 @@ func TestLessonsOlympiad(t *testing.T) {
 	permuted(t, w)
 }
 
-// essays builds the module of short essays of the first slice (altnovatrail/modules, main
-// 6d061e9): reading model essays, none, and choosing a first sentence, with a verdict, in tier 1;
-// writing one, paragraphs, endings and improving an essay, with a rubric, after them; six lessons,
-// and every task in a lesson. adult says whether the learner is an adult: a child gets neither the
-// lesson writing-about-a-day nor its task.
+// essays builds the module of short essays of the first slice: reading model essays, none, and
+// choosing a first sentence, with a verdict, in tier 1; writing one, paragraphs, endings and
+// improving an essay, with a rubric, after them; six lessons, and every task in a lesson. adult
+// says whether the learner is an adult: a child gets neither the lesson writing-about-a-day nor its
+// task.
 func essays(t *testing.T, adult bool) Module {
 	t.Helper()
 	band := learnermodel.BandRef{Place: 1, ID: "first-steps"}
@@ -220,12 +219,12 @@ func essays(t *testing.T, adult bool) Module {
 	return m
 }
 
-// Step 3: short essays, by the author's order, all by branch 6a. first-sentences and
-// reading-model-essays the graph leaves unordered, both of tier 1: first-sentences first, by ID;
-// then reading-model-essays, of tier 1, before paragraphs, of tier 3 (the amendment of 2026-11-08
-// to R05); of the three lessons after paragraphs, by ID. choosing-a-first-sentence, with a
-// verdict, comes by first-sentences, not by branch 6, and once handed out goes into the queue, but
-// branch 6a comes before branch 7. A child gets no writing-about-a-day.
+// Short essays, by the author's order, all by branch 6a. first-sentences and reading-model-essays
+// the graph leaves unordered, both of tier 1: first-sentences first, by ID; then
+// reading-model-essays, of tier 1, before paragraphs, of tier 3; of the three lessons after
+// paragraphs, by ID. choosing-a-first-sentence, with a verdict, comes by first-sentences, not by
+// branch 6, and once handed out goes into the queue, but branch 6a comes before branch 7. A child
+// gets no writing-about-a-day (R05).
 func TestLessonsEssays(t *testing.T) {
 	for _, adult := range []bool{true, false} {
 		m := essays(t, adult)
@@ -246,9 +245,8 @@ func TestLessonsEssays(t *testing.T) {
 	}
 }
 
-// Step 4: the AI closed. The pool holds only tasks answered by a touch, and the lessons only such
-// tasks; with none in any module, the second pass changes nothing, and the choice is nothing to
-// give.
+// The AI closed. The pool holds only tasks answered by a touch, and the lessons only such tasks;
+// with none in any module, the second pass changes nothing, and the choice is nothing to give.
 func TestLessonsAIClosed(t *testing.T) {
 	g, o := gradeLessons(t), olympiadLessons(t)
 	for _, m := range []*Module{&g, &o} {
@@ -332,8 +330,8 @@ func authorWorld(t *testing.T) (*many, Module) {
 }
 
 // A skill with a verdict not handed out, taught by a lesson of the author's order not passed,
-// comes by that lesson: branches 6–9 do not take it (the amendment of 2026-11-08 to R05) — even
-// when the learner has just left the run of the lesson before it, and branch 6a gives nothing.
+// comes by that lesson: branches 6–9 do not take it — even when the learner has just left the run
+// of the lesson before it, and branch 6a gives nothing (R05).
 func TestAwaitsLesson(t *testing.T) {
 	w, mod := authorWorld(t)
 	w.wantChoice(lessonChoice(lid(mod.Graph.Module, "m"), ReasonAuthorOrder))
@@ -350,8 +348,8 @@ func TestAwaitsLesson(t *testing.T) {
 
 // A task with a rubric outside the lessons comes in branch 6a as a lesson of its skills with a
 // rubric would: after the lessons of the author's order of its own skills and of those it would
-// come after are passed (the amendment of 2026-11-08 to R05), after the lessons, in the order of
-// its skills in the graph, then by ID, while no attempt of it is closed by "Done".
+// come after are passed, after the lessons, in the order of its skills in the graph, then by ID,
+// while no attempt of it is closed by "Done" (R05).
 func TestRubricTasksOutsideLessons(t *testing.T) {
 	module := "example/rubric"
 	band := learnermodel.BandRef{Place: 1, ID: "b"}
@@ -517,8 +515,7 @@ func TestMapLesson(t *testing.T) {
 
 // The skill chosen on the map with a verdict and no task on it: its lesson not passed of verdicts
 // alone, then, on the second pass, its lesson of the author's order, then the lesson whose latest
-// run "passed" ended longest ago — never nothing while a lesson teaches it (R104 spec; the
-// amendment of 2026-11-09 to R04).
+// run "passed" ended longest ago — never nothing while a lesson teaches it (R104 spec, R04).
 func TestMapLessonAgain(t *testing.T) {
 	module := "example/map-again"
 	band := learnermodel.BandRef{Place: 1, ID: "b"}
@@ -691,8 +688,8 @@ func TestPrerequisiteOutsideGraph(t *testing.T) {
 	}
 }
 
-// Found by the review of T19. Two open runs on a package before may each come after the other by
-// the current graph: branch 1 still gives one, by tier and ID.
+// Two open runs on a package before may each come after the other by the current graph: branch 1
+// still gives one, by tier and ID.
 func TestOpenRunsEachAfterTheOther(t *testing.T) {
 	module := "example/old"
 	band := learnermodel.BandRef{Place: 1, ID: "b"}
@@ -708,8 +705,8 @@ func TestOpenRunsEachAfterTheOther(t *testing.T) {
 	w.wantChoice(lessonChoice(lid(module, "a"), ReasonOpenRun))
 }
 
-// Found by the review of T19. Off the map, the lesson on a skill is none when it names another
-// skill not handed out that awaits its lesson of the author's order: that skill comes by it.
+// Off the map, the lesson on a skill is none when it names another skill not handed out that
+// awaits its lesson of the author's order: that skill comes by it.
 func TestLessonOnSkillAwaits(t *testing.T) {
 	module := "example/awaits"
 	band := learnermodel.BandRef{Place: 1, ID: "b"}
@@ -731,9 +728,8 @@ func TestLessonOnSkillAwaits(t *testing.T) {
 	w.wantChoice(lessonChoice(lid(module, "xy"), ReasonNewSkill))
 }
 
-// Found by the review of T19. A task that has a skill without assessment primary is no task with a
-// rubric on it: the map does not give it, and it teaches that skill nothing. A lesson passed
-// teaches nothing more either.
+// A task that has a skill without assessment primary is no task with a rubric on it: the map does
+// not give it, and it teaches that skill nothing. A lesson passed teaches nothing more either.
 func TestNothingToTeachRubricAndPassed(t *testing.T) {
 	module := "example/teach"
 	band := learnermodel.BandRef{Place: 1, ID: "b"}
@@ -767,7 +763,7 @@ func TestNothingToTeachRubricAndPassed(t *testing.T) {
 }
 
 // A prerequisite with none and no lesson is taught by a task with a rubric where it is primary,
-// as that task's "Done" counts it: it holds until the "Done" (the amendment of 2026-11-09 to R05).
+// as that task's "Done" counts it: it holds until the "Done" (R05).
 func TestNothingToTeachNoneByRubricTask(t *testing.T) {
 	module := "example/teach-none"
 	band := learnermodel.BandRef{Place: 1, ID: "b"}
@@ -801,7 +797,7 @@ func TestNothingToTeachNoneByRubricTask(t *testing.T) {
 // A task with a rubric teaches a prerequisite with a rubric or none only when branch 6a could give
 // it: one where a skill with a verdict after the prerequisite is primary too teaches nothing, or
 // both would wait on each other and the rule give nothing; nor does one in a lesson of its module,
-// which comes with its lesson (the amendment of 2026-11-09 to R05).
+// which comes with its lesson (R05).
 func TestNothingToTeachRubricTaskGiven(t *testing.T) {
 	module := "example/teach-given"
 	band := learnermodel.BandRef{Place: 1, ID: "b"}

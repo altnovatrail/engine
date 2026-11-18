@@ -17,16 +17,15 @@ import (
 )
 
 // The packages of the first slice, from the release v0.1.0 of altnovatrail/modules, and the
-// package of olympiad-math 0.1.1, from its release v0.1.1, which release-verify accepted on
-// 2026-11-08 and 2026-11-10 (docs/sources.md, sections 3.4 and 3.5): they stand in testdata/modules as
-// the releases have them, and a chain of digests holds them from then on. The index is the module
-// index of the release v0.1.4: it names both versions of olympiad-math, and the same 0.1.0 of each
-// module as the index of v0.1.0. Its digest is pinned here; the index names each package's digest,
-// which is the SHA-256 of its inventory.json; and the inventory names the SHA-256 of server.json
-// (the format's text, sections 25 and 26). Reading a package checks every link.
+// package of olympiad-math 0.1.1, from its release v0.1.1, which release-verify accepted: they
+// stand in testdata/modules as the releases have them, and a chain of digests holds them from then
+// on (R77 spec). The index is the module index of the release v0.1.4: it names both versions of
+// olympiad-math, and the same 0.1.0 of each module as the index of v0.1.0. Its digest is pinned
+// here; the index names each package's digest, which is the SHA-256 of its inventory.json; and the
+// inventory names the SHA-256 of server.json. Reading a package checks every link.
 //
 // The golden vectors stand on the packages 0.1.0, and the benchmark of the choice on the large
-// pool of olympiad-math 0.1.1 (docs/measurements.md, section 2).
+// pool of olympiad-math 0.1.1.
 //
 // The translation of server.json into the engine's types is this test's, not api's or sim's: the
 // golden vectors do not catch a difference between them.
@@ -233,9 +232,9 @@ func sortedKeys[V any](m map[string]V) []string {
 }
 
 // translate reads a server part into the engine's types: full IDs, an entry's module, its kind
-// and its local ID joined by / (the format's text, section 10); tiers from skill_tiers; bands by
-// place from the manifest; a slot's kind of check, and a choice's number of options; a check by a
-// rubric gives no slot with a verdict.
+// and its local ID joined by /; tiers from skill_tiers; bands by place from the manifest; a slot's
+// kind of check, and a choice's number of options; a check by a rubric gives no slot with a
+// verdict.
 func translate(tb testing.TB, server []byte) release {
 	tb.Helper()
 	var s serverPart
@@ -354,7 +353,7 @@ func translate(tb testing.TB, server []byte) release {
 
 // forAge gives the module as api gives it a learner of an age category: the tasks and the lessons
 // that suit them — their own age categories, or else the module's —, a lesson only when each of
-// its tasks does too (architecture 3.7 of api).
+// its tasks does too.
 func (r release) forAge(age string) Module {
 	suits := func(ages []string) bool {
 		if len(ages) == 0 {
@@ -371,8 +370,8 @@ func (r release) forAge(age string) Module {
 }
 
 // The packages read through the chain of digests, and their translation holds what the examples
-// of docs/architecture.md, sections 3.1–3.3, say of them: the skills, their tiers and
-// prerequisites, the bands, the lessons and the anchor skills taught.
+// of the rule take from them: the skills, their tiers and prerequisites, the bands, the lessons
+// and the anchor skills taught.
 func TestReleasePackages(t *testing.T) {
 	rel := readRelease(t)
 	skillIDs := func(m Module) []string {

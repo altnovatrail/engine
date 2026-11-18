@@ -9,9 +9,9 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The states of a skill in one module, for the skills with a verdict (docs/architecture.md,
-// section 3.1; R03): open, within reach, on pause, not reached yet and mastered for the queue,
-// and the candidates the task on the skill is chosen among.
+// The states of a skill in one module, for the skills with a verdict: open, within reach, on pause,
+// not reached yet and mastered for the queue, and the candidates the task on the skill is chosen
+// among (R03).
 
 // The constants of the rule, as in standalone. Only a run of sim changes them (R23 spec).
 const (
@@ -33,7 +33,7 @@ type skillView struct {
 	candidates []candidate
 	reachable  bool
 	// The recommended task: the task on the skill without the pause before a task with a seen
-	// solution (docs/architecture.md, section 3.3).
+	// solution (R05).
 	recommended    candidate
 	hasRecommended bool
 	// Mastered by the model while the recommended task is not above the band it is mastered at.
@@ -47,11 +47,11 @@ type skillView struct {
 	lowestBand    int32
 	hasLowestBand bool
 	// Not handed out, and taught by a lesson of the author's order not passed: it comes by that
-	// lesson, and branches 6–9 do not take it (the amendment of 2026-11-08 to R05).
+	// lesson, and branches 6–9 do not take it (R05).
 	awaitsLesson bool
 	// Due for review: open, mastered for the queue, with candidates in the pass, and the time of the
-	// choice not before its review date, or the date marked already (docs/architecture.md, section
-	// 3.4; R06). A skill that awaits its lesson is not.
+	// choice not before its review date, or the date marked already (R06). A skill that awaits its
+	// lesson is not.
 	due bool
 }
 
@@ -64,7 +64,7 @@ func (s skillView) notYet() bool { return s.open && !s.evidence && !s.reachable 
 // skills reads the skills with a verdict of the module at place i of the input, in the order of
 // the graph. In the second pass a task with a solution that went to the device less than 24
 // hours ago is a candidate again, after the others, but the task of the last closed attempt is
-// not (the amendment of 2026-11-07 to R03).
+// not (R03).
 func (pr prepared) skills(i int, second bool) []skillView {
 	in := pr.in
 	m := in.Modules[i]
@@ -105,9 +105,9 @@ func (pr prepared) skills(i int, second bool) []skillView {
 // before a seen solution, when it has one. A task with another primary skill closed is no
 // candidate, but on the map: the skill chosen there takes all its tasks (R04). In the second pass
 // a task on pause is a candidate again, after the others, but the task of the last closed attempt
-// is not (the amendment of 2026-11-07 to R03) — on the map it is, after all the others (the
-// amendment of 2026-11-07 to R04). The rule reads of the candidates only the first by an order —
-// byCorridor and byEase are total, by ID last —, so it does not sort them.
+// is not (R03) — on the map it is, after all the others (R04). The rule reads of the candidates
+// only the first by an order — byCorridor and byEase are total, by ID last —, so it does not sort
+// them (R20).
 func (pr prepared) candidates(i int, skill string, frequent []string, second, onMap bool) (cands []candidate, rec candidate, hasRec bool) {
 	on := pr.tasksOn(i, skill)
 	cands = make([]candidate, 0, len(on))
@@ -165,7 +165,7 @@ func (pr prepared) pause(t *learnermodel.Task, second, onMap bool) (candidate, b
 }
 
 // graphOrder orders the skills of a graph by tier, then by ID byte by byte: the order of the
-// skills in a graph carries no meaning (the format's text, section 12).
+// skills in a graph carries no meaning.
 func graphOrder(skills []learnermodel.Skill) []learnermodel.Skill {
 	s := slices.Clone(skills)
 	slices.SortFunc(s, func(a, b learnermodel.Skill) int {
@@ -201,8 +201,7 @@ func primaries(t learnermodel.Task) []string {
 }
 
 // othersOpen tells whether every primary skill of a task other than skill is open: otherwise
-// the task would give evidence to a closed skill past its prerequisites (the amendment of
-// 2026-11-07 to R03 found by the review of T03).
+// the task would give evidence to a closed skill past its prerequisites (R03).
 func othersOpen(primaries []string, skill string, isOpen func(string) bool) bool {
 	for _, p := range primaries {
 		if p != skill && !isOpen(p) {
@@ -222,14 +221,14 @@ func pausedSince(now, sent int64) bool {
 }
 
 // failed tells whether an attempt is a failure on a skill, as the model counts one: fewer than
-// half of its first verdicts right, or a solution shown without a right first verdict (R06 of
+// half of its first verdicts right, or a solution shown without a right first verdict (R06
 // learner-model).
 func failed(r SkillResult) bool {
 	return 2*int64(r.FirstRight) < int64(r.Answered) || r.SolutionShown && r.FirstRight == 0
 }
 
 // right tells whether an attempt is right on a skill: one that is not a failure and has a first
-// verdict on it. An attempt with none is neither (the amendment of 2026-11-08 to R03).
+// verdict on it. An attempt with none is neither (R03).
 func right(r SkillResult) bool { return r.Answered > 0 && !failed(r) }
 
 // backFromPause tells whether the last closed attempt of a skill is a probe or a repetition, and

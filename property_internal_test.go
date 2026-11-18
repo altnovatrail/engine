@@ -8,9 +8,8 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The properties of the choice that the stand sim would check and that are properties of the code
-// (docs/architecture.md, sections 3.1–3.5, "What the stand will check"), on random inputs over the
-// graphs of the release, drawn by PCG with a pinned seed:
+// The properties of the choice that the stand sim would check and that are properties of the code,
+// on random inputs over the graphs of the release, drawn by PCG with a pinned seed:
 //   - the same input gives the same choice, and so does any order of its lists;
 //   - the choice has a code when, and only when, it gives a lesson or a task;
 //   - it gives a task of a pool or a lesson of a module of the engine;
