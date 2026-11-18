@@ -7,10 +7,11 @@ Table 4 of [RUN.md](../RUN.md): what was put off on purpose, its risk, when to r
 
 ## Table 4. Technical debt
 
-Numbers are not reused: next — Д11.
+Numbers are not reused: next — Д12.
 
 | ID | Debt | From | Risk while open | When to return |
 |---|---|---|---|---|
 | Д5 | No framing of a task for the learner's interests: format v0 has no framing variants (R51 spec), and the rule reads no interests | T01; R03; R09 | Tasks are the same for every learner in one state | Format 0.4 (R111 spec) brought none. Once the format gives them, by a minor version, with a field of the input (R09) |
 | Д6 | Traps the AI suggested are not read by the task choice: they do not go to the model (concepts 9.4 spec), and frequent traps are the program's findings only | T01; R03 | A mistake only the AI sees in the learner's work is not worked on by the choice | E3's judgement did not touch traps. Once the stand or the adult's progress show the program's traps are too few |
 | Д7 | No tasks on paper, no glue with the device app, no offline | T09, T05; R04, R10 | None — stage 5; but glue added without an amendment to R10 fails the test of the rules | Stage 5, by О-11 and Т-10 |
+| Д11 | The comment at the head of `.devcontainer/Dockerfile` is the template's of `spec` v0.18.14: v0.18.27 names the Dev Containers CLI of the stage `orchestrator` beside the Docker CLI, and R158 spec (`just -f spec/justfile new-repo-draft engine go 3.8 v0.18.27`, lines 13–15). Nothing else of `.devcontainer/` or `.claude/settings.json` differs. Put off by the author's word that T72 not touch `.devcontainer/`: a change there asks for a rebuild (R30) | T72; R31 | None to the image — a comment, and no copy has the stage `orchestrator` —; `.devcontainer/` is not the template's byte for byte, as `.claude/rules/ci.md` holds it | The first task that changes `.devcontainer/` anyway — a move to a tag whose template changes it beyond this comment, or a raise of a tool —, so that the one rebuild takes both |
