@@ -1,6 +1,6 @@
 # engine — the documents
 
-The documents of `engine`, for the session of Claude Code that changes it, and what the repository's README leaves to them: releases, the gate and how to contribute in detail (T71).
+What the [README](../README.md) of the repository leaves out, which says only what the component is and where it stands in NovaTrail (the second 2026-11-17 amendment to R21 spec): the index of the documents, for people and for the session of Claude Code that changes `engine`, the releases, the gate and how to contribute (T71).
 
 ## Documents
 
