@@ -7,17 +7,6 @@ Open tasks outside an epic, each as its body, in Russian; each also stands as a 
 
 ## Tasks outside an epic
 
-#### T75. Без истории: раздел 2 архитектуры — вне эпика
-
-- **Цель:** раздел 2 [docs/architecture.md](../docs/architecture.md) держит текущее состояние, а не историю (R160 spec, «One home», «Decisions»).
-- **Почему:** R160 spec; T73 разделила по правилу 11 RUN.md строку 7.30 COORDINATION.md spec: переход на тег, `docs-budgets.json` и план — T73, остальное — T74–T77. После предыдущей задачи — тот же файл `docs/architecture.md`, и её правки ссылок на записи этот раздел видит.
-- **Сделать:**
-  - Подразделы 2.1–2.13 — что решено и где это в коде и журнале, номером решения, без пересказа записей и хроник кругов, судов и эпиков; что история — в архивах `docs/plan/` и git.
-  - Ссылка на поправку записи `spec`, которую тег переписал на месте (R143, R145, R154, R155 spec и другие, что E16 `spec` перепишет), — на запись.
-  - Записи журнала, которые задача меняет, — переписать на месте целиком, с поправками внутри (R160 spec); других записей не трогать.
-- **Как проверить:** `just -f spec/justfile docs-check-repo`; `/code-review high`.
-- **Разделы:** R160 spec; RULES.md spec — The bar; R32 spec.
-
 #### T76. Без истории: раздел 3 архитектуры — вне эпика
 
 - **Цель:** раздел 3 [docs/architecture.md](../docs/architecture.md) держит текущее состояние, а не историю (R160 spec, «One home», «Decisions»).
