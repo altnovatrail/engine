@@ -2,11 +2,10 @@ package engine
 
 import learnermodel "github.com/altnovatrail/learner-model"
 
-// The types of the engine's input and output (docs/architecture.md, section 3.6; R09). The graph,
-// the description of a task and the learner model's reading are learner-model's, taken as they
-// are; the rest is the engine's own, simple as they are. Times are whole seconds of Unix time,
-// UTC, as learner-model's. A field that may have no value by its meaning is a value with a flag
-// beside it, with no pointer.
+// The types of the engine's input and output. The graph, the description of a task and the learner
+// model's reading are learner-model's, taken as they are; the rest is the engine's own, simple as
+// they are (R09). Times are whole seconds of Unix time, UTC, as learner-model's. A field that may
+// have no value by its meaning is a value with a flag beside it, with no pointer.
 
 // Input is all that one choice reads. The order of its lists does not change the choice: the
 // rule orders by itself, by the order of the graph, of the lessons and of the IDs.

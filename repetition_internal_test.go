@@ -7,9 +7,9 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The repetition, on the example of docs/architecture.md, section 3.4 — school maths for grade 3 —
-// and at its edges. The reading of the learner model, the review dates and the P of the candidates
-// are set by hand, as in modules_internal_test.go.
+// The repetition, on an example of school maths for grade 3 and at its edges (R06). The reading
+// of the learner model, the review dates and the P of the candidates are set by hand, as in
+// modules_internal_test.go.
 
 var (
 	divisionSkill  = sid(grade3Math, "division-with-remainder")
@@ -46,11 +46,11 @@ func (w *many) choices(module string, n int64) {
 
 func due(at int64) learnermodel.ReviewDate { return learnermodel.ReviewDate{At: at} }
 
-// Steps 1–5 of the example. The review date of times-tables has come: on n = 13, the turn of the
-// repetition, branch 5 gives it, a task in the corridor; on n = 14 the queue goes on, or
-// consolidation after a failed repetition. With both due, the earlier date first, and the other on
-// the next turn, n = 16. With every skill mastered, the repetitions come one after another off the
-// turn, by date, before branch 8; with no date come, branch 8.
+// The review date of times-tables has come: on n = 13, the turn of the repetition, branch 5 gives
+// it, a task in the corridor; on n = 14 the queue goes on, or consolidation after a failed
+// repetition. With both due, the earlier date first, and the other on the next turn, n = 16. With
+// every skill mastered, the repetitions come one after another off the turn, by date, before
+// branch 8; with no date come, branch 8.
 func TestRepetitionGrade3(t *testing.T) {
 	w := repWorld(t, due(exampleTime-10), due(exampleTime+1000))
 	w.choices(grade3Math, 13)
@@ -84,9 +84,9 @@ func TestRepetitionGrade3(t *testing.T) {
 }
 
 // The turn of the repetition is n > 5 with n mod 3 = 1: not n = 4, nor the turn of the probe,
-// n = 11, which never meets it. It needs no end of the trial series (the amendment of 2026-11-08 to
-// R06). A date marked already comes before the earliest date; equal dates go by the order of the
-// graph; the date is come at the time of the choice, not a second before it.
+// n = 11, which never meets it. It needs no end of the trial series (R06). A date marked already
+// comes before the earliest date; equal dates go by the order of the graph; the date is come at
+// the time of the choice, not a second before it.
 func TestRepetitionTurn(t *testing.T) {
 	w := repWorld(t, due(exampleTime-10), due(exampleTime+1000))
 	for _, tc := range []struct {
@@ -216,8 +216,8 @@ func TestRepetitionCorridorAndAwaits(t *testing.T) {
 }
 
 // Of two dates marked already, the skill practised longest ago comes first, whatever the order of
-// the graph (the amendment of 2026-11-08 to R06): practice does not clear the mark, and the first in
-// the graph would take every repetition. A skill closed, whatever its reading says, is not due.
+// the graph: practice does not clear the mark, and the first in the graph would take every
+// repetition (R06). A skill closed, whatever its reading says, is not due.
 func TestRepetitionAlready(t *testing.T) {
 	already := learnermodel.ReviewDate{Already: true}
 	w := repWorld(t, already, already)

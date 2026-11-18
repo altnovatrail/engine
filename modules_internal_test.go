@@ -9,9 +9,9 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// Several modules, the skill chosen on the map and the anchor skills, on the example of
-// docs/architecture.md, section 3.2, and at their edges. The reading of the learner model and the
-// P of the candidates are set by hand, as in skills_internal_test.go.
+// Several modules, the skill chosen on the map and the anchor skills, on an example of two maths
+// and at their edges (R04). The reading of the learner model and the P of the candidates are set
+// by hand, as in skills_internal_test.go.
 
 // many is an input over several modules, with the P of their candidates beside it.
 type many struct {
@@ -110,10 +110,10 @@ var (
 	ratioSkill       = sid(olympiadMath, "ratio-sharing")
 )
 
-// bothModules builds the two maths of the example of section 3.2: school maths for grade 3, where
-// fractions-of-a-whole teaches core.fractions-of-a-whole, and olympiad maths, where
-// fractions-parts needs arithmetic-tricks and that anchor skill, and ratio-sharing needs
-// fractions-parts. Each skill has tasks of difficulty 1, 3 and 5 at one band.
+// bothModules builds the two maths of the example: school maths for grade 3, where
+// fractions-of-a-whole teaches core.fractions-of-a-whole, and olympiad maths, where fractions-parts
+// needs arithmetic-tricks and that anchor skill, and ratio-sharing needs fractions-parts. Each
+// skill has tasks of difficulty 1, 3 and 5 at one band.
 func bothModules(t *testing.T) (grade, olympiad Module) {
 	t.Helper()
 	band := learnermodel.BandRef{Place: 1, ID: "b"}
@@ -147,8 +147,8 @@ func bothWorld(t *testing.T) *many {
 	return w
 }
 
-// Step 1: the modules take turns — school maths first, never handed out and less by ID —, and
-// consolidation stays in the module of the attempt, past its trial series.
+// The modules take turns — school maths first, never handed out and less by ID —, and consolidation
+// stays in the module of the attempt, past its trial series.
 func TestModulesTakeTurns(t *testing.T) {
 	w := bothWorld(t)
 	w.want(tid(grade3Math, "times-tables-d1"), ReasonNewSkill)
@@ -192,9 +192,9 @@ func TestModulesTakeTurns(t *testing.T) {
 	w.want(tid(olympiadMath, "arithmetic-tricks-d1"), ReasonQueue)
 }
 
-// Steps 2–5: the anchor skill the learner has not holds fractions-parts — with no evidence, or
-// not mastered —, "has" opens it, and losing it again closes it only for a skill with no evidence
-// of its own; with only olympiad maths, the anchor is unknown and holds nothing.
+// The anchor skill the learner has not holds fractions-parts — with no evidence, or not
+// mastered —, "has" opens it, and losing it again closes it only for a skill with no evidence of
+// its own; with only olympiad maths, the anchor is unknown and holds nothing.
 func TestAnchorHolds(t *testing.T) {
 	w := bothWorld(t)
 	w.mastered(tricksSkill)
@@ -279,7 +279,7 @@ func TestAnchorNothingToTeach(t *testing.T) {
 	}
 }
 
-// Step 7: a cycle between modules — a in A needs core.y and teaches core.x, b in B needs core.x and
+// A cycle between modules — a in A needs core.y and teaches core.x, b in B needs core.x and
 // teaches core.y. Neither anchor holds a or b, which lie in one component, but core.x still holds
 // c, which needs it and is in no cycle.
 func TestAnchorCycle(t *testing.T) {
@@ -302,8 +302,8 @@ func TestAnchorCycle(t *testing.T) {
 	w.want(tid("example/a", "a-1"), ReasonNewSkill)
 }
 
-// Step 6: the skill chosen on the map comes closed, past a mistake and in the trial series, with
-// its own code; left, the next choice is "My subjects" with no consolidation.
+// The skill chosen on the map comes closed, past a mistake and in the trial series, with its own
+// code; left, the next choice is "My subjects" with no consolidation.
 func TestMapSkill(t *testing.T) {
 	w := olympiadWorld(t)
 	w.in.MapSkill = pigeonSkill

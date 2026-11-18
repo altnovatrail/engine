@@ -39,10 +39,9 @@ jobs:
   # The repository's Go code, by its own ci- recipes in its toolchain stage, and the coverage of
   # its tests, which the shared workflow sends to Codecov (R16 .github). id-token: write is for its
   # coverage job alone, which asks for an OIDC token: a called workflow can only lower what this
-  # job gives it. With same-bits it holds the bits the same on every build too (R10;
-  # docs/architecture.md, section 3.7): "Go / targets", "Go / fma-diff", "Go / arm64" on arm64
-  # hardware, and "Go / rules", the rules of code by the tool of .github and the lists of
-  # .github/coderules.json — in place of this repository's own job, recipes and port of the test.
+  # job gives it. With same-bits it holds the bits the same on every build too: "Go / targets",
+  # "Go / fma-diff", "Go / arm64" on arm64 hardware, and "Go / rules", the rules of code by the
+  # tool of .github and the lists of .github/coderules.json (R10).
   go:
     name: Go
     permissions:
@@ -53,9 +52,9 @@ jobs:
       same-bits: true
 
   # ReasonCode, ChoiceKind and RunEnd against cause.proto in the spec submodule, at the tag this
-  # repository pins (docs/architecture.md, section 3.6; R09): the shared go.yml checks out no
-  # submodule, and its test job skips this test, so this job checks it out and fails when the
-  # file is missing. The rest of the tests run in the Go job.
+  # repository pins (R09): the shared go.yml checks out no submodule, and its test job skips this
+  # test, so this job checks it out and fails when the file is missing. The rest of the tests run
+  # in the Go job.
   contracts:
     name: Contracts
     runs-on: ubuntu-24.04
@@ -68,7 +67,7 @@ jobs:
 
       # The image of the toolchain stage and the Go caches by the shared composite action of the
       # same release of .github as go.yml, called twice with the check contracts, an entry of its own
-      # (R49 .github; R28): before the work, the image from the cache of GitHub Actions by the hash of
+      # (R49 .github; R31): before the work, the image from the cache of GitHub Actions by the hash of
       # the Dockerfile, built only on a miss and saved on a push to main alone, and GOMODCACHE,
       # GOCACHE and GOLANGCI_LINT_CACHE in one folder outside the checkout, by the exact key and
       # verified by go mod verify, or by the prefix without the hash of go.sum, the modules dropped
@@ -93,24 +92,22 @@ jobs:
           check: contracts
           save: "true"
 
-  # The gate of sim (R17; R103 spec; repositories 4 spec): the choice of this commit on the bench,
-  # its numbers held to the bands of sim's gate.json, on every pull request and every commit of
-  # main. sim comes by the tag and the SHA of its commit in the env of the workflow, which the
-  # recipes gate, gate-part and gate-check read and check against each other; learner-model, by the
-  # commit gate.json names. They are inputs of a checkout, not a uses, so Dependabot does not move
-  # them: a task of this repository raises them, by the order of releases of repositories 4 spec.
-  # The gate runs as jobs, by sim's recipes of R67 sim (the third 2026-11-16 amendment to R17):
-  # four parts, each its share of the learners into a file of parts, and after them the check
-  # "Gate", the required one of the ruleset of main, which merges the parts and holds the numbers to
-  # their bands. Those are the numbers of just gate to the bit: a learner comes from its seeds
-  # alone, and sim's merge refuses a part missing, repeated or of another run. Every job runs in
-  # the toolchain stage of sim's devcontainer at that tag, from the cache or built from its
-  # checkout, with no context, and all on one kind of runner, since a part splits its share by the
-  # runner's processors. The limit, 15 minutes a job as in sim's gate.yml, is a guard against a
-  # hung run, not sim's budget. The runner is arm64, standard and free for public repositories
-  # (sources 8.3): sim's gate runs about a minute faster there than on amd64 (measurements 3.1
-  # spec), and the gate's numbers are the same to the bit on both: the engine's choice by R10, sim's
-  # own as sim holds them at home on both (the second 2026-11-16 amendment to R17). The cache's
+  # The gate of sim (R17; R103 spec): the choice of this commit on the bench, its numbers held to
+  # the bands of sim's gate.json, on every pull request and every commit of main. sim comes by the
+  # tag and the SHA of its commit in the env of the workflow, which the recipes gate, gate-part and
+  # gate-check read and check against each other; learner-model, by the commit gate.json names.
+  # They are inputs of a checkout, not a uses, so Dependabot does not move them: a task of this
+  # repository raises them, in the platform's order of releases. The gate runs as jobs, by sim's
+  # recipes (R17; R67 sim): four parts, each its share of the learners into a file of parts, and
+  # after them the check "Gate", the required one of the ruleset of main, which merges the parts and
+  # holds the numbers to their bands. Those are the numbers of just gate to the bit: a learner comes
+  # from its seeds alone, and sim's merge refuses a part missing, repeated or of another run. Every
+  # job runs in the toolchain stage of sim's devcontainer at that tag, from the cache or built from
+  # its checkout, with no context, and all on one kind of runner, since a part splits its share by
+  # the runner's processors. The limit, 15 minutes a job as in sim's gate.yml, is a guard against a
+  # hung run, not sim's budget. The runner is arm64: standard and free for public repositories, it
+  # runs sim's gate faster than amd64 does, and the gate's numbers are the same to the bit on both,
+  # the engine's choice by R10 and sim's own as sim holds them at home on both (R17). The cache's
   # entry of the image is that of arm64: its key holds runner.arch.
   gate-part:
     name: Gate / part ${{ matrix.part }}
@@ -137,7 +134,7 @@ jobs:
       # GOCACHE and GOMODCACHE in one folder, by the module sums and the toolchain of sim, not by the
       # commits gate.json names, so a new pin builds its libraries on the cache of the one before,
       # restore-keys. A pull request only reads it, and the first part of a push saves it; this
-      # workflow runs on no other event (R28, its third 2026-11-16 amendment).
+      # workflow runs on no other event (R28).
       - name: Go cache
         id: go
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -232,8 +229,8 @@ jobs:
           path: ${{ runner.temp }}/go
           key: ${{ steps.go.outputs.cache-primary-key }}
 
-  # The check after the parts, named as the gate was. It runs when a part failed too, and then
-  # fails: a required check skipped would pass as green.
+  # The check after the parts, by the name the ruleset of main requires. It runs when a part failed
+  # too, and then fails: a required check skipped would pass as green.
   gate:
     name: Gate
     needs: gate-part

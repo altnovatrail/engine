@@ -12,15 +12,15 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The golden vectors of the choice (docs/architecture.md, sections 3.5 and 3.7; R07, R10): inputs
-// on the graphs of the three modules of the first slice, from the packages of the release of
-// modules, read by the learner model's real Read; and the choice with its code, and the bits of
-// the P the engine computed of a task it gives. The files in testdata/choose are the same on every
-// target, and change only with a version of engine or learner-model; ENGINE_UPDATE=1 writes them.
+// The golden vectors of the choice: inputs on the graphs of the three modules of the first slice,
+// from the packages of the release of modules, read by the learner model's real Read; and the
+// choice with its code, and the bits of the P the engine computed of a task it gives. The files in
+// testdata/choose are the same on every target, and change only with a version of engine or
+// learner-model (R10); ENGINE_UPDATE=1 writes them.
 //
-// Each scenario names the branch of table 3.5 it is about, and a test holds the pair of branch
-// and code to the table: so the vectors check the codes of every branch, and that the rule gives
-// each of the nine codes.
+// Each scenario names the branch of the rule it is about, and a test holds the pair of branch and
+// code to branchCodes: so the vectors check the codes of every branch, and that the rule gives
+// each of the nine codes (R07).
 
 const (
 	updateEnv  = "ENGINE_UPDATE"
@@ -28,13 +28,13 @@ const (
 	day        = int64(86_400)
 )
 
-// branchCodes is table 3.5: the code of each branch, by its name in the scenarios. "nothing" is
-// nothing to give, with no code.
 type branchCode struct {
 	branch string
 	code   ReasonCode
 }
 
+// branchCodes is the code of each branch of the rule, by its name in the scenarios (R07).
+// "nothing" is nothing to give, with no code.
 var branchCodes = []branchCode{
 	{"1", ReasonOpenRun}, {"2", ReasonSkillChosen}, {"3", ReasonConsolidation}, {"4", ReasonProbe},
 	{"5", ReasonRepetition}, {"6", ReasonNewSkill}, {"6a", ReasonAuthorOrder}, {"7", ReasonQueue},
@@ -146,7 +146,7 @@ var (
 	band34  = learnermodel.BandRef{Place: 2, ID: "grades-3-4"}
 )
 
-// Olympiad maths for a learner of grade 3 (sections 3.1–3.3).
+// Olympiad maths for a learner of grade 3.
 var olympiadScenarios = []scenario{
 	{"new-learner", "6", func(rel map[string]release) golden {
 		return golden{modules: []Module{rel[releaseOlympiad].forAge("under_13")}, grade: learnerGrade3}
@@ -202,7 +202,7 @@ var (
 	grade3Band = learnermodel.BandRef{Place: 1, ID: "grade-3"}
 )
 
-// School maths for grade 3 (sections 3.1, 3.3 and 3.4).
+// School maths for grade 3.
 var grade3Scenarios = []scenario{
 	{"times-tables-lesson", "6", func(rel map[string]release) golden {
 		return golden{modules: []Module{rel[releaseGrade3].forAge("under_13")}, grade: learnerGrade3}
@@ -257,8 +257,8 @@ func grade3Mastered(rel map[string]release) golden {
 			issued(goldenTime-day+60, gComparing))}}}
 }
 
-// Short essays, by the author's order (section 3.3): a step for each lesson in turn, then the
-// queue; and a child, who gets no writing-about-a-day.
+// Short essays, by the author's order: a step for each lesson in turn, then the queue; and a
+// child, who gets no writing-about-a-day.
 var essayScenarios = func() []scenario {
 	order := []string{"first-sentences", "reading-model-essays", "paragraphs", "endings", "improving-an-essay", "writing-about-a-day"}
 	var out []scenario
@@ -292,7 +292,7 @@ var essayScenarios = func() []scenario {
 	return out
 }()
 
-// Both maths at once (section 3.2), and the AI closed (section 3.3).
+// Both maths at once, and the AI closed.
 var moduleScenarios = []scenario{
 	{"both-maths-first-turn", "6", func(rel map[string]release) golden {
 		return golden{modules: []Module{rel[releaseOlympiad].forAge("under_13"), rel[releaseGrade3].forAge("under_13")}, grade: learnerGrade3}
@@ -380,9 +380,9 @@ func TestGoldenChoose(t *testing.T) {
 	}
 }
 
-// TestGoldenCodes holds the code of each scenario to the code of its branch in table 3.5, and
-// requires a scenario of every branch: so every branch gives the code of the table, and the rule
-// gives each of the nine codes, REASON_CODE_ROTATION at its three places.
+// TestGoldenCodes holds the code of each scenario to the code of its branch in branchCodes, and
+// requires a scenario of every branch: so every branch gives its code, and the rule gives each of
+// the nine codes, REASON_CODE_ROTATION at its three places (R07).
 func TestGoldenCodes(t *testing.T) {
 	rel := readRelease(t)
 	seen := map[string]bool{}

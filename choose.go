@@ -8,19 +8,19 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// Choose picks what the learner is given next, and the reason code of the choice
-// (docs/architecture.md, section 3). It refuses, with ErrInvalid, an input whose rules it relies
-// on are broken: a module, a task of the pool or a lesson twice by ID; a skill of a graph, a task
-// of the pool or a lesson that is not its module's by ID; a skill of a lesson that is not in the
-// graph of its module; the traps of an item twice, or at a place where its task has no item; a
-// run's end outside its list, an open run with a time of its end, and two open runs of one lesson;
-// a skill, a module or a task twice in the summary, and a reason code of the summary outside its
-// list; a skill twice in the results of the last attempt, and a result with first right verdicts
-// fewer than none or more than its first verdicts; a module of the engine with no reading of the
-// learner model, and an anchor skill a graph names with none or with a status off its list; and a
-// candidate task the reading refuses, or one with the P of an item outside [0, 1], NaN and the
-// infinities included. The checks run in one order and each names the least ID that breaks it, so
-// that the order of the input's lists does not change the error either.
+// Choose picks what the learner is given next, and the reason code of the choice. It refuses, with
+// ErrInvalid, an input whose rules it relies on are broken: a module, a task of the pool or a
+// lesson twice by ID; a skill of a graph, a task of the pool or a lesson that is not its module's
+// by ID; a skill of a lesson that is not in the graph of its module; the traps of an item twice, or
+// at a place where its task has no item; a run's end outside its list, an open run with a time of
+// its end, and two open runs of one lesson; a skill, a module or a task twice in the summary, and a
+// reason code of the summary outside its list; a skill twice in the results of the last attempt,
+// and a result with first right verdicts fewer than none or more than its first verdicts; a module
+// of the engine with no reading of the learner model, and an anchor skill a graph names with none
+// or with a status off its list; and a candidate task the reading refuses, or one with the P of an
+// item outside [0, 1], NaN and the infinities included. The checks run in one order and each names
+// the least ID that breaks it, so that the order of the input's lists does not change the error
+// either.
 //
 // Choose runs the rule: the lesson of an open run; then on the skill chosen on the map, or in "My
 // subjects" — consolidation in the module of the last closed attempt, then the modules in turn,
@@ -225,9 +225,9 @@ func checkLessonSkills(in Input) error {
 }
 
 // checkTraps refuses the traps of an item twice for a task of the pool, and traps at a place
-// where the task has no item: of each, the least place. A task has few items as a rule, and their
-// places are compared pair by pair, with nothing copied or sorted; past trapsByPair of them, they
-// are sorted, so that a page of many lines costs no more than before.
+// where the task has no item: of each, the least place. A task has the traps of few items as a
+// rule, and their places are compared pair by pair, with nothing copied or sorted; past trapsByPair
+// of them, they are sorted, so that a task with the traps of many items is not quadratic (R20).
 func checkTraps(in Input, tasks []at) error {
 	for _, at := range tasks {
 		c := &in.Modules[at.module].Pool[at.item]
@@ -395,8 +395,7 @@ func checkReadout(in Input) error {
 
 // checkAnchors refuses an anchor skill that a graph of a module of the engine names, as a
 // prerequisite or as a skill it teaches, with no reading of the learner model, or with a status
-// outside its list: the rule would have to guess whether the anchor holds a skill (the amendment
-// of 2026-11-08 to R04).
+// outside its list: the rule would have to guess whether the anchor holds a skill (R04; R09).
 func checkAnchors(in Input) error {
 	var named []string
 	for _, m := range in.Modules {
@@ -444,7 +443,7 @@ func probabilities(in Input, tasks []at) ([][]learnermodel.TaskReadout, error) {
 }
 
 // checkProbabilities refuses an item with a verdict whose P is outside [0, 1]: a comparison with
-// NaN is always false, and the choice would hang on the order of the comparisons (R10, rule 3).
+// NaN is always false, and the choice would hang on the order of the comparisons (R10).
 func checkProbabilities(task string, tr learnermodel.TaskReadout) error {
 	for _, it := range tr.Items {
 		if it.HasVerdict && !(it.Probability >= 0 && it.Probability <= 1) {

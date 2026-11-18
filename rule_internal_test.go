@@ -7,8 +7,8 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The branches of the rule in one module, on the examples of docs/architecture.md, section 3.1,
-// and at their edges, over the worlds of skills_internal_test.go.
+// The branches of the rule in one module, on the examples of olympiad maths and school maths for
+// grade 3 and at their edges, over the worlds of skills_internal_test.go.
 
 // trial sets the two flags of the module's trial series.
 func (w *world) trial(over, lastIn bool) {
@@ -61,7 +61,7 @@ func (w *world) want(task string, code ReasonCode) {
 func wrong(skill string) SkillResult   { return SkillResult{Skill: skill, Answered: 1} }
 func rightOn(skill string) SkillResult { return SkillResult{Skill: skill, Answered: 1, FirstRight: 1} }
 
-// The olympiad maths of section 3.1, step by step.
+// The world of olympiad maths that the tests below share.
 func olympiadWorld(t *testing.T) *world {
 	w := newWorld(t, olympiad(t))
 	w.probabilities([]px{
@@ -78,7 +78,7 @@ var (
 	pigeonSkill = sid(olympiadMath, "pigeonhole-basic")
 )
 
-// Steps 1–3: in the trial series new skills come first, then the queue; no mistake is worked on.
+// In the trial series new skills come first, then the queue; no mistake is worked on.
 func TestOlympiadSeries(t *testing.T) {
 	w := olympiadWorld(t)
 	w.want("enum-34-d1-1", ReasonNewSkill)
@@ -94,7 +94,7 @@ func TestOlympiadSeries(t *testing.T) {
 	w.want("gaps-34-d1-1", ReasonQueue) // on the series' last answer
 }
 
-// Step 4: past the series, a mistake keeps the next choice on its skill.
+// Past the series, a mistake keeps the next choice on its skill.
 func TestOlympiadConsolidation(t *testing.T) {
 	w := olympiadWorld(t)
 	w.issue(enumSkill, exampleTime-100)
@@ -127,8 +127,8 @@ func TestOlympiadConsolidation(t *testing.T) {
 	})
 }
 
-// Step 5: counting-gaps on pause comes back as a probe on the turn of the probe, the easiest
-// task; consolidation takes that turn first.
+// counting-gaps on pause comes back as a probe on the turn of the probe, the easiest task;
+// consolidation takes that turn first.
 func TestOlympiadProbe(t *testing.T) {
 	w := olympiadWorld(t)
 	w.probabilities([]px{{"gaps-12-d2-1", 0.66}, {"gaps-12-d3-1", 0.5}, {"gaps-12-d5-1", 0.3}, {"gaps-34-*", 0.2}})
@@ -175,8 +175,8 @@ func TestOlympiadProbe(t *testing.T) {
 	w.want("enum-34-d1-1", ReasonQueue)
 }
 
-// Step 6: "mastered" of combinatorics-enumeration opens pigeonhole-basic, a new skill; once its
-// recommended task moves above grades-3-4, the mastered skill comes back in rotation.
+// "mastered" of combinatorics-enumeration opens pigeonhole-basic, a new skill; once its recommended
+// task moves above grades-3-4, the mastered skill comes back in rotation.
 func TestOlympiadMasteredSkills(t *testing.T) {
 	w := olympiadWorld(t)
 	w.skill(learnermodel.SkillReadout{Skill: enumSkill, EvidenceCount: 12, Mastered: true, Review: notDue, MasteryBand: learnermodel.BandRef{Place: 2}})
@@ -198,8 +198,8 @@ func grade3World(t *testing.T) *world {
 
 var timesTables = sid(grade3Math, "times-tables")
 
-// School maths for grade 3, step 1: times-tables is the new skill; when even its easiest task is
-// too hard, no skill is within reach and the bottom of the ladder gives it, the easiest task.
+// School maths for grade 3: times-tables is the new skill; when even its easiest task is too hard,
+// no skill is within reach and the bottom of the ladder gives it, the easiest task.
 func TestGrade3Branches(t *testing.T) {
 	w := grade3World(t)
 	w.want("times-tables-d3", ReasonNewSkill)
@@ -209,8 +209,8 @@ func TestGrade3Branches(t *testing.T) {
 	w.want("times-tables-d1", ReasonRotation)
 }
 
-// School maths for grade 3, step 4: all four mastered for the queue — branch 8, the one not
-// handed out for longest.
+// School maths for grade 3: all four mastered for the queue — branch 8, the one not handed out for
+// longest.
 func TestGrade3AllMastered(t *testing.T) {
 	w := grade3World(t)
 	w.probabilities([]px{{"*", 0.78}})

@@ -9,8 +9,7 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The task on a skill (docs/architecture.md, section 3.1; R03): once the rule has chosen a
-// skill, which of its candidates it gives.
+// The task on a skill: once the rule has chosen a skill, which of its candidates it gives (R03).
 
 // candidate is a task of the pool as a candidate of a skill.
 type candidate struct {
@@ -111,7 +110,7 @@ func (t poolTask) onSkill(place int32, skill string) bool {
 
 // candidateOf reads a task of the pool as a candidate of a skill, from the P of its items: the
 // task on the skill has an item with a verdict where the skill is primary, or it is no candidate
-// of the skill (the amendment of 2026-11-08 to R03).
+// of the skill (R03).
 func candidateOf(t poolTask, skill string, frequent []string) (candidate, bool) {
 	// The P of the task on the skill is the mean P of its items where the skill is primary,
 	// summed by place: addition of floating-point numbers is not associative (R10).
@@ -128,7 +127,7 @@ func candidateOf(t poolTask, skill string, frequent []string) (candidate, bool) 
 	}
 
 	cd := candidate{id: t.c.Task.ID, band: t.c.Task.Band.Place, p: float64(sum / float64(n))}
-	if len(frequent) == 0 { // no frequent trap to catch
+	if len(frequent) == 0 {
 		return cd, true
 	}
 	var caught []string

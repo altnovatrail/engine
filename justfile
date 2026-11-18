@@ -1,6 +1,6 @@
 # engine's own recipes. The ci- ones are what .github's shared go.yml runs, one job each, in the
-# toolchain stage of .devcontainer/Dockerfile (R16 .github; R12 in docs/decisions.md): their names
-# are the same in every Go repository of NovaTrail, and what they run is this repository's own.
+# toolchain stage of .devcontainer/Dockerfile (R16 .github; R12): their names are the same in every
+# Go repository of NovaTrail, and what they run is this repository's own.
 
 # The tools only the checks need, at exact versions. Each is a Go program run straight from its
 # module, as learner-model's justfile runs them, so nothing is installed for it and go.mod gains no
@@ -62,14 +62,13 @@ ci-test:
     mkdir -p coverage
     go test -race -count=1 -covermode=atomic -coverpkg=./... -coverprofile=coverage/go.out ./...
 
-# The checks of the same choice on every build (R10; docs/architecture.md, section 3.7) in the
-# container, as the shared go.yml of .github runs them with same-bits, by its own scripts: .github
-# at the commit ci.yml pins its go.yml to, so that the container runs what CI runs and nothing here
-# is kept in step by hand (the fourth amendment of 2026-11-08 to R10). CI calls none of these
-# recipes. ci.yml must call go.yml once, by a commit's SHA. The checkout of that commit is kept in
-# the user's cache, by the SHA, with the tool of the rules built in it, and reused: the first run of
-# a commit reaches the network. The path of the tool's module holds .github, which go run does not
-# take.
+# The checks of the same choice on every build in the container, as the shared go.yml of .github
+# runs them with same-bits, by its own scripts: .github at the commit ci.yml pins its go.yml to, so
+# that the container runs what CI runs and nothing here is kept in step by hand (R10). CI calls none
+# of these recipes. ci.yml must call go.yml once, by a commit's SHA. The checkout of that commit is
+# kept in the user's cache, by the SHA, with the tool of the rules built in it, and reused: the
+# first run of a commit reaches the network. The path of the tool's module holds .github, which go
+# run does not take.
 # Give the folder of the checkout of .github that ci.yml pins, fetching it once.
 [private]
 github:
@@ -370,8 +369,8 @@ ci-licenses:
     go run {{ GO_LICENSES }} check ./... --allowed_licenses="$ALLOWED_LICENSES"
 
 # The test that holds ReasonCode, ChoiceKind and RunEnd to cause.proto in the spec submodule
-# (docs/architecture.md, section 3.6): the job Contracts of ci.yml runs it with the submodule
-# checked out, where a missing file fails rather than skips, as it does in the other runs.
+# (R09): the job Contracts of ci.yml runs it with the submodule checked out, where a missing file
+# fails rather than skips, as it does in the other runs.
 # Check the engine's codes against the contracts of spec, in its submodule.
 ci-contracts:
     ENGINE_CONTRACTS=1 go test -count=1 -run '^TestContracts$' ./...
