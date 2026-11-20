@@ -1,6 +1,6 @@
 # RUN.md — work plan of engine
 
-What engine does, does not do and how it is built — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.18.34: the component's card — architecture 3.8 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, each reviewed by the author; only the current epic is in detail (R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). Open tasks outside an epic — their bodies in [run/TASKS.md](run/TASKS.md) (R155 spec), their rows in table 1 (rule 9; R27).
+What engine does, does not do and how it is built — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.19.4: the component's card — architecture 3.8 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, each reviewed by the author; only the current epic is in detail (R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). Open tasks outside an epic — their bodies in [run/TASKS.md](run/TASKS.md) (R155 spec), their rows in table 1 (rule 9; R27).
 
 Language (R154 spec): rules and tables in English, terse, for the session; the epic's description, table 1 and the bodies of tasks — in table 1's epic and in `run/TASKS.md` — in Russian: the author writes and reviews them.
 
@@ -69,3 +69,4 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T75 | Без истории: раздел 2 архитектуры — вне эпика | Claude | — | T74 |
 | [x] | T76 | Без истории: раздел 3 архитектуры — вне эпика | Claude | — | T75 |
 | [x] | T77 | Комментарии кода по R160 spec — вне эпика | Claude | — | T73 |
+| [x] | T78 | Переход на тег `spec` v0.19.4 — вне эпика | Claude | — | — |
