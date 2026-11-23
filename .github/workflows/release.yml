@@ -1,8 +1,8 @@
-# NovaTrail's shared release, pinned to a release of .github by SHA with its version
-# beside it. RELEASE_LINE is the line the releases are numbered in; paths, what they are built
-# from. A commit of main whose CI has passed and which changes one of the paths since the
-# release before it gets the next patch of the line, its tag and its one file, the archive of the
-# code, signed; Go code takes the module by that tag.
+# NovaTrail's shared release, pinned to a release of .github by SHA with its version beside it.
+# RELEASE_LINE is the line the releases are numbered in; paths, what they are built from. A
+# commit of main whose CI has passed and which changes one of the paths since the release before
+# it gets the next patch of the line, its tag and its one file, the archive of the code, signed;
+# Go code takes the module by that tag.
 name: Release
 
 on:

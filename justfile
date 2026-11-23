@@ -1,6 +1,6 @@
 # engine's own recipes. The ci- ones are what .github's shared go.yml runs, one job each, in the
-# toolchain stage of .devcontainer/Dockerfile: their names are the same in every
-# Go repository of NovaTrail, and what they run is this repository's own.
+# toolchain stage of .devcontainer/Dockerfile: their names are the same in every Go repository
+# of NovaTrail, and what they run is this repository's own.
 
 # The tools only the checks need, at exact versions. Each is a Go program run straight from its
 # module, as learner-model's justfile runs them, so nothing is installed for it and go.mod gains no
@@ -33,10 +33,10 @@ ci-lint:
     fi
     go vet ./...
     # gopls comes into the devcontainer image from its lock file, .devcontainer/gopls/, which the
-    # go kind of spec's repo-template gives, and the image's build stops when the
-    # gopls it built does not name GOPLS_VERSION. CI never builds that stage, so the two are held
-    # to each other here: a pull request that raises one alone, or a move to a new tag of spec
-    # that drops the step from the Dockerfile, fails here.
+    # go kind of spec's repo-template gives, and the image's build stops when the gopls it built
+    # does not name GOPLS_VERSION. CI never builds that stage, so the two are held to each other
+    # here: a pull request that raises one alone, or a move to a new tag of spec that drops the
+    # step from the Dockerfile, fails here.
     lock="$(sed -n 's/^[[:space:]]*\(require[[:space:]]\{1,\}\)\{0,1\}golang\.org\/x\/tools\/gopls[[:space:]]\{1,\}v\([^[:space:]]\{1,\}\).*$/\2/p' \
         .devcontainer/gopls/go.mod)"
     arg="$(sed -n 's/^ARG GOPLS_VERSION=\(.*\)$/\1/p' .devcontainer/Dockerfile)"
@@ -49,10 +49,10 @@ ci-lint:
     {{ just_executable() }} ci-release
 
 # The coverage goes into coverage/go.out, one Go profile, which the job coverage of .github's shared
-# go.yml sends to Codecov. Go counts statements and leaves the tests themselves out;
-# a package that no test runs is in it too, its statements at zero. Every test counts for every
-# package of the module, -coverpkg=./...: a test of golden vectors runs the code of other packages,
-# and its lines count where they are.
+# go.yml sends to Codecov. Go counts statements and leaves the tests themselves out; a package that
+# no test runs is in it too, its statements at zero. Every test counts for every package of the
+# module, -coverpkg=./...: a test of golden vectors runs the code of other packages, and its lines
+# count where they are.
 # The checks of the same choice on every build are the shared go.yml's, with same-bits:
 # "Go / targets", "Go / fma-diff", "Go / arm64" and "Go / rules". "Go / arm64" runs this recipe on
 # arm64 hardware, then the targets. The recipes test-targets, fma-diff and rules below run the same
@@ -162,9 +162,9 @@ rules:
 # Run test-targets, fma-diff and rules.
 same-bits: test-targets fma-diff rules
 
-# The gate of sim: sim's own recipes of the gate, in their bands mode, on this
-# working tree in place of engine — GATE_ENGINE —, and on learner-model at the commit sim's
-# gate.json names. sim is taken by the tag and the SHA of its commit that the env of ci.yml names,
+# The gate of sim: sim's own recipes of the gate, in their bands mode, on this working tree in
+# place of engine — GATE_ENGINE —, and on learner-model at the commit sim's gate.json names.
+# sim is taken by the tag and the SHA of its commit that the env of ci.yml names,
 # SIM_TAG and SIM_COMMIT, once each, so that here and in CI it is the same sim with the same bands:
 # from SIM_DIR when it is set, as the jobs of the gate set it to their checkout of sim, or else
 # fetched once into the user's cache, by the SHA. Either way the folder must be at that commit with
@@ -273,9 +273,9 @@ gate-check dir:
     case "$dir" in /*) ;; *) dir={{ quote(invocation_directory()) }}/"$dir" ;; esac
     {{ just_executable() }} -f {{ quote(justfile()) }} sim gate-check bands "$dir"
 
-# The release's one file: engine-<version>.tar.gz, a folder of that name with LICENSE,
-# go.mod, go.sum and the Go code of the module but its tests and testdata/ — what a consumer builds,
-# the paths that give a release. The tar is written the same by every build: names in order, no
+# The release's one file: engine-<version>.tar.gz, a folder of that name with LICENSE, go.mod,
+# go.sum and the Go code of the module but its tests and testdata/ — what a consumer builds, the
+# paths that give a release. The tar is written the same by every build: names in order, no
 # times or owners, mode 0644, and gzip with no name or time. .github's shared release runs it in a
 # tree git archive made, with no git to ask, so the files come from the tree. Go code takes the
 # module by the tag; this file binds the tag to the signed release.

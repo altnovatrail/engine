@@ -103,11 +103,10 @@ func (pr prepared) skills(i int, second bool) []skillView {
 // candidates gives the candidates of a skill of the module at place i in the pass, in the order of
 // their IDs, and the recommended task: the first by byCorridor of all its tasks without the pause
 // before a seen solution, when it has one. A task with another primary skill closed is no
-// candidate, but on the map: the skill chosen there takes all its tasks. In the second pass
-// a task on pause is a candidate again, after the others, but the task of the last closed attempt
-// is not — on the map it is, after all the others. The rule reads of the candidates
-// only the first by an order — byCorridor and byEase are total, by ID last —, so it does not sort
-// them.
+// candidate, but on the map: the skill chosen there takes all its tasks. In the second pass a task
+// on pause is a candidate again, after the others, but the task of the last closed attempt is not
+// — on the map it is, after all the others. The rule reads of the candidates only the first by an
+// order — byCorridor and byEase are total, by ID last —, so it does not sort them.
 func (pr prepared) candidates(i int, skill string, frequent []string, second, onMap bool) (cands []candidate, rec candidate, hasRec bool) {
 	on := pr.tasksOn(i, skill)
 	cands = make([]candidate, 0, len(on))
@@ -145,7 +144,8 @@ func (pr prepared) tasksOn(i int, skill string) []int {
 // solution went to the device less than 24 hours ago is none in the first pass; in the second it
 // is, but the task of the last closed attempt is not — on the map it is, after all the others. The
 // task of the last closed attempt whose solution went to the device is on pause however long ago
-// that was: the next task is never the one whose solution the learner has just seen.
+// that was, so that a learner who has seen its solution does not get it again as the next task
+// while another is left.
 func (pr prepared) pause(t *learnermodel.Task, second, onMap bool) (candidate, bool) {
 	in := pr.in
 	cd := candidate{id: t.ID, band: t.Band.Place}
