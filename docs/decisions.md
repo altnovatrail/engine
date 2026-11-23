@@ -402,7 +402,7 @@
   - **`release-files <version>`** takes the files from the tree: the shared release calls it in the tree of `git archive`, where there is no git. `ci-release` checks them against git;
   - **the settings** — immutable releases and the ruleset `v-tags`, id 26805295, on `refs/tags/v*` with `update`, `deletion` and `non_fast_forward`, without bypass, a copy of `learner-model`'s: the shared release requires the repository to keep them (sources 7.3);
   - **the baseline** is `v0.1.0`, the first version, which its own tests checked; every release after it that changes the rule passes the gate of `sim`.
-- **What the releases are and how to verify one** — [README.md](README.md) of `docs/`, "Releases".
+- **What the releases are and how to verify one** — [README.md](README.md) of `docs/`.
 
 — *Why:*
 - **a Go module, not a file** — `sim` and `api` are Go code, and `go.mod` with `go.sum` pin the version themselves, and the checksum database keeps the hash of the zip forever, as with `learner-model`;
@@ -430,7 +430,7 @@
   - `spec/` — at v0.9.16, commit c495b88; the tag in CLAUDE.md, README.md, at the start of RUN.md and in the status line of [architecture.md](architecture.md);
   - `.devcontainer/` — the output of the recipe of `spec` v0.9.16 for `engine` of the kind `go`, as it is: it differs from the previous one only in comments; `gopls/go.sum`, `ARG GOPLS_VERSION`, the step itself and the extension's settings are the same, byte for byte;
   - `ci-lint` still checks `GOPLS_VERSION` against the lock file — a repository's own `ci-lint` stays its own business —, and gopls is raised by a move to a tag of `spec`, not by a change here;
-  - CLAUDE.md, Environment, — the container has no differences from the container of `spec`; [architecture.md](architecture.md) — the gopls step from the template.
+  - CLAUDE.md — the container has no differences from the container of `spec`; [architecture.md](architecture.md) — the gopls step from the template.
 
 — *Why now:* the own gopls step had become a repeat of what the template gives. v0.9.16 is the latest release and immutable (`gh release view v0.9.16 -R altnovatrail/spec`: published 2026-11-08T23:40:11Z, `isImmutable` — `true`); `gh release verify v0.9.16 -R altnovatrail/spec` says "Release v0.9.16 verified!", and the tag is on commit c495b88.
 
@@ -462,10 +462,10 @@
 - the mode `exact` — `sim` holds its numbers to the bit at home, and its README tells callers to use bands; a matrix of amd64 and arm64 — twice the time for no new proof;
 - `go mod edit -replace` — it edits `go.mod`;
 - a limit of 25 minutes a job — a hung part would hold the required check ten times as long as a part runs; a limit that a run on a loaded runner could fail through no fault of the code; another number of parts — four is the number `sim` weighed;
-- the steps of the caches of Go of `go.yml` in the jobs of the gate, and the gate without caches of Go — each part would build `sim`, `engine` and `learner-model` from nothing;
+- the steps of the caches of Go of `go.yml` in the jobs of the gate — word for word they would delete the caches on every run, and a script of this repository's own would not be `sim`'s; the gate without caches of Go — each part and the check would build `sim`, `engine` and `learner-model` from nothing, which `sim`'s own gate does not;
 - the commands of the gate in README.md — README holds only what the component is and its place in NovaTrail's architecture.
 
-— *Consequence:* `.github/workflows/ci.yml` — the jobs of the gate; `justfile` — `sim`, `gate`, `gate-part`, `gate-check`; the ruleset of `main`; [README.md](README.md) of `docs/`, "The gate"; [architecture.md](architecture.md); [.claude/rules/ci.md](../.claude/rules/ci.md).
+— *Consequence:* `.github/workflows/ci.yml` — the jobs of the gate; `justfile` — `sim`, `gate`, `gate-part`, `gate-check`; the ruleset of `main`; [README.md](README.md) of `docs/`; [architecture.md](architecture.md); [.claude/rules/ci.md](../.claude/rules/ci.md).
 
 ## The tag `spec` v0.12.0
 

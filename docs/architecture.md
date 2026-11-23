@@ -231,7 +231,7 @@ The types of the input and the output, with the rule at each field, and the disc
 
 ### 3.1. The core of the rule: a task outside a lesson in one module
 
-Here is a task outside a lesson in one module, for skills with a verdict. Several modules, a skill from the map and anchor skills, lessons and the author's order, and repetition fit into this rule in the subsections after it. The numbers are as in standalone: the corridor 0.70–0.85 aiming at 0.775 and a probe once in six choices of the module (sources 1.1 and 1.2). These are the engine's constants, and only a run of the simulator `sim` changes them.
+Here is a task outside a lesson in one module, for skills with a verdict. Several modules, a skill from the map and anchor skills, lessons and the author's order, and repetition fit into this rule in the subsections after it. The numbers are as in standalone: the corridor 0.70–0.85 aiming at 0.775 and a probe once in six choices of the module (sources 1.1–1.3). These are the engine's constants, and only a run of the simulator `sim` changes them.
 
 **What the rule reads.**
 - From `Read` of `learner-model`, for the time of the choice: for a skill, the number of pieces of evidence, the time of the last practice, "mastered" with the mastery band, and the traps the program found, with the number of pieces of evidence and the time of the last one; from `Readout.Task`, the P of each item of a candidate task, with retention (sources 5.2).
@@ -390,7 +390,7 @@ Here — when the choice above gives a lesson, how the skills with `rubric` and 
 
 **What the simulator will check** — in addition to the lists above:
 - a new skill with a verdict that has a lesson of its band begins with a lesson, and a new band with a lesson of this band;
-- the lessons of the author's order go in the order of the graph, and "goes in the author's order" of the platform's criterion of the simulator is their share among the issues to skills without a verdict;
+- the lessons of the author's order go in the order of the graph, and "goes in the author's order" of the first slice's success criterion is their share among the issues to skills without a verdict;
 - "nothing to give" does not happen while an open skill has a candidate — a task where it is primary and every other primary skill is open — other than the task of the last attempt; except for two cases where branches 8 and 9 have nothing to give: an open skill out of reach has no bands where it is taught — it does not get onto "the bottom" —, and each open skill with candidates waits for its lesson of the author's order, while the learner left the run of a predecessor lesson. On a skill from the map — while there is a lesson or a task on it. The tasks of skills closed by a prerequisite wait for it;
 - in the second pass a task with a seen solution comes no earlier than the others.
 
