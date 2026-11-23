@@ -8,7 +8,7 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The rule (R03–R06): branch 1, the lesson of an open run; then "My subjects" — consolidation in
+// The rule: branch 1, the lesson of an open run; then "My subjects" — consolidation in
 // the module of the last closed attempt, then the modules in turn, each running branches 4–9 with
 // 6a, the author's order — or the skill chosen on the map, branch 2. Branches 6–9 give the lesson
 // on the skill when there is one. The first branch that fits makes the choice, and its code is the

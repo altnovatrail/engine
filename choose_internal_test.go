@@ -11,7 +11,7 @@ import (
 // A P outside [0, 1] is an error, NaN and the infinities too, and an item with no verdict has no
 // P to check.
 func TestCheckProbabilities(t *testing.T) {
-	nan := math.Float64frombits(0x7ff8000000000001) // a quiet NaN, by its bits: math.NaN breaks rule 2 of the rules of code (R10)
+	nan := math.Float64frombits(0x7ff8000000000001) // a quiet NaN, by its bits: math.NaN is not among the functions of math the code may call
 	for _, tc := range []struct {
 		name    string
 		p       float64
