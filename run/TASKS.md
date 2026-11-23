@@ -7,15 +7,6 @@ Open tasks outside an epic, each as its body, in Russian; each also stands as a 
 
 ## Tasks outside an epic
 
-#### T84. Ссылки по R171 spec: журнал, от «The tag `spec` v0.15.0» до конца и его начало — вне эпика
-
-- **Цель:** разделы журнала [docs/decisions.md](../docs/decisions.md) от «The tag `spec` v0.15.0» до последнего и начало журнала — по правилу ссылок R171 spec, их поправки свёрнуты; начало журнала — по заготовке `spec/repo-template/files/docs/decisions.md`: хвост «— *Consequence:*» и запись без датированных поправок.
-- **Почему:** пятая часть T80 (архив [docs/plan/E5.md](../docs/plan/E5.md), T80); R171 spec, R160 spec.
-- **Сделать:** как шаги 1–4 T81, в своих разделах; начало журнала — по заготовке, с тем, чем журнал от неё отличается.
-- **Как проверить:** как у T81, по своим разделам и началу.
-- **Разделы:** как у T81.
-- **Зависит от:** T80.
-
 #### T85. Ссылки по R171 spec: архитектура, разделы 1 и 2 — вне эпика
 
 - **Цель:** разделы 1 и 2 [docs/architecture.md](../docs/architecture.md) — по правилу ссылок R171 spec: ссылка стоит, только если читатель пойдёт по ней, чтобы действовать, номеров задач и ссылок на поправки нет.
@@ -44,3 +35,5 @@ Open tasks outside an epic, each as its body, in Russian; each also stands as a 
 - **Как проверить:** `just -f spec/justfile docs-check-repo` с ключом — зелёный; `/code-review high`, один круг; в отчёте — ссылок было до T80 и стало, по видам, командой `measurements 1.18 spec`.
 - **Разделы:** R171 spec, R32 spec; `spec/repo-template/files/docs-budgets.json`.
 - **Зависит от:** T81–T86.
+
+Найдено в T84: в `justfile` сообщение об ошибке рецепта несёт номер решения — `(R16)` — в строке кода, не в комментарии, и ключ его не находит; по строгому правилу — причина словами.
