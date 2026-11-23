@@ -11,7 +11,7 @@ import (
 
 // Lessons, the author's order and nothing to give: the order of the lessons, the lesson on a skill,
 // branch 1 — the lesson of an open run —, branch 6a — the author's order —, and the skill chosen on
-// the map with a rubric or none (R05).
+// the map with a rubric or none.
 
 // moduleSkills is what the lessons read of the graph of a module: its skills by ID, sorted, with
 // the assessability and the tier of each, and the skills of the module each needs through its
@@ -87,7 +87,7 @@ func (ms moduleSkills) after(a, b []string) bool {
 }
 
 // tier gives the tier of a lesson of these skills: the least of theirs, each computed from the
-// graph by the module format (R05).
+// graph by the module format.
 func (ms moduleSkills) tier(skills []string) int32 {
 	t := int32(math.MaxInt32)
 	for _, s := range skills {
@@ -206,7 +206,7 @@ func (pr prepared) lessonOnSkill(i int, skill string, rec candidate, hasRec, onM
 
 // awaitsLesson tells whether a lesson of the author's order not passed teaches a skill of the
 // module at place i: a skill with a verdict not handed out comes by that lesson, and branches 6–9
-// do not take it (R05).
+// do not take it.
 func (pr prepared) awaitsLesson(i int, skill string) bool {
 	ms := pr.mods[i]
 	return slices.ContainsFunc(pr.in.Modules[i].Lessons, func(l Lesson) bool {
@@ -261,7 +261,7 @@ func (ms moduleSkills) rubricOf(t learnermodel.Task) []string {
 // attempt closed by "Done", as a lesson of its skills with a rubric would — after the lessons of
 // the author's order of its own skills and of those it would come after are passed —, in the
 // order of its skills in the graph, then by ID. A lesson whose skills all have a verdict holds
-// neither: it is given on the new and by band (R05).
+// neither: it is given on the new and by band.
 func (pr prepared) authorOrder(i int, second bool) (Choice, bool) {
 	ms := pr.mods[i]
 	m := pr.in.Modules[i]
@@ -337,7 +337,7 @@ func (pr prepared) passedLongestAgo(passed []lessonAt) lessonAt {
 // it — of the author's order, or of another band than the skill's recommended task on pause —, in
 // the order of the lessons; and on the second pass, after the tasks on pause, the lesson passed
 // longest ago, by a new run, as mapAuthor gives one. So the learner's choice gives something while
-// the lessons hold one (R04; R104 spec).
+// the lessons hold one.
 func (pr prepared) mapLessonAgain(i int, skill string, second bool) (Choice, bool) {
 	fresh, passed := pr.lessonsOn(i, skill)
 	if l, ok := pr.firstLesson(fresh); ok {
@@ -360,7 +360,7 @@ func (pr prepared) verdictsOpen(ms moduleSkills, t learnermodel.Task) bool {
 // it comes after, since the learner chose the skill; else a task with a rubric on it outside the
 // lessons with no "Done"; else the lesson of it whose latest run "passed" ended longest ago, by a
 // new run; else the task with a rubric on it of the pool whose latest "Done" closed longest ago,
-// one never done first, by a new attempt. A lesson with an open run is branch 1's (R04).
+// one never done first, by a new attempt. A lesson with an open run is branch 1's.
 func (pr prepared) mapAuthor(i int, skill string, second bool) (Choice, bool) {
 	m := pr.in.Modules[i]
 	fresh, passed := pr.lessonsOn(i, skill)

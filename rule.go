@@ -12,12 +12,12 @@ import (
 // the module of the last closed attempt, then the modules in turn, each running branches 4–9 with
 // 6a, the author's order — or the skill chosen on the map, branch 2. Branches 6–9 give the lesson
 // on the skill when there is one. The first branch that fits makes the choice, and its code is the
-// choice's (R07). Branch 5, the repetition, comes on the module's turn of the repetition and, when
-// branches 6, 6a and 7 give nothing, before branches 8 and 9 (R06).
+// choice's. Branch 5, the repetition, comes on the module's turn of the repetition and, when
+// branches 6, 6a and 7 give nothing, before branches 8 and 9.
 
 // The turn of the probe: the module's n-th choice, counted before this one, with n > 5 and
 // n mod 6 = 5, as in standalone. The turn of the repetition: n > 5 and n mod 3 = 1 — n = 7, 10,
-// 13 and so on —, which the turn of the probe, with n mod 3 = 2, never meets (R06). Only a run of
+// 13 and so on —, which the turn of the probe, with n mod 3 = 2, never meets. Only a run of
 // sim changes them.
 const (
 	probeEvery int64 = 6
@@ -76,7 +76,7 @@ func given(s skillView, easiest bool, code ReasonCode) (Choice, bool) {
 
 // give is the choice of branches 6–9 on a skill of the module at place i: the lesson on the skill
 // when there is one, else the task on it, with the branch's code. Consolidation and the probe give
-// only tasks (R05).
+// only tasks.
 func (pr prepared) give(i int, s skillView, code ReasonCode) (Choice, bool) {
 	if id, ok := pr.lessonOnSkill(i, s.id, s.recommended, s.hasRecommended, false); ok {
 		return Choice{Kind: ChoiceLesson, ID: id, Reason: code}, true
@@ -113,7 +113,7 @@ func (pr prepared) consolidation(i int, skills []skillView) (Choice, bool) {
 
 // turns orders the modules of the engine for their turns: the one whose last handing out was
 // longest ago first, a module never handed out before them all; of as long ago, by full ID byte by
-// byte. A module was last handed out when the latest of its skills was, by the summary (R04): the
+// byte. A module was last handed out when the latest of its skills was, by the summary: the
 // rows whose full ID begins with the module's, so that a skill a newer version of the module
 // dropped still counts.
 func (pr prepared) turns() []int {
@@ -271,7 +271,7 @@ func byIssue(a, b skillView) int {
 // its state — closed, on pause, in the trial series. A skill with a verdict gets the lesson on it
 // when there is one, else a task on it among all its tasks, and with neither, another lesson that
 // teaches it, by mapLessonAgain; one with a rubric or none goes by mapAuthor. A skill outside the
-// modules of the engine gives nothing (R04).
+// modules of the engine gives nothing.
 func (pr prepared) onMap(second bool) (Choice, bool) {
 	skill := pr.in.MapSkill
 	for i, m := range pr.in.Modules {
@@ -299,7 +299,7 @@ func (pr prepared) onMap(second bool) (Choice, bool) {
 
 // dueFirst gives, of the skills due for review, the first: one whose date is marked already — of
 // those, the one practised longest ago —, then the one with the earliest date, then the first in
-// the order of the graph. The repetition is a task, not a lesson (R05; R06).
+// the order of the graph. The repetition is a task, not a lesson.
 func dueFirst(skills []skillView) (skillView, bool) {
 	return firstBy(skills, func(s skillView) bool { return s.due }, byReview)
 }

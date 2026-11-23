@@ -11,7 +11,7 @@ updates:
     groups:
       # Every reference to a shared workflow of .github in one pull request, to one release: they
       # go to one release anyway, and a pull request per file would be a rebase and a round of CI
-      # each. Actions of other owners stay a pull request each (R04 .github; R28).
+      # each. Actions of other owners stay a pull request each.
       shared-workflows:
         patterns: ["altnovatrail/.github/*"]
 
@@ -25,12 +25,12 @@ updates:
   # The Go modules the code is built from, as in every Go repository of NovaTrail. go.mod requires
   # learner-model alone, and Dependabot does not raise it: a new version comes by a task that holds
   # its tag to the signed release by release-verify, and once the baseline is out, through the gate
-  # of sim (R09; R77 spec; R103 spec), as the consumers of spec leave its module out (R64 spec). The
-  # ecosystem stays all the same, as in every Go repository, with nothing to raise. Go itself, in
-  # the Dockerfile, and the tools the recipes run by `go run` at an exact version are not among
-  # them: those are raised by hand. Neither is .devcontainer/gopls/, the lock file of gopls: it
-  # comes with spec's repo-template, and its version goes up with GOPLS_VERSION in the Dockerfile
-  # by a move to a tag of spec (R16; R102 spec).
+  # of sim (R09), as a repository that takes spec's Go module leaves that out. The ecosystem
+  # stays all the same, as in every Go repository, with nothing to raise. Go itself, in the
+  # Dockerfile, and the tools the recipes run by `go run` at an exact version are not among them:
+  # those are raised by hand. Neither is .devcontainer/gopls/, the lock file of gopls: it comes
+  # with spec's repo-template, and its version goes up with GOPLS_VERSION in the Dockerfile by a
+  # move to a tag of spec.
   - package-ecosystem: gomod
     directory: /
     schedule:

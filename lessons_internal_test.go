@@ -224,7 +224,7 @@ func essays(t *testing.T, adult bool) Module {
 // reading-model-essays, of tier 1, before paragraphs, of tier 3; of the three lessons after
 // paragraphs, by ID. choosing-a-first-sentence, with a verdict, comes by first-sentences, not by
 // branch 6, and once handed out goes into the queue, but branch 6a comes before branch 7. A child
-// gets no writing-about-a-day (R05).
+// gets no writing-about-a-day.
 func TestLessonsEssays(t *testing.T) {
 	for _, adult := range []bool{true, false} {
 		m := essays(t, adult)
@@ -331,7 +331,7 @@ func authorWorld(t *testing.T) (*many, Module) {
 
 // A skill with a verdict not handed out, taught by a lesson of the author's order not passed,
 // comes by that lesson: branches 6–9 do not take it — even when the learner has just left the run
-// of the lesson before it, and branch 6a gives nothing (R05).
+// of the lesson before it, and branch 6a gives nothing.
 func TestAwaitsLesson(t *testing.T) {
 	w, mod := authorWorld(t)
 	w.wantChoice(lessonChoice(lid(mod.Graph.Module, "m"), ReasonAuthorOrder))
@@ -349,7 +349,7 @@ func TestAwaitsLesson(t *testing.T) {
 // A task with a rubric outside the lessons comes in branch 6a as a lesson of its skills with a
 // rubric would: after the lessons of the author's order of its own skills and of those it would
 // come after are passed, after the lessons, in the order of its skills in the graph, then by ID,
-// while no attempt of it is closed by "Done" (R05).
+// while no attempt of it is closed by "Done".
 func TestRubricTasksOutsideLessons(t *testing.T) {
 	module := "example/rubric"
 	band := learnermodel.BandRef{Place: 1, ID: "b"}
@@ -515,7 +515,7 @@ func TestMapLesson(t *testing.T) {
 
 // The skill chosen on the map with a verdict and no task on it: its lesson not passed of verdicts
 // alone, then, on the second pass, its lesson of the author's order, then the lesson whose latest
-// run "passed" ended longest ago — never nothing while a lesson teaches it (R104 spec, R04).
+// run "passed" ended longest ago — never nothing while a lesson teaches it.
 func TestMapLessonAgain(t *testing.T) {
 	module := "example/map-again"
 	band := learnermodel.BandRef{Place: 1, ID: "b"}
@@ -763,7 +763,7 @@ func TestNothingToTeachRubricAndPassed(t *testing.T) {
 }
 
 // A prerequisite with none and no lesson is taught by a task with a rubric where it is primary,
-// as that task's "Done" counts it: it holds until the "Done" (R05).
+// as that task's "Done" counts it: it holds until the "Done".
 func TestNothingToTeachNoneByRubricTask(t *testing.T) {
 	module := "example/teach-none"
 	band := learnermodel.BandRef{Place: 1, ID: "b"}
@@ -797,7 +797,7 @@ func TestNothingToTeachNoneByRubricTask(t *testing.T) {
 // A task with a rubric teaches a prerequisite with a rubric or none only when branch 6a could give
 // it: one where a skill with a verdict after the prerequisite is primary too teaches nothing, or
 // both would wait on each other and the rule give nothing; nor does one in a lesson of its module,
-// which comes with its lesson (R05).
+// which comes with its lesson.
 func TestNothingToTeachRubricTaskGiven(t *testing.T) {
 	module := "example/teach-given"
 	band := learnermodel.BandRef{Place: 1, ID: "b"}

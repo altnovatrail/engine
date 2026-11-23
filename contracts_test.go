@@ -13,12 +13,12 @@ import (
 )
 
 // The engine's ReasonCode, ChoiceKind and RunEnd carry the names and numbers of ReasonCode,
-// ChoiceKind and RunEndReason in cause.proto, in spec's contracts, which api translates them by
-// (R09). The file is read in the spec submodule, at the tag of spec's release this repository pins
-// (R64 spec): it is no part of the engine's Go module. Where the submodule is not checked out — the
-// shared go.yml checks out none, and a consumer runs the tests from the module cache — the test is
-// skipped; the job Contracts of ci.yml checks the submodule out and sets ENGINE_CONTRACTS=1, and
-// there a missing file fails.
+// ChoiceKind and RunEndReason in cause.proto, in spec's contracts, which api translates them by.
+// The file is read in the spec submodule, at the tag of spec's release this repository pins: it is
+// no part of the engine's Go module. Where the submodule is not checked out — the shared go.yml
+// checks out none, and a consumer runs the tests from the module cache — the test is skipped; the
+// job Contracts of ci.yml checks the submodule out and sets ENGINE_CONTRACTS=1, and there a
+// missing file fails.
 const causeProto = "spec/contracts/novatrail/api/v1/cause.proto"
 
 var contractEnums = map[string]map[string]int32{

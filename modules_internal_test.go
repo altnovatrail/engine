@@ -10,7 +10,7 @@ import (
 )
 
 // Several modules, the skill chosen on the map and the anchor skills, on an example of two maths
-// and at their edges (R04). The reading of the learner model and the P of the candidates are set
+// and at their edges. The reading of the learner model and the P of the candidates are set
 // by hand, as in skills_internal_test.go.
 
 // many is an input over several modules, with the P of their candidates beside it.

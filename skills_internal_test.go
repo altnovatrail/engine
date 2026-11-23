@@ -639,7 +639,7 @@ func TestPausedSince(t *testing.T) {
 
 // The task of the last closed attempt whose solution went to the device is no candidate for the
 // next choice, however long ago the solution went: past the pause of 24 hours it would otherwise
-// come back as the next task when the skill has no other one (R82 spec).
+// come back as the next task when the skill has no other one.
 func TestLastSeenNotNext(t *testing.T) {
 	w := newWorld(t, grade3(t))
 	tt := sid(grade3Math, "times-tables")

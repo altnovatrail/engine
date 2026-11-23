@@ -227,7 +227,7 @@ func checkLessonSkills(in Input) error {
 // checkTraps refuses the traps of an item twice for a task of the pool, and traps at a place
 // where the task has no item: of each, the least place. A task has the traps of few items as a
 // rule, and their places are compared pair by pair, with nothing copied or sorted; past trapsByPair
-// of them, they are sorted, so that a task with the traps of many items is not quadratic (R20).
+// of them, they are sorted, so that a task with the traps of many items is not quadratic.
 func checkTraps(in Input, tasks []at) error {
 	for _, at := range tasks {
 		c := &in.Modules[at.module].Pool[at.item]
@@ -395,7 +395,7 @@ func checkReadout(in Input) error {
 
 // checkAnchors refuses an anchor skill that a graph of a module of the engine names, as a
 // prerequisite or as a skill it teaches, with no reading of the learner model, or with a status
-// outside its list: the rule would have to guess whether the anchor holds a skill (R04; R09).
+// outside its list: the rule would have to guess whether the anchor holds a skill.
 func checkAnchors(in Input) error {
 	var named []string
 	for _, m := range in.Modules {
@@ -421,7 +421,7 @@ func checkAnchors(in Input) error {
 }
 
 // probabilities reads the P of every candidate of the pools once, before the rule, by
-// Readout.Task (R09): a P outside [0, 1] is an error whichever branch of the rule would come to
+// Readout.Task: a P outside [0, 1] is an error whichever branch of the rule would come to
 // the candidate. The result is by the input's places; the reading goes by ID.
 func probabilities(in Input, tasks []at) ([][]learnermodel.TaskReadout, error) {
 	p := make([][]learnermodel.TaskReadout, len(in.Modules))
@@ -443,7 +443,7 @@ func probabilities(in Input, tasks []at) ([][]learnermodel.TaskReadout, error) {
 }
 
 // checkProbabilities refuses an item with a verdict whose P is outside [0, 1]: a comparison with
-// NaN is always false, and the choice would hang on the order of the comparisons (R10).
+// NaN is always false, and the choice would hang on the order of the comparisons.
 func checkProbabilities(task string, tr learnermodel.TaskReadout) error {
 	for _, it := range tr.Items {
 		if it.HasVerdict && !(it.Probability >= 0 && it.Probability <= 1) {

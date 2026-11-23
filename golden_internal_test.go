@@ -16,11 +16,11 @@ import (
 // from the packages of the release of modules, read by the learner model's real Read; and the
 // choice with its code, and the bits of the P the engine computed of a task it gives. The files in
 // testdata/choose are the same on every target, and change only with a version of engine or
-// learner-model (R10); ENGINE_UPDATE=1 writes them.
+// learner-model; ENGINE_UPDATE=1 writes them.
 //
 // Each scenario names the branch of the rule it is about, and a test holds the pair of branch and
 // code to branchCodes: so the vectors check the codes of every branch, and that the rule gives
-// each of the nine codes (R07).
+// each of the nine codes.
 
 const (
 	updateEnv  = "ENGINE_UPDATE"
@@ -33,7 +33,7 @@ type branchCode struct {
 	code   ReasonCode
 }
 
-// branchCodes is the code of each branch of the rule, by its name in the scenarios (R07).
+// branchCodes is the code of each branch of the rule, by its name in the scenarios.
 // "nothing" is nothing to give, with no code.
 var branchCodes = []branchCode{
 	{"1", ReasonOpenRun}, {"2", ReasonSkillChosen}, {"3", ReasonConsolidation}, {"4", ReasonProbe},
@@ -382,7 +382,7 @@ func TestGoldenChoose(t *testing.T) {
 
 // TestGoldenCodes holds the code of each scenario to the code of its branch in branchCodes, and
 // requires a scenario of every branch: so every branch gives its code, and the rule gives each of
-// the nine codes, REASON_CODE_ROTATION at its three places (R07).
+// the nine codes, REASON_CODE_ROTATION at its three places.
 func TestGoldenCodes(t *testing.T) {
 	rel := readRelease(t)
 	seen := map[string]bool{}
