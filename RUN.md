@@ -74,7 +74,7 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T80 | Ссылки по R171 spec: план, CLAUDE.md, `.claude/rules/`, комментарии кода; разбивка — вне эпика | Claude | да | T79 |
 | [x] | T81 | Ссылки по R171 spec: журнал, раздел «The choice rule» — вне эпика | Claude | — | T80 |
 | [x] | T82 | Ссылки по R171 spec: журнал, разделы о теге `spec`, кодах, типах и сборке для устройства — вне эпика | Claude | — | T80 |
-| [ ] | T83 | Ссылки по R171 spec: журнал, от «The frame and CI» до «The speed of the choice» — вне эпика | Claude | — | T80 |
+| [x] | T83 | Ссылки по R171 spec: журнал, от «The frame and CI» до «The speed of the choice» — вне эпика | Claude | — | T80 |
 | [ ] | T84 | Ссылки по R171 spec: журнал, от «The tag `spec` v0.15.0» до конца и его начало — вне эпика | Claude | — | T80 |
 | [ ] | T85 | Ссылки по R171 spec: архитектура, разделы 1 и 2 — вне эпика | Claude | — | T80 |
 | [ ] | T86 | Ссылки по R171 spec: архитектура, разделы 3 и 4 — вне эпика | Claude | — | T80 |
