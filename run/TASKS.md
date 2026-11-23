@@ -7,15 +7,6 @@ Open tasks outside an epic, each as its body, in Russian; each also stands as a 
 
 ## Tasks outside an epic
 
-#### T86. Ссылки по R171 spec: архитектура, разделы 3 и 4 — вне эпика
-
-- **Цель:** разделы 3 и 4 [docs/architecture.md](../docs/architecture.md) — по правилу ссылок R171 spec.
-- **Почему:** седьмая часть T80 (архив [docs/plan/E5.md](../docs/plan/E5.md), T80); R171 spec.
-- **Сделать:** как у T85, в своих разделах.
-- **Как проверить:** как у T85, по своим разделам.
-- **Разделы:** как у T85.
-- **Зависит от:** T80.
-
 #### T87. Ссылки по R171 spec: источники, замеры и ключ проверки — вне эпика
 
 - **Цель:** [docs/sources.md](../docs/sources.md) и [docs/measurements.md](../docs/measurements.md) — по правилу ссылок R171 spec, а `docs-check-repo` держит правило ключом `"citations": true` в `docs-budgets.json`, как в `spec/repo-template/files/docs-budgets.json`.
