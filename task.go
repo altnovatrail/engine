@@ -9,7 +9,7 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The task on a skill: once the rule has chosen a skill, which of its candidates it gives (R03).
+// The task on a skill: once the rule has chosen a skill, which of its candidates it gives.
 
 // candidate is a task of the pool as a candidate of a skill.
 type candidate struct {
@@ -110,10 +110,10 @@ func (t poolTask) onSkill(place int32, skill string) bool {
 
 // candidateOf reads a task of the pool as a candidate of a skill, from the P of its items: the
 // task on the skill has an item with a verdict where the skill is primary, or it is no candidate
-// of the skill (R03).
+// of the skill.
 func candidateOf(t poolTask, skill string, frequent []string) (candidate, bool) {
 	// The P of the task on the skill is the mean P of its items where the skill is primary,
-	// summed by place: addition of floating-point numbers is not associative (R10).
+	// summed by place: addition of floating-point numbers is not associative.
 	var sum float64
 	var n int
 	for _, ip := range t.p {
@@ -164,7 +164,7 @@ func frequentTraps(traps []learnermodel.TrapCount) []string {
 }
 
 // bySolution puts the candidates whose solution never went to the device first, and of the rest
-// the one whose solution went longest ago (R82 spec); the task of the last closed attempt, back
+// the one whose solution went longest ago; the task of the last closed attempt, back
 // on the map, comes after them all.
 func bySolution(a, b candidate) int {
 	if c := cmp.Or(falseFirst(a.last, b.last), falseFirst(a.seen, b.seen)); c != 0 || !a.seen {

@@ -371,7 +371,7 @@ func TestChooseOneModule(t *testing.T) {
 		in.Runs = in.Runs[:1] // no open run
 		in.Summary.Skills = nil
 		// The solution of a-1, the task of the last attempt, never went to the device: else a-1 is
-		// no candidate for the next choice (R82 spec), and the skill has no other task.
+		// no candidate for the next choice, and the skill has no other task.
 		in.Summary.Tasks = nil
 		return in
 	}

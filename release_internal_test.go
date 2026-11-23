@@ -19,7 +19,7 @@ import (
 // The packages of the first slice, from the release v0.1.0 of altnovatrail/modules, and the
 // package of olympiad-math 0.1.1, from its release v0.1.1, which release-verify accepted: they
 // stand in testdata/modules as the releases have them, and a chain of digests holds them from then
-// on (R77 spec). The index is the module index of the release v0.1.4: it names both versions of
+// on. The index is the module index of the release v0.1.4: it names both versions of
 // olympiad-math, and the same 0.1.0 of each module as the index of v0.1.0. Its digest is pinned
 // here; the index names each package's digest, which is the SHA-256 of its inventory.json; and the
 // inventory names the SHA-256 of server.json. Reading a package checks every link.

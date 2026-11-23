@@ -1,5 +1,5 @@
 # engine's own recipes. The ci- ones are what .github's shared go.yml runs, one job each, in the
-# toolchain stage of .devcontainer/Dockerfile (R16 .github; R12): their names are the same in every
+# toolchain stage of .devcontainer/Dockerfile: their names are the same in every
 # Go repository of NovaTrail, and what they run is this repository's own.
 
 # The tools only the checks need, at exact versions. Each is a Go program run straight from its
@@ -33,7 +33,7 @@ ci-lint:
     fi
     go vet ./...
     # gopls comes into the devcontainer image from its lock file, .devcontainer/gopls/, which the
-    # go kind of spec's repo-template gives (R16; R102 spec), and the image's build stops when the
+    # go kind of spec's repo-template gives, and the image's build stops when the
     # gopls it built does not name GOPLS_VERSION. CI never builds that stage, so the two are held
     # to each other here: a pull request that raises one alone, or a move to a new tag of spec
     # that drops the step from the Dockerfile, fails here.
@@ -45,15 +45,15 @@ ci-lint:
             ".devcontainer/Dockerfile has GOPLS_VERSION ${arg:-unset}; raise them together (R16)" >&2
         exit 1
     fi
-    # The release's file is the code, the same bytes on every build (R15).
+    # The release's file is the code, the same bytes on every build.
     {{ just_executable() }} ci-release
 
 # The coverage goes into coverage/go.out, one Go profile, which the job coverage of .github's shared
-# go.yml sends to Codecov (R48 spec; R12). Go counts statements and leaves the tests themselves out;
+# go.yml sends to Codecov. Go counts statements and leaves the tests themselves out;
 # a package that no test runs is in it too, its statements at zero. Every test counts for every
 # package of the module, -coverpkg=./...: a test of golden vectors runs the code of other packages,
 # and its lines count where they are.
-# The checks of the same choice on every build (R10) are the shared go.yml's, with same-bits:
+# The checks of the same choice on every build are the shared go.yml's, with same-bits:
 # "Go / targets", "Go / fma-diff", "Go / arm64" and "Go / rules". "Go / arm64" runs this recipe on
 # arm64 hardware, then the targets. The recipes test-targets, fma-diff and rules below run the same
 # in the container, and same-bits runs all three; CI calls none of them.
@@ -64,7 +64,7 @@ ci-test:
 
 # The checks of the same choice on every build in the container, as the shared go.yml of .github
 # runs them with same-bits, by its own scripts: .github at the commit ci.yml pins its go.yml to, so
-# that the container runs what CI runs and nothing here is kept in step by hand (R10). CI calls none
+# that the container runs what CI runs and nothing here is kept in step by hand. CI calls none
 # of these recipes. ci.yml must call go.yml once, by a commit's SHA. The checkout of that commit is
 # kept in the user's cache, by the SHA, with the tool of the rules built in it, and reused: the
 # first run of a commit reaches the network. The path of the tool's module holds .github, which go
@@ -162,7 +162,7 @@ rules:
 # Run test-targets, fma-diff and rules.
 same-bits: test-targets fma-diff rules
 
-# The gate of sim (R17; R103 spec): sim's own recipes of the gate, in their bands mode, on this
+# The gate of sim: sim's own recipes of the gate, in their bands mode, on this
 # working tree in place of engine — GATE_ENGINE —, and on learner-model at the commit sim's
 # gate.json names. sim is taken by the tag and the SHA of its commit that the env of ci.yml names,
 # SIM_TAG and SIM_COMMIT, once each, so that here and in CI it is the same sim with the same bands:
@@ -250,7 +250,7 @@ gate:
 
 # Part k of n of the gate's learners into the folder dir, sim's recipe gate-part, as the job
 # "Gate / part k" runs it; dir is of the caller's folder when relative. The parts of one gate run on
-# one kind of machine, since each splits its share by its processors (R67 sim).
+# one kind of machine, since each splits its share by its processors.
 # Run part k of n of the gate into a folder, as "Gate / part k" does.
 [positional-arguments]
 gate-part k n dir:
@@ -273,12 +273,12 @@ gate-check dir:
     case "$dir" in /*) ;; *) dir={{ quote(invocation_directory()) }}/"$dir" ;; esac
     {{ just_executable() }} -f {{ quote(justfile()) }} sim gate-check bands "$dir"
 
-# The release's one file (R15): engine-<version>.tar.gz, a folder of that name with LICENSE,
+# The release's one file: engine-<version>.tar.gz, a folder of that name with LICENSE,
 # go.mod, go.sum and the Go code of the module but its tests and testdata/ — what a consumer builds,
 # the paths that give a release. The tar is written the same by every build: names in order, no
 # times or owners, mode 0644, and gzip with no name or time. .github's shared release runs it in a
 # tree git archive made, with no git to ask, so the files come from the tree. Go code takes the
-# module by the tag; this file binds the tag to the signed release (R77 spec).
+# module by the tag; this file binds the tag to the signed release.
 # Build the release's file into dist/.
 release-files version:
     #!/usr/bin/env bash
@@ -305,7 +305,7 @@ release-files version:
 # tracks or would, as they are in the tree, and nothing else; and unless the unpacked archive builds.
 # So the file a release signs is the code of its commit, and anyone can build it again and
 # compare. It refuses to run beside a dist/ of one's own, which release-files would replace.
-# ci-lint runs it, so "Go / lint" holds it (R15).
+# ci-lint runs it, so "Go / lint" holds it.
 # Check that the release's file is the code, and the same bytes on every build.
 ci-release:
     #!/usr/bin/env bash
@@ -368,8 +368,8 @@ ci-licenses:
     fi
     go run {{ GO_LICENSES }} check ./... --allowed_licenses="$ALLOWED_LICENSES"
 
-# The test that holds ReasonCode, ChoiceKind and RunEnd to cause.proto in the spec submodule
-# (R09): the job Contracts of ci.yml runs it with the submodule checked out, where a missing file
+# The test that holds ReasonCode, ChoiceKind and RunEnd to cause.proto in the spec submodule:
+# the job Contracts of ci.yml runs it with the submodule checked out, where a missing file
 # fails rather than skips, as it does in the other runs.
 # Check the engine's codes against the contracts of spec, in its submodule.
 ci-contracts:

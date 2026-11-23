@@ -7,7 +7,7 @@ import (
 	learnermodel "github.com/altnovatrail/learner-model"
 )
 
-// The repetition, on an example of school maths for grade 3 and at its edges (R06). The reading
+// The repetition, on an example of school maths for grade 3 and at its edges. The reading
 // of the learner model, the review dates and the P of the candidates are set by hand, as in
 // modules_internal_test.go.
 
@@ -84,7 +84,7 @@ func TestRepetitionGrade3(t *testing.T) {
 }
 
 // The turn of the repetition is n > 5 with n mod 3 = 1: not n = 4, nor the turn of the probe,
-// n = 11, which never meets it. It needs no end of the trial series (R06). A date marked already
+// n = 11, which never meets it. It needs no end of the trial series. A date marked already
 // comes before the earliest date; equal dates go by the order of the graph; the date is come at
 // the time of the choice, not a second before it.
 func TestRepetitionTurn(t *testing.T) {
@@ -217,7 +217,7 @@ func TestRepetitionCorridorAndAwaits(t *testing.T) {
 
 // Of two dates marked already, the skill practised longest ago comes first, whatever the order of
 // the graph: practice does not clear the mark, and the first in the graph would take every
-// repetition (R06). A skill closed, whatever its reading says, is not due.
+// repetition. A skill closed, whatever its reading says, is not due.
 func TestRepetitionAlready(t *testing.T) {
 	already := learnermodel.ReviewDate{Already: true}
 	w := repWorld(t, already, already)
