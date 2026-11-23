@@ -7,15 +7,6 @@ Open tasks outside an epic, each as its body, in Russian; each also stands as a 
 
 ## Tasks outside an epic
 
-#### T82. Ссылки по R171 spec: журнал, разделы о теге `spec`, кодах, типах и сборке для устройства — вне эпика
-
-- **Цель:** разделы журнала [docs/decisions.md](../docs/decisions.md) «The tag of `spec`», «Reason codes and the repeat of a choice», «The tag `spec` v0.9.6», «Types», «The build for the device» и «The tag `spec` v0.9.8» — по правилу ссылок R171 spec, их поправки свёрнуты.
-- **Почему:** третья часть T80 (архив [docs/plan/E5.md](../docs/plan/E5.md), T80); R171 spec, R160 spec.
-- **Сделать:** как шаги 1–4 T81, в своих разделах; ссылки на их поправки из других файлов — на записи.
-- **Как проверить:** как у T81, по своим разделам.
-- **Разделы:** как у T81.
-- **Зависит от:** T80.
-
 #### T83. Ссылки по R171 spec: журнал, от «The frame and CI» до «The speed of the choice» — вне эпика
 
 - **Цель:** разделы журнала [docs/decisions.md](../docs/decisions.md) от «The frame and CI» до «The speed of the choice» включительно — каркас и CI, теги v0.9.9, v0.9.16, v0.12.0 и v0.14.0, релиз, гейт `sim`, скорость выбора — по правилу ссылок R171 spec, их поправки свёрнуты.
