@@ -92,7 +92,7 @@ jobs:
           check: contracts
           save: "true"
 
-  # The gate of sim (R17): the choice of this commit on the bench, its numbers held to the bands of
+  # The gate of sim: the choice of this commit on the bench, its numbers held to the bands of
   # sim's gate.json, on every pull request and every commit of main. sim comes by the tag and the
   # SHA of its commit in the env of the workflow, which the recipes gate, gate-part and gate-check
   # read and check against each other; learner-model, by the commit gate.json names. They are inputs
@@ -107,7 +107,7 @@ jobs:
   # processors. The limit, 15 minutes a job as in sim's gate.yml, is a guard against a hung run, not
   # sim's budget. The runner is arm64: standard and free for public repositories, it runs sim's gate
   # faster than amd64 does, and the gate's numbers are the same to the bit on both, the engine's
-  # choice by R10 and sim's own as sim holds them at home. The cache's entry of the
+  # choice by the rules of its code and sim's own as sim holds them at home. The cache's entry of the
   # image is that of arm64: its key holds runner.arch.
   gate-part:
     name: Gate / part ${{ matrix.part }}

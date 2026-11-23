@@ -15,7 +15,7 @@
 
 The NovaTrail engine: it picks what a learner does next — a lesson or a task, on a new skill or on one due for practice again — and gives each choice a reason code that the adult sees. It is a Go library of pure computation that works by a rule, with no AI model: it is handed the skill graphs, the lessons and the task pool and the learner model's estimates, time comes from outside, it takes no seed because the rule needs no randomness, and the same input always gives the same choice, on any build.
 
-A component of [NovaTrail](https://github.com/altnovatrail/spec), a universal open platform for adaptive learning, interactive lessons and AI tutoring. Its card is [architecture 3.8 spec](https://github.com/altnovatrail/spec/blob/main/docs/architecture.md#38-learner-model-and-engine).
+A component of [NovaTrail](https://github.com/altnovatrail/spec), a universal open platform for adaptive learning, interactive lessons and AI tutoring. Its card, the summary of what it does and its links, is in [spec's architecture](https://github.com/altnovatrail/spec/blob/main/docs/architecture.md#38-learner-model-and-engine).
 
 - [learner-model](https://github.com/altnovatrail/learner-model) estimates what the learner has mastered; the engine reads its estimates and takes its graph types, and never estimates mastery itself.
 - [api](https://github.com/altnovatrail/api), the platform's service, runs the engine in its process: it hands it the graphs, the pool and its summary of what it has handed out before, and stores each choice. The engine keeps nothing between calls.

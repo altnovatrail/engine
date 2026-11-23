@@ -1,6 +1,6 @@
 # RUN.md — work plan of engine
 
-What engine does, does not do and how it is built — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.19.11: the component's card — architecture 3.8 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, each reviewed by the author; only the current epic is in detail (R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). Open tasks outside an epic — their bodies in [run/TASKS.md](run/TASKS.md) (R155 spec), their rows in table 1 (rule 9; R27).
+What engine does, does not do and how it is built — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.19.12: the component's card — architecture 3.8 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, each reviewed by the author; only the current epic is in detail (R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). Open tasks outside an epic — their bodies in [run/TASKS.md](run/TASKS.md) (R155 spec), their rows in table 1 (rule 9; R27).
 
 Language (R154 spec): rules and tables in English, terse, for the session; the epic's description, table 1 and the bodies of tasks — in table 1's epic and in `run/TASKS.md` — in Russian: the author writes and reviews them.
 
@@ -72,10 +72,12 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T78 | Переход на тег `spec` v0.19.4 — вне эпика | Claude | — | — |
 | [x] | T79 | Переход на тег `spec` v0.19.11 — вне эпика | Claude | — | — |
 | [x] | T80 | Ссылки по R171 spec: план, CLAUDE.md, `.claude/rules/`, комментарии кода; разбивка — вне эпика | Claude | да | T79 |
-| [ ] | T81 | Ссылки по R171 spec: журнал, раздел «The choice rule» — вне эпика | Claude | — | T80 |
-| [ ] | T82 | Ссылки по R171 spec: журнал, разделы о теге `spec`, кодах, типах и сборке для устройства — вне эпика | Claude | — | T80 |
-| [ ] | T83 | Ссылки по R171 spec: журнал, от «The frame and CI» до «The speed of the choice» — вне эпика | Claude | — | T80 |
-| [ ] | T84 | Ссылки по R171 spec: журнал, от «The tag `spec` v0.15.0» до конца и его начало — вне эпика | Claude | — | T80 |
-| [ ] | T85 | Ссылки по R171 spec: архитектура, разделы 1 и 2 — вне эпика | Claude | — | T80 |
-| [ ] | T86 | Ссылки по R171 spec: архитектура, разделы 3 и 4 — вне эпика | Claude | — | T80 |
-| [ ] | T87 | Ссылки по R171 spec: источники, замеры и ключ проверки — вне эпика | Claude | — | T81–T86 |
+| [x] | T81 | Ссылки по R171 spec: журнал, раздел «The choice rule» — вне эпика | Claude | — | T80 |
+| [x] | T82 | Ссылки по R171 spec: журнал, разделы о теге `spec`, кодах, типах и сборке для устройства — вне эпика | Claude | — | T80 |
+| [x] | T83 | Ссылки по R171 spec: журнал, от «The frame and CI» до «The speed of the choice» — вне эпика | Claude | — | T80 |
+| [x] | T84 | Ссылки по R171 spec: журнал, от «The tag `spec` v0.15.0» до конца и его начало — вне эпика | Claude | — | T80 |
+| [x] | T85 | Ссылки по R171 spec: архитектура, разделы 1 и 2 — вне эпика | Claude | — | T80 |
+| [x] | T86 | Ссылки по R171 spec: архитектура, разделы 3 и 4 — вне эпика | Claude | — | T80 |
+| [x] | T87 | Ссылки по R171 spec: источники, замеры и ключ проверки — вне эпика | Claude | — | T81–T86 |
+| [x] | T88 | Переход на тег `spec` v0.19.12 — вне эпика | Claude | — | — |
+| [x] | T89 | Ссылки по строгому правилу R171 spec: проход по первой части — вне эпика | Claude | — | T88 |

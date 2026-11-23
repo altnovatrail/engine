@@ -13,7 +13,7 @@ import (
 // not reached yet and mastered for the queue, and the candidates the task on the skill is chosen
 // among.
 
-// The constants of the rule, as in standalone. Only a run of sim changes them (R23 spec).
+// The constants of the rule, as in standalone. Only a run of sim changes them.
 const (
 	corridorLow  = 0.70  // the corridor of success, from; and the least P of a skill within reach
 	corridorHigh = 0.85  // the corridor of success, to

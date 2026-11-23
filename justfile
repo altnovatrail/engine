@@ -42,7 +42,7 @@ ci-lint:
     arg="$(sed -n 's/^ARG GOPLS_VERSION=\(.*\)$/\1/p' .devcontainer/Dockerfile)"
     if [ -z "$lock" ] || [ "$arg" != "$lock" ]; then
         echo "ci-lint: .devcontainer/gopls/go.mod names gopls ${lock:-at no version} and" \
-            ".devcontainer/Dockerfile has GOPLS_VERSION ${arg:-unset}; raise them together (R16)" >&2
+            ".devcontainer/Dockerfile has GOPLS_VERSION ${arg:-unset}; raise them together" >&2
         exit 1
     fi
     # The release's file is the code, the same bytes on every build.

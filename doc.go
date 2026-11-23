@@ -7,10 +7,10 @@
 // been handed out before, and passes the time in as a number; api keeps every choice the library
 // makes. The library estimates no mastery — that is the learner model's — gives no verdict, calls
 // no AI model, reads no module package or database, and keeps nothing between calls. The rule
-// takes no randomness, so it takes no seed (R07).
+// takes no randomness, so it takes no seed.
 //
 // The same input gives the same choice and the same reason code, bit for bit, on any build by Go's
 // gc compiler of one version of this module and of the learner model — on any architecture it
 // knows, WebAssembly included, with any Go no older than go.mod names. The code imports nothing
-// but Go's standard library and the learner model, and only the packages its rules allow (R10).
+// but Go's standard library and the learner model, and only the packages its rules allow.
 package engine
