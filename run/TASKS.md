@@ -7,4 +7,18 @@ Open tasks outside an epic, each as its body, in Russian; each also stands as a 
 
 ## Tasks outside an epic
 
-None yet.
+#### T92. `sources` по правилу записей, часть 2: темы standalone, исследований, `modules`, `api` и `learner-model` — вне эпика
+
+- **Цель:** темы `docs/sources.md` standalone, исследований и других программ, `modules`, `api` и `learner-model` — по правилу записей `spec/RULES.md`, как T91 сделала с темами `.github` и Go.
+- **Почему:** строка 7.66 COORDINATION.md `spec`; T91 разбита по правилу 11.
+- **Сделать:** файлы MathTrail (standalone) и репозиториев NovaTrail (`modules`, `api`, `learner-model`), их релизы и `testdata/modules` — записи удалить, утверждения — ссылка на файл в репозитории@коммит или на тег, цитаты сверить на клоне во временной папке (MathTrail — тоже во временной папке, по RULES.md); исследования и документация других программ (2.1, 2.2) — статья вне репозиториев или страница без версии остаётся записью с одним текущим чтением, документация на версии или коммите — ссылка на месте; повторные чтения — свернуть до текущего; номера не переиспользовать, `docs/plan/` не трогать; смысл утверждений не менять. Около 60 ссылок — журнал, `architecture`, `measurements`.
+- **Как проверить:** `just -f spec/justfile docs-check-repo` и проверки частей, чьи файлы задеты, — зелёные; размер `docs/sources.md` до и после — в отчёт; `/code-review high`, один круг.
+- **Разделы:** `spec/RULES.md`, «The bar» и «Citations»; R171 `spec`; [docs/sources.md](../docs/sources.md), его темы от standalone до `learner-model`.
+
+#### T93. `sources` по правилу записей, часть 3: тема `sim` — вне эпика
+
+- **Цель:** тема `sim` `docs/sources.md` — его код, гейт, судьи и релизы — по правилу записей `spec/RULES.md`; после неё у `docs/sources.md` записи — только у того, что прогон не проверит или у чего нет версии.
+- **Почему:** строка 7.66 COORDINATION.md `spec`; T91 разбита по правилу 11; после T93 строка закрыта.
+- **Сделать:** записи 6.1–6.15 — файлы и теги `sim` — удалить, утверждения — ссылка на файл `sim` на теге или коммите, цитаты сверить на клоне во временной папке; что держит прогон гейта — `measurements`, где его там нет; повторные чтения — свернуть до текущего; номера не переиспользовать, `docs/plan/` не трогать; смысл утверждений не менять. Около 40 ссылок — журнал, `architecture`, `measurements`, `run/DEBT.md`.
+- **Как проверить:** `just -f spec/justfile docs-check-repo` и проверки частей, чьи файлы задеты, — зелёные; размер `docs/sources.md` до и после — в отчёт; `/code-review high`, один круг.
+- **Разделы:** `spec/RULES.md`, «The bar» и «Citations»; R171 `spec`; [docs/sources.md](../docs/sources.md), тема `sim`.

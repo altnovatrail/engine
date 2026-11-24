@@ -2,7 +2,7 @@
 
 > The results of the engine's measurements: what was measured, how, on what, and what numbers came out. The document that describes how it is built — [architecture.md](architecture.md) — refers here, and itself holds only what was decided from the measurements. A claim cites a measurement by its number, `measurements 2.1`, and from another repository `measurements 2.1 engine`.
 >
-> An external fact a measurement rests on is a record of [sources.md](sources.md). A section's heading names what was measured, not a task. The measurement of the tokens spent by an epic's sessions, by the plan's rules for epics in [RUN.md](../RUN.md), is measurements 4.
+> A fact no run checks that a measurement rests on is a record of [sources.md](sources.md); a program's documentation or code at a version or commit is a link beside it. A section's heading names what was measured, not a task. The measurement of the tokens spent by an epic's sessions, by the plan's rules for epics in [RUN.md](../RUN.md), is measurements 4.
 
 ## 1. The corridor of the base
 
@@ -353,6 +353,17 @@ The time of the jobs of CI and of the release that the stage `toolchain-core` an
 
 The run of CI, from the start of its first job to the end of its last: 173 s before, 573 s after. Its 24 jobs waited for a runner 18 s on average and 54 s at most before, 154 s and 315 s after, at an hour when other repositories of the organization moved to the same tags.
 
-**What it shows.** The stage `toolchain-core` changes no job of CI in `engine`: its `toolchain` holds the same files, the checks take it, as `.github` has it for a caller of the kind `go` (sources 7.6), and the jobs that grew grew by the miss of the new Dockerfile — the image built, the caches of Go empty — and by the queue.
+**What it shows.** The stage `toolchain-core` changes no job of CI in `engine`: its `toolchain` holds the same files, the checks take it, as `.github` has it for a caller of the kind `go` ([its decisions at v0.1.31](https://github.com/altnovatrail/.github/blob/v0.1.31/docs/decisions.md)), and the jobs that grew grew by the miss of the new Dockerfile — the image built, the caches of Go empty — and by the queue.
 
 **Not measured.** The release after the move — "Work out the version" and "Build the files" in `toolchain-core` — runs only on `main`, after the merge: the stage holds the same layers as `toolchain`, so its build should take what it took. A run of the pull request with the entries of the new Dockerfile filled: the first push to `main` saves them.
+
+## 12. The fusion of floating-point operations by Go's compiler
+
+Which expressions of the kind the choice rule computes Go's compiler fuses into one operation, on which architectures.
+
+**How it was measured.** 2026-11-07, go1.27.3 in the container, `go build -gcflags=-S` of small functions for amd64 with GOAMD64 v3, arm64, ppc64le, s390x, riscv64 and loong64, and the instructions of the assembler read.
+
+**What came out.**
+- `(p1+p2)/2 - 0.775` — `FNMSUBD` on arm64, `FMSUB` on ppc64le and s390x, `FMSUBD` on riscv64 and loong64; `float64((p1+p2)/2) - 0.775` — a separate multiplication and subtraction on all five; on amd64 with GOAMD64 v3 — fused in neither case.
+- `s*0.5 - 0.775` — `FNMSUBD` on arm64, `FMSUB` on ppc64le and `FMSUBD` on riscv64.
+- `s/float64(n) - 0.775` — `FDIVD` and `FSUBD` on arm64 and riscv64, `FDIV` and `FSUB` on ppc64le: a division by a variable does not fuse.
