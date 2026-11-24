@@ -108,7 +108,7 @@ The first four levers were taken, with the small things that go with them: the i
 
 ### 2.3. After `learner-model` v0.1.6 (2026-11-11)
 
-`learner-model` `v0.1.6` sped up `Readout.Task` (sources 5.8), and `go.mod` requires it. The same benchmark, the binaries before the raise and after in turn in one session, 10 measurements each, go1.27.4; the host was loaded, and the time is from the calmest of three sessions. The best measurement is 0.38–0.46 ms instead of 0.72–0.80, the medians 0.41–0.50 ms instead of 0.75–1.13, about 1.8×; memory per choice 0.27–0.33 MB instead of 0.67–0.73, allocations 1.75–2.56 thousand instead of 9.5–11.0. `Readout.Task` is now 36% of `Choose`, not 61%. The choice is the same: the golden vectors and `TestBenchInputs` did not change.
+`learner-model` `v0.1.6` sped up `Readout.Task` ([`readout.go` of `learner-model` v0.1.6](https://github.com/altnovatrail/learner-model/blob/v0.1.6/readout.go)), and `go.mod` requires it. The same benchmark, the binaries before the raise and after in turn in one session, 10 measurements each, go1.27.4; the host was loaded, and the time is from the calmest of three sessions. The best measurement is 0.38–0.46 ms instead of 0.72–0.80, the medians 0.41–0.50 ms instead of 0.75–1.13, about 1.8×; memory per choice 0.27–0.33 MB instead of 0.67–0.73, allocations 1.75–2.56 thousand instead of 9.5–11.0. `Readout.Task` is now 36% of `Choose`, not 61%. The choice is the same: the golden vectors and `TestBenchInputs` did not change.
 
 ## 3. The rough look of the variant of E7
 
