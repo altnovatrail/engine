@@ -265,11 +265,15 @@ Read 2026-11-16, from a clone of `sim` in a temporary folder at the tag `v0.1.24
 
 ## 7. `.github`
 
-No record: the shared workflows are `.github`'s files at the tag the workflows of `.github/workflows/` pin, git.
+No record for the shared workflows: they are `.github`'s files at the tag the workflows of `.github/workflows/` pin, git. What stays is a repository's setting, an answer of GitHub's API with no version.
 
-## 8. GitHub and the licenses of Go's tools
+### 7.3. The ruleset of tags of `learner-model`
 
-No record for Go's specification and code, the Go Wiki or Codecov: a link at a version or commit beside the claim, or the measurement.
+By GitHub's API, `repos/altnovatrail/learner-model/rulesets`, read 2026-11-08: the ruleset `v-tags` — id 26770474, `refs/tags/v*`, `update`, `deletion`, `non_fast_forward`, without bypass.
+
+## 8. GitHub, Codecov, the base image and the licenses of Go's tools
+
+No record for Go's specification and code, the Go Wiki or spec's tags: a link at a version, a commit or a tag beside the claim, or the measurement.
 
 ### 8.3. The arm64 runners
 
@@ -278,3 +282,11 @@ No record for Go's specification and code, the Go Wiki or Codecov: a link at a v
 ### 8.4. The licenses of the tools of the checks and of gopls
 
 By GitHub's API, `repos/<repository>/license`, read 2026-11-08: govulncheck and gopls — BSD-3-Clause (`golang/vuln` and `golang/tools`), go-licenses — Apache-2.0 (`google/go-licenses`).
+
+### 8.5. Codecov
+
+Read 2026-11-08: the Codecov app is installed in the organization for all repositories — `gh api orgs/altnovatrail/installations`, `"app_slug":"codecov","repository_selection":"all"`; `engine` is already in Codecov, but not activated — `https://api.codecov.io/api/v2/github/altnovatrail/repos/engine/`, `"active":false,"activated":false`.
+
+### 8.6. The digest of the base image `devcontainers/base` 3.0.13
+
+Read 2026-11-16: the registry, `https://mcr.microsoft.com/v2/devcontainers/base/manifests/3.0.13-noble` with the media types of an image index — `docker-content-digest: sha256:48be4adec1c1ecbe030064700aef85382f5205786a8f82937fc44a7473717eae`.
