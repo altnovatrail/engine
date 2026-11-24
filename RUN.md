@@ -84,4 +84,4 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T90 | Переход на тег `spec` v0.19.17 — вне эпика | Claude | — | — |
 | [x] | T91 | Переход на тег `spec` v0.19.20; `sources` по правилу записей: вводная, ссылки на записи `spec`, темы `.github` и Go — вне эпика | Claude | да | — |
 | [x] | T92 | `sources` по правилу записей: темы standalone, исследований, `modules`, `api` и `learner-model` — вне эпика | Claude | — | T91 |
-| [ ] | T93 | `sources` по правилу записей: тема `sim` — вне эпика | Claude | — | T92 |
+| [x] | T93 | `sources` по правилу записей: тема `sim` — вне эпика | Claude | — | T92 |
