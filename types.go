@@ -147,8 +147,8 @@ const (
 	ReasonAuthorOrder   ReasonCode = 7 // a skill with a rubric or without assessment, by the graph
 	ReasonOpenRun       ReasonCode = 8 // the lesson of a run that is open
 	ReasonRotation      ReasonCode = 9 // a skill given before comes round again, outside the queue
-	// A lesson the learner chose from its module's lessons: Choose never gives it, and api records it
-	// for the run it opens.
+	// A lesson the learner chose from its module's lessons: Choose never gives it, api records it for
+	// the run it opens, and the summary may name it as the code of a skill's last attempt.
 	ReasonLessonChosen ReasonCode = 10
 )
 

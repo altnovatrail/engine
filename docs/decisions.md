@@ -725,7 +725,7 @@
 - **The order** is the repeat of the rule's first lesson on what is left: a lesson that comes after none of the others, of the least tier, then by ID byte by byte. A cycle still gives each lesson once, by tier and ID.
 - **A group** goes on while each new lesson and every lesson of the group are not ordered by the graph, either way; a lesson ordered with one of them starts the next group. So a page lists the lessons in the rule's order and marks those it may show "in any order".
 - **What it reads**: the graph and the lessons' IDs and skills, not their tasks, bands or runs, and not the learner model: the list is the same for every learner of the module, and the caller gives only the lessons it lists. A lesson twice by its ID is `ErrInvalid`, as in a choice.
-- **The tenth code** keeps the engine's `ReasonCode` the list of `cause.proto` value for value, as the test of the contracts holds it.
+- **The tenth code** keeps the engine's `ReasonCode` the list of `cause.proto` value for value, as the test of the contracts holds it; the summary takes it as the code of a skill's last closed attempt, an attempt of a segment of a run that a lesson chosen opened.
 
 — *Why:* `spec` lets the learner open any lesson of a module from its page, in the author's order, and `api` lists it; one rule orders the lessons, and a copy of it in `api` could drift from the one the choice keeps. The groups come from the same rule, so the page's "in any order" is true of the graph.
 
@@ -734,5 +734,5 @@
 - groups by the layers of the graph — a lesson of a lower tier would stand after one the rule takes later, and the page's order would not be the rule's;
 - `ReasonLessonChosen` left out of the engine — the test of the contracts would fail on the next tag of `spec`, and `api` translates the codes by the engine's numbers.
 
-— *Consequence:* `order.go`; `types.go`; `contracts_test.go`; `docs/architecture.md`.
+— *Consequence:* `order.go`; `types.go`; `choose.go`; `contracts_test.go`; `docs/architecture.md`.
 
