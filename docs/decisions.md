@@ -4,7 +4,7 @@
 >
 > **Rule:** do not propose again what was rejected without new facts. If a decision has to change, ask the author and rewrite its entry in its place, and every entry the change touches: an entry is its text in force — what was decided, why, what was rejected and what a change of it edits —, git keeps the old text, and the commit says why. An entry's number stands in its heading alone: an entry cites no other entry and no section, says in words what it rests on, and carries no date of who decided it and no amendment; a fact that no run of ours checks cites its one record of [sources.md](sources.md), a measurement its record of [measurements.md](measurements.md), and `spec`'s are cited as `sources 2.3 spec`.
 >
-> The repository was set up 2026-10-19 from the template of `spec` v0.1.0; the tag it stands on is the `spec` submodule's, and an entry on a move to a tag says what the tag brings to `engine` and what is changed here. How it comes to differ from the template — tools in the devcontainer, rules in RUN.md — is recorded here as a decision. Next number — R32.
+> The repository was set up 2026-10-19 from the template of `spec` v0.1.0; the tag it stands on is the `spec` submodule's, and an entry on a move to a tag says what the tag brings to `engine` and what is changed here. How it comes to differ from the template — tools in the devcontainer, rules in RUN.md — is recorded here as a decision. Next number — R33.
 >
 > Open questions that concern several repositories — О-, П-, Т- — are in the registers of `spec`, in `spec/docs/product.md`, `spec/docs/privacy.md` and `spec/docs/repositories.md`. What is still to decide in the component itself is in [architecture.md](architecture.md).
 
@@ -718,3 +718,21 @@
 - the action in the jobs of the gate — its key hashes `.devcontainer/Dockerfile` at the root of the checkout, and theirs is `sim/.devcontainer/Dockerfile`: it would hash nothing there and build engine's image, not `sim`'s.
 
 — *Consequence:* `.github/workflows/ci.yml`; README.md; [.claude/rules/ci.md](../.claude/rules/ci.md); [run/DEBT.md](../run/DEBT.md).
+
+## The order of a module's lessons, outside a choice
+
+**R32. `LessonOrder` gives the lessons of one module in the author's order, by the rule a choice takes them by, with the place of each lesson's group — the lessons that no prerequisite of the graph orders between them —, for the list of a module's lessons that `api` gives `app`. `ReasonCode` has a tenth value, `ReasonLessonChosen`, which `Choose` never gives: `api` records it for a lesson the learner chose from that list.**
+- **The order** is the repeat of the rule's first lesson on what is left: a lesson that comes after none of the others, of the least tier, then by ID byte by byte. A cycle still gives each lesson once, by tier and ID.
+- **A group** goes on while each new lesson and every lesson of the group are not ordered by the graph, either way; a lesson ordered with one of them starts the next group. So a page lists the lessons in the rule's order and marks those it may show "in any order".
+- **What it reads**: the graph and the lessons' IDs and skills, not their tasks, bands or runs, and not the learner model: the list is the same for every learner of the module, and the caller gives only the lessons it lists. A lesson twice by its ID is `ErrInvalid`, as in a choice.
+- **The tenth code** keeps the engine's `ReasonCode` the list of `cause.proto` value for value, as the test of the contracts holds it.
+
+— *Why:* `spec` lets the learner open any lesson of a module from its page, in the author's order, and `api` lists it; one rule orders the lessons, and a copy of it in `api` could drift from the one the choice keeps. The groups come from the same rule, so the page's "in any order" is true of the graph.
+
+— *Rejected:*
+- the order computed in `api` from the graph — a second copy of the rule;
+- groups by the layers of the graph — a lesson of a lower tier would stand after one the rule takes later, and the page's order would not be the rule's;
+- `ReasonLessonChosen` left out of the engine — the test of the contracts would fail on the next tag of `spec`, and `api` translates the codes by the engine's numbers.
+
+— *Consequence:* `order.go`; `types.go`; `contracts_test.go`; `docs/architecture.md`.
+

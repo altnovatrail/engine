@@ -33,6 +33,7 @@ var contractEnums = map[string]map[string]int32{
 		"REASON_CODE_AUTHOR_ORDER":  int32(engine.ReasonAuthorOrder),
 		"REASON_CODE_OPEN_RUN":      int32(engine.ReasonOpenRun),
 		"REASON_CODE_ROTATION":      int32(engine.ReasonRotation),
+		"REASON_CODE_LESSON_CHOSEN": int32(engine.ReasonLessonChosen),
 	},
 	"ChoiceKind": {
 		"CHOICE_KIND_UNSPECIFIED": int32(engine.ChoiceUnspecified),

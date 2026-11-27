@@ -143,10 +143,13 @@ const (
 	ReasonQueue         ReasonCode = 3 // the skill within reach not given for longest in its module
 	ReasonRepetition    ReasonCode = 4 // the review date of a mastered skill has come
 	ReasonProbe         ReasonCode = 5 // a skill put aside comes back as a check
-	ReasonSkillChosen   ReasonCode = 6 // the skill chosen on the skill map
+	ReasonSkillChosen   ReasonCode = 6 // the skill the learner chose, on the map or for a module
 	ReasonAuthorOrder   ReasonCode = 7 // a skill with a rubric or without assessment, by the graph
 	ReasonOpenRun       ReasonCode = 8 // the lesson of a run that is open
 	ReasonRotation      ReasonCode = 9 // a skill given before comes round again, outside the queue
+	// A lesson the learner chose from its module's lessons: Choose never gives it, and api records it
+	// for the run it opens.
+	ReasonLessonChosen ReasonCode = 10
 )
 
 // ChoiceKind is what a choice gives: ChoiceKind of cause.proto, names and numbers.
