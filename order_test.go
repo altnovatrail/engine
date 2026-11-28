@@ -2,7 +2,7 @@ package engine_test
 
 import (
 	"errors"
-	"reflect"
+	"slices"
 	"testing"
 
 	learnermodel "github.com/altnovatrail/learner-model"
@@ -59,7 +59,7 @@ func TestLessonOrderFollowsTheGraphThenTierThenID(t *testing.T) {
 		{ID: orderModule + "/lesson/c-gaps", Group: 1},
 		{ID: orderModule + "/lesson/e-patterns", Group: 2},
 	}
-	if !reflect.DeepEqual(got, want) {
+	if !slices.Equal(got, want) {
 		t.Errorf("got %+v, want %+v", got, want)
 	}
 }
@@ -82,7 +82,7 @@ func TestLessonOrderGroupsLessonsWithNoOrderBetweenThem(t *testing.T) {
 		{ID: orderModule + "/lesson/gaps", Group: 1},
 		{ID: orderModule + "/lesson/shapes", Group: 1},
 	}
-	if !reflect.DeepEqual(got, want) {
+	if !slices.Equal(got, want) {
 		t.Errorf("got %+v, want %+v", got, want)
 	}
 }
@@ -93,7 +93,7 @@ func TestLessonOrderReadsNoInputOrder(t *testing.T) {
 	b := []engine.Lesson{a[2], a[0], a[1]}
 	ga, errA := engine.LessonOrder(orderGraph, a)
 	gb, errB := engine.LessonOrder(orderGraph, b)
-	if errA != nil || errB != nil || !reflect.DeepEqual(ga, gb) {
+	if errA != nil || errB != nil || !slices.Equal(ga, gb) {
 		t.Errorf("%+v %v and %+v %v differ", ga, errA, gb, errB)
 	}
 }
@@ -106,7 +106,7 @@ func TestLessonOrderOfACycle(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []engine.OrderedLesson{{ID: orderModule + "/lesson/a", Group: 0}, {ID: orderModule + "/lesson/b", Group: 1}}
-	if !reflect.DeepEqual(got, want) {
+	if !slices.Equal(got, want) {
 		t.Errorf("got %+v, want %+v", got, want)
 	}
 }
