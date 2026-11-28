@@ -330,7 +330,7 @@ func checkSummary(in Input) error {
 	}
 	for _, i := range byID(len(in.Summary.Skills), func(i int) string { return in.Summary.Skills[i].Skill }) {
 		s := in.Summary.Skills[i]
-		if s.HasLast && (s.LastCode < ReasonUnspecified || s.LastCode > ReasonRotation) {
+		if s.HasLast && (s.LastCode < ReasonUnspecified || s.LastCode > ReasonLessonChosen) {
 			return invalid("skill " + shown(s.Skill) + " of the summary has the reason code " + itoa(int64(s.LastCode)) + ", which ReasonCode does not name")
 		}
 	}

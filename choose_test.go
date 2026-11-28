@@ -118,6 +118,17 @@ func TestChooseValid(t *testing.T) {
 	}
 }
 
+// A skill whose last closed attempt came of a lesson the learner chose has that code in the
+// summary: the input is valid, and the choice is the same.
+func TestChooseTakesALessonChosenInTheSummary(t *testing.T) {
+	in := fixture(t)
+	in.Summary.Skills = append(in.Summary.Skills, engine.SkillIssue{Skill: skillID(fixtureModules[0], "zz"), LastCode: engine.ReasonLessonChosen, HasLast: true})
+	got, err := engine.Choose(in)
+	if err != nil || got.Reason != engine.ReasonOpenRun {
+		t.Errorf("Choose = %+v, %v; want the lesson of the open run", got, err)
+	}
+}
+
 func TestChooseInvalid(t *testing.T) {
 	olympiad, workbook := fixtureModules[0], fixtureModules[1]
 	for _, tc := range []struct {
@@ -173,8 +184,8 @@ func TestChooseInvalid(t *testing.T) {
 			in.Summary.Tasks = append(in.Summary.Tasks, engine.TaskSolution{Task: olympiad + "/task/a-1"})
 		}, `task "example/olympiad/task/a-1" comes twice in the summary`},
 		{"reason code of the summary off the list", func(t *testing.T, in *engine.Input) {
-			in.Summary.Skills[0].LastCode = engine.ReasonRotation + 1
-		}, `skill "example/olympiad/skill/a" of the summary has the reason code 10, which ReasonCode does not name`},
+			in.Summary.Skills[0].LastCode = engine.ReasonLessonChosen + 1
+		}, `skill "example/olympiad/skill/a" of the summary has the reason code 11, which ReasonCode does not name`},
 		{"skill twice in the results of the last attempt", func(t *testing.T, in *engine.Input) {
 			in.Last.Results = append(in.Last.Results, in.Last.Results[0])
 		}, `skill "example/olympiad/skill/a" comes twice in the results of the last attempt`},
